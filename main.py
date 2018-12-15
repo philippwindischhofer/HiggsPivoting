@@ -2,39 +2,53 @@ import tensorflow as tf
 import numpy as np
 import uproot as ur
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
-def raw_generator(file_path, tree_name, branches):
-    tree = ur.open(file_path)[tree_name]
-
-    for chunk in tree.iterate(branches):
-        converted = {bytes.decode(key): val for key, val in chunk.items()} # convert the column names from byte arrays into proper strings
-        yield pd.DataFrame(converted)
+import Generators as gens
+from SimplePreprocessor import SimplePreprocessor
+from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
         
 def main():
     file_path = "/data/atlas/atlasdata/windischhofer/Hbb/hist-all-mc16d.root"
 
-    data_branches = ["nTags"]
+    data_branches = ["mBB", "mB1", "mB2"]
     truth_branches = ["Sample"]
     read_branches = data_branches + truth_branches
 
+    # sig_samples = ["qqZvvH125, qqWlvH125"]
+    # bkg_samples = ["Zbb"]
+
+    # for testing purposes
     sig_samples = ["Wl"]
-    bkg_samples = ["asdf"]
+    bkg_samples = ["Wbl"]
 
     # convert them into binary representations, to match the way they are read from the tree
     sig_samples_bin = [str.encode(samp) for samp in sig_samples]
     bkg_samples_bin = [str.encode(samp) for samp in bkg_samples]
 
-    test = raw_generator(file_path, "Nominal", read_branches)
+    sig_cut = lambda row: any([name == row["Sample"] for name in sig_samples_bin])
+    bkg_cut = lambda row: any([name == row["Sample"] for name in bkg_samples_bin])
 
-    for chunk in test:
-        data_chunk = chunk[data_branches]
-        truth_chunk = chunk[truth_branches]
+    # get the data and split it into signal and background
+    gen = gens.raw_data(file_path, "Nominal", read_branches)
+    pre = SimplePreprocessor(data_branches = data_branches, sig_cut = sig_cut, bkg_cut = bkg_cut)
+    sig_data, bkg_data = pre.process_generator(gen)
 
-        bkg_chunk = chunk.loc[truth_chunk["Sample"].isin(bkg_samples_bin)]
-        sig_chunk = chunk.loc[truth_chunk["Sample"].isin(sig_samples_bin)]
+    # perform training / testing split
+    test_size = 0.2
+    sig_data_train, sig_data_test = train_test_split(sig_data, test_size = test_size)
+    bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size)
 
-        print(bkg_chunk)
-        print(sig_chunk)
+    # set up the PCA whitening on on the training data
+    pca_pre = PCAWhiteningPreprocessor(data_branches = data_branches)
+    pca_pre.setup(np.concatenate([sig_data_train, bkg_data_train], axis = 0))
 
+    # apply the PCA again
+    sig_data_train = pca_pre.process(sig_data_train)
+    bkg_data_train = pca_pre.process(bkg_data_train)
+
+    print(sig_data_train)
+    print(bkg_data_train)
+    
 if __name__ == "__main__":
     main()
