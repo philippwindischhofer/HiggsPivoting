@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 import uproot as ur
 import pandas as pd
@@ -7,6 +6,8 @@ from sklearn.model_selection import train_test_split
 import Generators as gens
 from SimplePreprocessor import SimplePreprocessor
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
+from TrainingEnvironment import TrainingEnvironment
+from SimpleModel import SimpleModel
         
 def main():
     file_path = "/data/atlas/atlasdata/windischhofer/Hbb/hist-all-mc16d.root"
@@ -47,8 +48,12 @@ def main():
     sig_data_train = pca_pre.process(sig_data_train)
     bkg_data_train = pca_pre.process(bkg_data_train)
 
-    print(sig_data_train)
-    print(bkg_data_train)
-    
+    # set up the training environment
+    mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
+    trainer = TrainingEnvironment(classifier_model = mod, training_pars = {"batch_size": 256})
+
+    trainer.build()
+    trainer.train(number_epochs = 300, data_sig = sig_data_train, data_bkg = bkg_data_train)
+
 if __name__ == "__main__":
     main()
