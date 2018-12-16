@@ -6,3 +6,4 @@ lib64
 *.json
 *.cfg
 __pycache__/
+models/

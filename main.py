@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 import Generators as gens
 from SimplePreprocessor import SimplePreprocessor
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
-from TrainingEnvironment import TrainingEnvironment
+from TFEnvironment import TFEnvironment
 from SimpleModel import SimpleModel
         
 def main():
@@ -50,10 +50,19 @@ def main():
 
     # set up the training environment
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
-    trainer = TrainingEnvironment(classifier_model = mod, training_pars = {"batch_size": 256})
+    tfe = TFEnvironment(classifier_model = mod, training_pars = {"batch_size": 256}, num_inputs = len(data_branches))
 
-    trainer.build()
-    trainer.train(number_epochs = 300, data_sig = sig_data_train, data_bkg = bkg_data_train)
+    tfe.build()
+    #tfe.train(number_epochs = 300, data_sig = sig_data_train, data_bkg = bkg_data_train)
+    #tfe.save("/home/windischhofer/HiggsPivoting/models/test_model.dat")
+    tfe.load("/home/windischhofer/HiggsPivoting/models/test_model.dat")
+
+    # now apply it on the test dataset
+    pred = tfe.predict(data_test = bkg_data_test)
+    print(pred)
+
+    pred = tfe.predict(data_test = sig_data_test)
+    print(pred)
 
 if __name__ == "__main__":
     main()

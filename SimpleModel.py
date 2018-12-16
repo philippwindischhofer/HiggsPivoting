@@ -7,7 +7,7 @@ class SimpleModel:
         self.num_hidden_layers = hyperpars["num_hidden_layers"]
         self.num_units = hyperpars["num_units"]
 
-    def classfier(self, classifier_input):
+    def classifier(self, classifier_input):
         with tf.variable_scope(self.name):
             lay = classifier_input
 
@@ -20,4 +20,3 @@ class SimpleModel:
         these_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = self.name)
     
         return outputs, these_vars
-
