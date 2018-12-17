@@ -16,9 +16,6 @@ def main():
     truth_branches = ["Sample"]
     read_branches = data_branches + truth_branches
 
-    # sig_samples = ["qqZvvH125, qqWlvH125"]
-    # bkg_samples = ["Zbb"]
-
     # for testing purposes
     sig_samples = ["Wl"]
     bkg_samples = ["Wbl"]
