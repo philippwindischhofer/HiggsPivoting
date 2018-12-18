@@ -10,27 +10,15 @@ from SimpleClassifierEnvironment import SimpleClassifierEnvironment
 from SimpleModel import SimpleModel
         
 def main():
-    file_path = "/data/atlas/atlasdata/windischhofer/Hbb/hist-all-mc16d.root"
+    infile_path = "/data/atlas/atlasdata/windischhofer/Hbb/training-mc16d.h5"
 
     data_branches = ["mBB", "mB1", "mB2"]
-    truth_branches = ["Sample"]
-    read_branches = data_branches + truth_branches
 
-    # for testing purposes
-    sig_samples = ["Wl"]
-    bkg_samples = ["Wbl"]
+    # read the training data
+    sig_data, bkg_data = pd.read_hdf(infile_path, key = 'sig'), pd.read_hdf(infile_path, key = 'bkg')
 
-    # convert them into binary representations, to match the way they are read from the tree
-    sig_samples_bin = [str.encode(samp) for samp in sig_samples]
-    bkg_samples_bin = [str.encode(samp) for samp in bkg_samples]
-
-    sig_cut = lambda row: any([name == row["Sample"] for name in sig_samples_bin])
-    bkg_cut = lambda row: any([name == row["Sample"] for name in bkg_samples_bin])
-
-    # get the data and split it into signal and background
-    gen = gens.raw_data(file_path, "Nominal", read_branches)
-    pre = SimplePreprocessor(data_branches = data_branches, sig_cut = sig_cut, bkg_cut = bkg_cut)
-    sig_data, bkg_data = pre.process_generator(gen)
+    print(sig_data)
+    print(bkg_data)
 
     # perform training / testing split
     test_size = 0.2
@@ -52,7 +40,7 @@ def main():
     sce.build()
     sce.train(number_epochs = 300, data_sig = sig_data_train, data_bkg = bkg_data_train)
     sce.save("/home/windischhofer/HiggsPivoting/models/test_model.dat")
-    #sce.load("/home/windischhofer/HiggsPivoting/models/test_model.dat")
+    sce.load("/home/windischhofer/HiggsPivoting/models/test_model.dat")
 
     # now apply it on the test dataset
     pred = sce.predict(data_test = bkg_data_test)
