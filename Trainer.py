@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 
 class Trainer:
@@ -10,8 +11,14 @@ class Trainer:
         self.training_pars.setdefault("batch_size", 256)
 
     def train(self, env, number_batches, data_sig, data_bkg):
+        # make sure the data is in the form of numpy arrays
+        if isinstance(data_sig, pd.DataFrame):
+            data_sig = data_sig.values
+        if isinstance(data_bkg, pd.DataFrame):
+            data_bkg = data_bkg.values
+
         # initialize the environment
-        env.init()
+        env.init(np.concatenate([data_sig, data_bkg], axis = 0))
 
         for batch in range(number_batches):
             # sample separately from signal and background samples, try to have a balanced sig/bkg ratio in every batch

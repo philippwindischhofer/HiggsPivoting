@@ -7,17 +7,13 @@ import os
 
 class ModelEvaluator:
 
-    def __init__(self, env, pre):
+    def __init__(self, env):
         self.env = env
-        self.pre = pre
 
     # plot the ROC of the classifier
     def plot_roc(self, sig_data_test, bkg_data_test, outpath):
-        sig_data_test = self.pre.process(sig_data_test)
-        bkg_data_test = self.pre.process(bkg_data_test)
-
-        pred_bkg = self.env.predict(data_test = bkg_data_test)[:,1]
-        pred_sig = self.env.predict(data_test = sig_data_test)[:,1]
+        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
+        pred_sig = self.env.predict(data = sig_data_test)[:,1]
 
         pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
         labels_test = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
@@ -41,10 +37,8 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
 
     def plot_mBB_distortion(self, sig_data_test, bkg_data_test, outpath):
-        sig_data_pre = self.pre.process(sig_data_test)
-        bkg_data_pre = self.pre.process(bkg_data_test)
-        pred_bkg = self.env.predict(data_test = bkg_data_pre)[:,1]
-        pred_sig = self.env.predict(data_test = sig_data_pre)[:,1]
+        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
+        pred_sig = self.env.predict(data = sig_data_test)[:,1]
 
         # create the output directory if it doesn't already exist and save the figure(s)
         if not os.path.exists(outpath):

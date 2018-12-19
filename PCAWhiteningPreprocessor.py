@@ -6,9 +6,9 @@ from Preprocessor import Preprocessor
 
 class PCAWhiteningPreprocessor(Preprocessor):
 
-    def __init__(self, data_branches = None):
-        if data_branches is not None:
-            self.pca = PCA(n_components = len(data_branches), svd_solver = 'auto', whiten = True)
+    def __init__(self, num_inputs = None):
+        if num_inputs is not None:
+            self.pca = PCA(n_components = num_inputs, svd_solver = 'auto', whiten = True)
         else:
             self.pca = None
 

@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleClassifierEnvironment import SimpleClassifierEnvironment
 from SimpleModel import SimpleModel
 from Trainer import Trainer
@@ -26,18 +25,6 @@ def main():
     test_size = 0.2
     sig_data_train, sig_data_test = train_test_split(sig_data, test_size = test_size)
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size)
-
-    # set up the PCA whitening on on the training data
-    pca_pre = PCAWhiteningPreprocessor(data_branches = data_branches)
-    pca_pre.setup(np.concatenate([sig_data_train, bkg_data_train], axis = 0))
-    pca_pre.save(os.path.join(outdir, "pre.pkl"))
-
-    # apply the PCA to training and test data
-    sig_data_train = pca_pre.process(sig_data_train)
-    bkg_data_train = pca_pre.process(bkg_data_train)
-
-    sig_data_test = pca_pre.process(sig_data_test)
-    bkg_data_test = pca_pre.process(bkg_data_test)
 
     # set up the training environment
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
