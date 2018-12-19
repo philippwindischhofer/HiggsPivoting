@@ -5,16 +5,14 @@ from TFEnvironment import TFEnvironment
 
 class SimpleClassifierEnvironment(TFEnvironment):
 
-    def __init__(self, classifier_model, training_pars, num_inputs):
+    def __init__(self, classifier_model):
         super(SimpleClassifierEnvironment, self).__init__()
         self.classifier_model = classifier_model
-        self.training_pars = training_pars
-        self.num_inputs = num_inputs
         
-    # builds the training graph
-    def build(self):
+    # builds the graph
+    def build(self, num_inputs):
         self.labels_in = tf.placeholder(tf.int32, [None, ], name = 'labels_in')
-        self.data_in = tf.placeholder(tf.float32, [None, self.num_inputs], name = 'data_in')
+        self.data_in = tf.placeholder(tf.float32, [None, num_inputs], name = 'data_in')
 
         self.classifier_out, self.classifier_vars = self.classifier_model.classifier(self.data_in)
 
@@ -28,24 +26,15 @@ class SimpleClassifierEnvironment(TFEnvironment):
 
         self.saver = tf.train.Saver()
 
-    def train(self, number_epochs, data_sig, data_bkg):
-        # prepare the training dataset
-        self.training_data = np.concatenate([data_sig, data_bkg], axis = 0)
-        self.training_labels = np.concatenate([np.ones(len(data_sig)), np.zeros(len(data_bkg))], axis = 0)
-
-        # initialize the graph
+    def init(self):
         self.sess.run(tf.global_variables_initializer())
 
-        for epoch in range(number_epochs):
-            # sample from signal and background
-            inds = np.random.choice(len(self.training_data), self.training_pars["batch_size"])
-            data_batch = self.training_data[inds]
-            labels_batch = self.training_labels[inds]
+    def train_step(self, data_step, labels_step):
+        self.sess.run(self.train_op, feed_dict = {self.data_in: data_step, self.labels_in: labels_step})
 
-            self.sess.run(self.train_op, feed_dict = {self.data_in: data_batch, self.labels_in: labels_batch})
-            loss = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_batch, self.labels_in: labels_batch})
-
-            print("loss = {}".format(loss))
+    def loss(self, data, labels):
+        loss = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data, self.labels_in: labels})
+        return loss
 
     def predict(self, data_test):
         retval = self.sess.run(self.classifier_out, feed_dict = {self.data_in: data_test})

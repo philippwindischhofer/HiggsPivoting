@@ -15,11 +15,6 @@ class TFEnvironment(ABC):
     def build(self):
         pass
 
-    # trains the model that is embedded in this environment
-    @abstractmethod
-    def train(self):
-        pass
-
     # uses the (possibly trained?) model to make a forward pass
     @abstractmethod
     def predict(self):
