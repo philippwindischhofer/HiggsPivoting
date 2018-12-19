@@ -25,9 +25,7 @@ def main():
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size)
 
     # load the preprocessor
-    pca_pre = PCAWhiteningPreprocessor.from_file(os.path.join(model_dir, "pre.pkl"))
-    sig_data_test = pca_pre.process(sig_data_test)
-    bkg_data_test = pca_pre.process(bkg_data_test)
+    pre = PCAWhiteningPreprocessor.from_file(os.path.join(model_dir, "pre.pkl"))
 
     # load the trained model
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
@@ -35,12 +33,9 @@ def main():
     sce.build(num_inputs = len(TrainingConfig.training_branches))
     sce.load(os.path.join(model_dir, "test_model.dat"))
 
-    # create the standard ROC plot
-    ev = ModelEvaluator(sce)
+    # generate performance plots
+    ev = ModelEvaluator(sce, pre)
     ev.evaluate(sig_data_test, bkg_data_test, "/home/windischhofer/HiggsPivotingModels/")
-
-    # create mBB plots to show the (non)pivotality of the classifier
-    
 
 if __name__ == "__main__":
     main()
