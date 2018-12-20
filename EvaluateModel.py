@@ -5,14 +5,14 @@ from sklearn.model_selection import train_test_split
 
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleModel import SimpleModel
-from SimpleClassifierEnvironment import SimpleClassifierEnvironment
+from MINEClassifierEnvironment import MINEClassifierEnvironment
 from ModelEvaluator import ModelEvaluator
 
 from Configs import TrainingConfig
 
 def main():
     infile_path = "/data/atlas/atlasdata/windischhofer/Hbb/training-mc16d.h5"
-    model_dir = "/home/windischhofer/HiggsPivoting/models"
+    model_dir = "/home/windischhofer/HiggsPivoting/adversarial_models"
 
     # read the training data
     print("loading data ...")
@@ -26,12 +26,12 @@ def main():
 
     # load the trained model
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
-    sce = SimpleClassifierEnvironment(classifier_model = mod)
-    sce.build(num_inputs = len(TrainingConfig.training_branches))
-    sce.load(os.path.join(model_dir, "test_model.dat"))
+    mce = MINEClassifierEnvironment(classifier_model = mod)
+    mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1)
+    mce.load(os.path.join(model_dir, "test_model.dat"))
 
     # generate performance plots
-    ev = ModelEvaluator(sce)
+    ev = ModelEvaluator(mce)
     ev.evaluate(sig_data_test, bkg_data_test, "/home/windischhofer/HiggsPivotingModels/")
 
 if __name__ == "__main__":

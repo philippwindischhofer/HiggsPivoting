@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 
-class Trainer:
+class Trainer(object):
 
     def __init__(self, training_pars):
         self.training_pars = training_pars
 
         # give default values
-        self.training_pars.setdefault("printout_interval", 1000)
+        self.training_pars.setdefault("printout_interval", 1)
         self.training_pars.setdefault("batch_size", 256)
 
     def train(self, env, number_batches, data_sig, data_bkg):
