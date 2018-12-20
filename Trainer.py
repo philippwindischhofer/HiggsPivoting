@@ -34,6 +34,5 @@ class Trainer:
             env.train_step(data_step = data_batch, labels_step = labels_batch)
 
             if not batch % self.training_pars["printout_interval"]:
-                loss = env.loss(data = data_batch, labels = labels_batch)
-                print("batch {}: loss = {}".format(batch, loss))
-
+                print("batch {}:".format(batch))
+                env.dump_loss_information(data = data_batch, labels = labels_batch)

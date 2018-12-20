@@ -46,6 +46,10 @@ class SimpleClassifierEnvironment(TFEnvironment):
         loss = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels})
         return loss
 
+    def dump_loss_information(self, data, labels):
+        loss = self.loss(data = data, labels = labels)
+        print("loss = {}".format(loss))
+
     def predict(self, data):
         data_pre = self.pre.process(data)
         retval = self.sess.run(self.classifier_out, feed_dict = {self.data_in: data_pre})
