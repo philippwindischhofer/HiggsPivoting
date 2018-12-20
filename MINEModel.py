@@ -4,10 +4,12 @@ import tensorflow.contrib.layers as layers
 class MINEModel:
     def __init__(self, name, hyperpars):
         self.name = name
-        self.num_hidden_layers = hyperpars["num_hidden_layers"]
-        self.num_units = hyperpars["num_units"]
+        self.hyperpars = hyperpars
+        self.num_hidden_layers = self.hyperpars["num_hidden_layers"]
+        self.num_units = self.hyperpars["num_units"]
 
     def MINE_network(self, data_input):
+        print("setting up MINE network with the following hyperparameters: " + str(self.hyperpars))
         with tf.variable_scope(self.name, reuse = tf.AUTO_REUSE):
             lay = data_input
 
@@ -27,9 +29,6 @@ class MINEModel:
 
         T_xy, MINE_vars = self.MINE_network(data_xy)
         T_x_y, MINE_vars_cc = self.MINE_network(data_x_y)
-
-        print(MINE_vars)
-        print(MINE_vars_cc)
 
         MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y), axis = 0)))
         MINE_lossval = MINE_lossval[0]

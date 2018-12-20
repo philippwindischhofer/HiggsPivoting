@@ -27,7 +27,7 @@ def main():
     # load the trained model
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
     mce = MINEClassifierEnvironment(classifier_model = mod)
-    mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1)
+    mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1, lambda_val = 0.45)
     mce.load(os.path.join(model_dir, "test_model.dat"))
 
     # generate performance plots

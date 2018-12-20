@@ -7,7 +7,6 @@ class AdversarialTrainer(Trainer):
 
     def __init__(self, training_pars):
         super(AdversarialTrainer, self).__init__(training_pars)
-        self.pretrain_batches = 100
 
     # overload the 'train' method here
     def train(self, env, number_batches, df_sig, df_bkg, nuisances):
@@ -32,10 +31,13 @@ class AdversarialTrainer(Trainer):
         env.init(data_train = data_train, data_nuisance = nuisances_train)
 
         # pre-train the adversary
-        for batch in range(self.pretrain_batches):
+        print("pretraining MINE network for {} batches".format(self.training_pars["pretrain_batches"]))
+        for batch in range(self.training_pars["pretrain_batches"]):
             env.train_adversary(data_step = data_train, nuisances_step = nuisances_train, labels_step = labels_train)
             env.dump_loss_information(data = data_train, nuisances = nuisances_train, labels = labels_train)
+        print("pretraining complete!")
 
+        print("starting training:")
         for batch in range(number_batches):
             # sample separately from signal and background samples, try to have a balanced sig/bkg ratio in every batch
             inds_sig = np.random.choice(len(data_sig), int(self.training_pars["batch_size"] / 2))

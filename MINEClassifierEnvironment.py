@@ -14,7 +14,8 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre = None
         self.pre_nuisance = None
 
-    def build(self, num_inputs, num_nuisances):
+    def build(self, num_inputs, num_nuisances, lambda_val):
+        print("building MINEClassifierEnvironment using lambda = {}".format(lambda_val))
         self.pre = PCAWhiteningPreprocessor(num_inputs)
         self.pre_nuisance = PCAWhiteningPreprocessor(num_nuisances)
         
@@ -35,7 +36,7 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.MINE_loss, self.MINE_vars = self.MI_nuisances.MINE_loss(self.classifier_out_single, self.nuisances_in)
 
         # total adversarial loss
-        self.adv_loss = self.classification_loss + 0 * (-self.MINE_loss)
+        self.adv_loss = self.classification_loss + lambda_val * (-self.MINE_loss)
 
         # optimizers for the classifier and MINE
         self.train_classifier = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)

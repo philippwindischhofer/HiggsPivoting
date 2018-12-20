@@ -14,12 +14,14 @@ class PCAWhiteningPreprocessor(Preprocessor):
 
     @classmethod
     def from_file(cls, filepath):
+        print("attempting to read PCAWhiteningPreprocessor from " + filepath)
         obj = cls()
         with open(filepath, "rb") as infile:
             obj.pca = pickle.load(infile)
         return obj
 
     def save(self, filepath):
+        print("writing PCAWhiteningPreprocessor to " + filepath)
         with open(filepath, "wb") as outfile:
             pickle.dump(self.pca, outfile)
 
