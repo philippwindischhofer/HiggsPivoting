@@ -33,7 +33,7 @@ class MINEClassifierEnvironment(TFEnvironment):
 
             # mutual information between the classifier output and the nuisance parameters
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.MI_nuisances = MINEModel(name = "MINE_nuisances", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
+            self.MI_nuisances = MINEModel(name = "MINE_nuisances", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
             self.MINE_loss, self.MINE_vars = self.MI_nuisances.MINE_loss(self.classifier_out_single, self.nuisances_in)
             
             # total adversarial loss
@@ -67,14 +67,22 @@ class MINEClassifierEnvironment(TFEnvironment):
         with self.graph.as_default():
             self.sess.run(self.train_MINE, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
 
-    def dump_loss_information(self, data, nuisances, labels):
+    def evaluate_classifier_loss(self, data, labels):
+        data_pre = self.pre.process(data)
+        with self.graph.as_default():
+            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels})
+        return classifier_lossval
+
+    def evaluate_MI(self, data, nuisances, labels):
         data_pre = self.pre.process(data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
-
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels})
             mutual_information = self.sess.run(-self.MINE_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels})
+        return mutual_information
 
+    def dump_loss_information(self, data, nuisances, labels):
+        classifier_lossval = self.evaluate_classifier_loss(data, labels)
+        mutual_information = self.evaluate_MI(data, nuisances, labels)
         print("classifier loss: {:.4f}, MI = {:.4f}".format(classifier_lossval, mutual_information))
 
     def predict(self, data):
@@ -84,6 +92,20 @@ class MINEClassifierEnvironment(TFEnvironment):
             retval = self.sess.run(self.classifier_out, feed_dict = {self.data_in: data_pre})
 
         return retval
+
+    # return a dictionary with important model parameters
+    def get_model_statistics(self, data, nuisances, labels):
+        from sklearn.feature_selection import mutual_info_regression
+
+        retdict = {}
+        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels)
+        #retdict["MINE(f, z)"] = self.evaluate_MI(data, nuisances, labels)
+        
+        pred = np.expand_dims(self.predict(data)[:,1], axis = 1)
+        retdict["MI(f, z)"] = mutual_info_regression(pred, nuisances.ravel())[0]
+        retdict["MI(f, label)"] = mutual_info_regression(pred, labels.ravel())[0]
+
+        return retdict
 
     def load(self, file_path):
         with self.graph.as_default():
@@ -98,20 +120,3 @@ class MINEClassifierEnvironment(TFEnvironment):
 
         self.pre.save(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
         self.pre_nuisance.save(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
-
-    # def test_MINE(self):
-    #     self.build(num_inputs = 1, num_nuisances = 1)
-    #     self.init(data_train = None)
-
-    #     # prepare some test data
-    #     num_samples = 50000
-    #     x = np.random.normal(loc = 0, scale = 1, size = [num_samples])
-    #     y = np.random.normal(loc = 0, scale = 0.9, size = [num_samples]) 
-
-    #     x = np.expand_dims(x, axis = 1)
-    #     y = np.expand_dims(y, axis = 1)
-
-    #     for batch in range(100):
-    #         self.sess.run(self.train_MINE, feed_dict = {self.data_in: x, self.nuisances_in: y})
-    #         lossval = self.sess.run(self.MINE_loss, feed_dict = {self.data_in: x, self.nuisances_in: y})
-    #         print("MI = {}".format(-lossval))

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pickle
 
 from Trainer import Trainer
 
@@ -7,6 +8,7 @@ class AdversarialTrainer(Trainer):
 
     def __init__(self, training_pars):
         super(AdversarialTrainer, self).__init__(training_pars)
+        self.statistics_dict = {}
 
     # overload the 'train' method here
     def train(self, env, number_batches, df_sig, df_bkg, nuisances):
@@ -59,8 +61,21 @@ class AdversarialTrainer(Trainer):
             env.train_adversary(data_step = data_train, nuisances_step = nuisances_train, labels_step = labels_train)
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch)
 
+            # callbacks to keep track of the parameter evolution during training
+            stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch)
+            stat_dict_cur["batch"] = batch
+            
+            for key, val in stat_dict_cur.items():
+                if not key in self.statistics_dict:
+                    self.statistics_dict[key] = []
+                self.statistics_dict[key].append(val)
+
+            # some status printouts
             if not batch % self.training_pars["printout_interval"]:
                 print("batch {}:".format(batch))
                 env.dump_loss_information(data = data_train, nuisances = nuisances_train, labels = labels_train)
+                print("stat_dict = " + str(stat_dict_cur))
 
-
+    def save_training_statistics(self, filepath):
+        with open(filepath, "wb") as outfile:
+            pickle.dump(self.statistics_dict, outfile)

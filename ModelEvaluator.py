@@ -75,3 +75,4 @@ class ModelEvaluator:
     def evaluate(self, sig_data_test, bkg_data_test, outpath):
         self.plot_roc(sig_data_test, bkg_data_test, outpath)
         self.plot_mBB_distortion(sig_data_test, bkg_data_test, outpath)
+

@@ -8,6 +8,7 @@ from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleModel import SimpleModel
 from MINEClassifierEnvironment import MINEClassifierEnvironment
 from ModelEvaluator import ModelEvaluator
+from TrainingStatisticsPlotter import TrainingStatisticsPlotter
 
 from Configs import TrainingConfig
 
@@ -37,17 +38,23 @@ def main():
         print("now evaluating " + model_dir)
 
         # load the trained models
-        mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
+        mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
         mce = MINEClassifierEnvironment(classifier_model = mod)
         mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1, lambda_val = 0.45)
-        mce.load(os.path.join(model_dir, "test_model.dat"))
+        mce.load(os.path.join(model_dir, "model.dat"))
         mods.append(mce)
 
+        plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.evaluate(sig_data_test, bkg_data_test, os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir))))
+        ev.evaluate(sig_data_test, bkg_data_test, plots_outdir)
+
+        # generate plots showing the evolution of certain parameters during training
+        tsp = TrainingStatisticsPlotter(model_dir)
+        tsp.plot(outdir = plots_outdir)
 
     # generate combined performance plots that compare all the models
+    
 
 if __name__ == "__main__":
     main()
