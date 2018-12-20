@@ -82,19 +82,19 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre.save(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
         self.pre_nuisance.save(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
 
-    def test_MINE(self):
-        self.build(num_inputs = 1, num_nuisances = 1)
-        self.init(data_train = None)
+    # def test_MINE(self):
+    #     self.build(num_inputs = 1, num_nuisances = 1)
+    #     self.init(data_train = None)
 
-        # prepare some test data
-        num_samples = 50000
-        x = np.random.normal(loc = 0, scale = 1, size = [num_samples])
-        y = np.random.normal(loc = 0, scale = 0.9, size = [num_samples]) 
+    #     # prepare some test data
+    #     num_samples = 50000
+    #     x = np.random.normal(loc = 0, scale = 1, size = [num_samples])
+    #     y = np.random.normal(loc = 0, scale = 0.9, size = [num_samples]) 
 
-        x = np.expand_dims(x, axis = 1)
-        y = np.expand_dims(y, axis = 1)
+    #     x = np.expand_dims(x, axis = 1)
+    #     y = np.expand_dims(y, axis = 1)
 
-        for batch in range(100):
-            self.sess.run(self.train_MINE, feed_dict = {self.data_in: x, self.nuisances_in: y})
-            lossval = self.sess.run(self.MINE_loss, feed_dict = {self.data_in: x, self.nuisances_in: y})
-            print("MI = {}".format(-lossval))
+    #     for batch in range(100):
+    #         self.sess.run(self.train_MINE, feed_dict = {self.data_in: x, self.nuisances_in: y})
+    #         lossval = self.sess.run(self.MINE_loss, feed_dict = {self.data_in: x, self.nuisances_in: y})
+    #         print("MI = {}".format(-lossval))
