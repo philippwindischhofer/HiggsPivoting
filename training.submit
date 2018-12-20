@@ -1,0 +1,9 @@
+executable = /home/windischhofer/HiggsPivoting/run_adversarial_training.sh
+universe = vanilla
+output = /home/windischhofer/data/test/output.$(Process)
+error = /home/windischhofer/data/test/error.$(Process)
+log = /home/windischhofer/data/test/log.$(Process)
+notification = never
+should_transfer_files = Yes
+when_to_transfer_output = ON_EXIT
+queue 1
