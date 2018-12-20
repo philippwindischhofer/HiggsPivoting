@@ -39,11 +39,11 @@ def main():
     # set up the training environment
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 3, "num_units": 30})
     mce = MINEClassifierEnvironment(classifier_model = mod)
-    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.45)
+    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.3)
 
     # set up the training
     train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50})
-    train.train(mce, number_batches = 100, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
+    train.train(mce, number_batches = 200, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)

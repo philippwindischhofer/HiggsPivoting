@@ -9,7 +9,9 @@ class TFEnvironment(ABC):
                                                device_count = {'CPU': 32})):
         print("starting TensorFlow session ...")
         # start the tensorflow session
-        self.sess = tf.InteractiveSession(config = config)
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.sess = tf.Session(config = config)
         print("done!")
 
     # builds the computational graph required by this environment
