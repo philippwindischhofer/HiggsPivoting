@@ -6,9 +6,11 @@ from argparse import ArgumentParser
 
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleModel import SimpleModel
-from MINEClassifierEnvironment import MINEClassifierEnvironment
 from ModelEvaluator import ModelEvaluator
 from TrainingStatisticsPlotter import TrainingStatisticsPlotter
+
+from MINEClassifierEnvironment import MINEClassifierEnvironment
+from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
 
 from Configs import TrainingConfig
 
@@ -39,8 +41,9 @@ def main():
 
         # load the trained models
         mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
-        mce = MINEClassifierEnvironment(classifier_model = mod)
-        mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1, lambda_val = 0.45)
+        #mce = MINEClassifierEnvironment(classifier_model = mod)
+        mce = AdversarialClassifierEnvironment(classifier_model = mod)
+        mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1, lambda_val = 0.6)
         mce.load(os.path.join(model_dir, "model.dat"))
         mods.append(mce)
 

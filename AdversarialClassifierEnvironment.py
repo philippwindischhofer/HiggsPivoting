@@ -29,7 +29,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
             self.classifier_out, self.classifier_vars = self.classifier_model.classifier(self.data_in)
             self.labels_one_hot = tf.one_hot(self.labels_in, depth = 2)
             self.classification_loss = tf.losses.softmax_cross_entropy(onehot_labels = self.labels_one_hot,
-                                                                   logits = self.classifier_out)
+                                                                       logits = self.classifier_out)
 
             # set up the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
@@ -56,24 +56,22 @@ class AdversarialClassifierEnvironment(TFEnvironment):
             nc = hyperpars["num_components"]
             pre_output = layers.linear(lay, 3 * nc)
             
-            mu = pre_output[:,:nc] # no sign restriction on the mean values
-            sigma = tf.exp(pre_output[:,nc:2*nc]) # standard deviations need to be positive
-            frac = tf.nn.softmax(pre_output[:,2*nc:3*nc]) # the mixture fractions need to add up to unity
+            mu_val = pre_output[:,:nc] # no sign restriction on the mean values
+            sigma_val = tf.exp(pre_output[:,nc:2*nc]) # standard deviations need to be positive
+            frac_val = tf.nn.softmax(pre_output[:,2*nc:3*nc]) # the mixture fractions need to add up to unity
 
         these_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = name)
 
-        return mu, sigma, frac, these_vars
+        return mu_val, sigma_val, frac_val, these_vars
 
     # returns the log(L) of 'data' under the Gaussian mixture model given by (mu, sigma, frac)
     def _GMM_loglik(self, mu, sigma, frac, num_components, data):
-        pdfval = 0
-        for comp in range(num_components):
-            pdfval += 1.0 / (np.sqrt(2.0 * np.pi)) * tf.multiply(
-                tf.divide(frac[:,comp], sigma[:,comp]), tf.math.exp(-0.5 * tf.math.divide(tf.square(mu[:,comp] - data), tf.square(sigma[:,comp])))
-            )
+        # mu, sigma and frac are of shape (batch_size, num_components)
+        comps_val = 1.0 / (np.sqrt(2.0 * np.pi)) * frac / sigma * tf.math.exp(-0.5 * tf.square(mu - data) / tf.square(sigma))
 
-        logpdf = tf.math.log(pdfval)
-        loglik = tf.reduce_mean(logpdf)
+        pdfval = tf.reduce_sum(comps_val, axis = 1) # sum over components
+        logpdf = tf.math.log(pdfval + 1e-5)
+        loglik = tf.reduce_mean(logpdf, axis = 0) # sum over batch
 
         return loglik
 
@@ -105,11 +103,11 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         return classifier_lossval
 
     def evaluate_adversary_loss(self, data, nuisances, labels):
-        data_pre = self.pre.process(data_step)
-        nuisances_pre = self.pre_nuisance.process(nuisances_step)
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
 
         with self.graph.as_default():
-            retval = self.sess.run(self.GMM_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
+            retval = self.sess.run(self.GMM_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels})
 
         return retval
 

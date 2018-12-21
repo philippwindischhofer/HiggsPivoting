@@ -42,10 +42,10 @@ def main():
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
     #mce = MINEClassifierEnvironment(classifier_model = mod)
     mce = AdversarialClassifierEnvironment(classifier_model = mod)
-    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.3)
+    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.6)
 
     # set up the training
-    train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50, "printout_interval": 10})
+    train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50, "printout_interval": 1})
     train.train(mce, number_batches = 150, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
 
     # save all the necessary information
