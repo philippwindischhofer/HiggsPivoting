@@ -33,7 +33,7 @@ class AdversarialTrainer(Trainer):
         env.init(data_train = data_train, data_nuisance = nuisances_train)
 
         # pre-train the adversary
-        print("pretraining MINE network for {} batches".format(self.training_pars["pretrain_batches"]))
+        print("pretraining adversarial network for {} batches".format(self.training_pars["pretrain_batches"]))
         for batch in range(self.training_pars["pretrain_batches"]):
             env.train_adversary(data_step = data_train, nuisances_step = nuisances_train, labels_step = labels_train)
             env.dump_loss_information(data = data_train, nuisances = nuisances_train, labels = labels_train)

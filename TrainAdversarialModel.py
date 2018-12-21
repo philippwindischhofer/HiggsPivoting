@@ -5,6 +5,8 @@ from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
 from MINEClassifierEnvironment import MINEClassifierEnvironment
+from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
+
 from SimpleModel import SimpleModel
 from AdversarialTrainer import AdversarialTrainer
 
@@ -38,7 +40,8 @@ def main():
 
     # set up the training environment
     mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
-    mce = MINEClassifierEnvironment(classifier_model = mod)
+    #mce = MINEClassifierEnvironment(classifier_model = mod)
+    mce = AdversarialClassifierEnvironment(classifier_model = mod)
     mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.3)
 
     # set up the training
