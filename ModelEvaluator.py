@@ -1,14 +1,42 @@
+import os
 import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn import metrics
-import os
+from sklearn.feature_selection import mutual_info_regression
 
 class ModelEvaluator:
 
     def __init__(self, env):
         self.env = env
+
+    # computes a series of performance measures: ROC AUC
+    def get_performance_metrics(self, sig_data_test, bkg_data_test):
+        retdict = {}
+
+        mBB_sig = sig_data_test["mBB"].values
+        mBB_bkg = bkg_data_test["mBB"].values
+        mBB = np.concatenate([mBB_sig, mBB_bkg])
+
+        # get the model's predictions
+        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
+        pred_sig = self.env.predict(data = sig_data_test)[:,1]
+        pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
+        pred = np.expand_dims(pred, axis = 1)
+
+        labels_test = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
+
+        # get ROC
+        retdict["ROCAUC"] = metrics.roc_auc_score(labels_test, pred)
+
+        # get mutual information between prediction and true class label
+        retdict["I(f,label)"] = mutual_info_regression(pred, labels_test.ravel())[0]
+
+        # get mutual information between prediction and nuisance
+        retdict["I(f,nu)"] = mutual_info_regression(pred, mBB.ravel())[0]
+
+        return retdict
 
     # plot the ROC of the classifier
     def plot_roc(self, sig_data_test, bkg_data_test, outpath):
@@ -72,7 +100,7 @@ class ModelEvaluator:
         fig.savefig(outfile) 
 
     # produce all performance plots
-    def evaluate(self, sig_data_test, bkg_data_test, outpath):
+    def performance_plots(self, sig_data_test, bkg_data_test, outpath):
         self.plot_roc(sig_data_test, bkg_data_test, outpath)
         self.plot_mBB_distortion(sig_data_test, bkg_data_test, outpath)
 

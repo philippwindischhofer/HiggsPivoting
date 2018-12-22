@@ -48,9 +48,14 @@ def main():
         mods.append(mce)
 
         plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))
+
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.evaluate(sig_data_test, bkg_data_test, plots_outdir)
+        ev.performance_plots(sig_data_test, bkg_data_test, plots_outdir)
+
+        # get performance metrics
+        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
+        print(perfdict)
 
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
