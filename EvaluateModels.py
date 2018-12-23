@@ -9,9 +9,10 @@ from SimpleModel import SimpleModel
 from ModelEvaluator import ModelEvaluator
 from TrainingStatisticsPlotter import TrainingStatisticsPlotter
 
-from MINEClassifierEnvironment import MINEClassifierEnvironment
-from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
+# from MINEClassifierEnvironment import MINEClassifierEnvironment
+# from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
 
+from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
 
 def main():
@@ -39,12 +40,12 @@ def main():
     for model_dir in model_dirs:
         print("now evaluating " + model_dir)
 
-        # load the trained models
-        #mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
-        #mce = MINEClassifierEnvironment(classifier_model = mod)
-        mce = AdversarialClassifierEnvironment.from_file(model_dir)
-        #mce.build(num_inputs = len(TrainingConfig.training_branches), num_nuisances = 1, lambda_val = 0.6)
-        #mce.load(os.path.join(model_dir, "model.dat"))
+        model_type = ConfigFileUtils.get_env_type(model_dir)
+        if model_type is not None:
+            mce = model_type.from_file(model_dir)
+        else:
+            raise FileNotFoundError("could not determine the type of this model - aborting!")
+
         mods.append(mce)
 
         plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))

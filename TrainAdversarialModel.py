@@ -5,11 +5,11 @@ from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
 from MINEClassifierEnvironment import MINEClassifierEnvironment
-from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
 
 from SimpleModel import SimpleModel
 from AdversarialTrainer import AdversarialTrainer
 
+from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
         
 def main():
@@ -39,10 +39,12 @@ def main():
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
 
     # set up the training environment
-    mod = SimpleModel("simpmod", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
-    #mce = MINEClassifierEnvironment(classifier_model = mod)
-    mce = AdversarialClassifierEnvironment(classifier_model = mod)
-    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.3)
+    model_type = ConfigFileUtils.get_env_type(outdir)
+    if model_type is not None:
+        mce = model_type.from_file(outdir)
+    else:
+        print("no model type prescribed in this config file, using MINEClassifierEnvironment as default")
+        mce = MINEClassifierEnvironment.from_file(outdir)
 
     # set up the training
     train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50, "printout_interval": 1})

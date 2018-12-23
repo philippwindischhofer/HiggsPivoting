@@ -36,6 +36,10 @@ class ModelEvaluator:
         # get mutual information between prediction and nuisance
         retdict["I(f,nu)"] = mutual_info_regression(pred, mBB.ravel())[0]
 
+        # get additional information about this model and add it - may be important for plotting later
+        for key, val in self.env.global_pars.items():
+            retdict[key] = val
+
         return retdict
 
     # plot the ROC of the classifier

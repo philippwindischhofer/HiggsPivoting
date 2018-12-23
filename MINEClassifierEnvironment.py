@@ -1,21 +1,61 @@
 import os
 import numpy as np
 import tensorflow as tf
+from configparser import ConfigParser
 
 from TFEnvironment import TFEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from MINEModel import MINEModel
+from SimpleModel import SimpleModel
 
 class MINEClassifierEnvironment(TFEnvironment):
 
     def __init__(self, classifier_model):
         super(MINEClassifierEnvironment, self).__init__()
         self.classifier_model = classifier_model
+        self.MINE_hyperpars = {"num_hidden_layers": 2, "num_units": 30}
+        self.global_pars = {"type": "MINEClassifierEnvironment"}
+
         self.pre = None
         self.pre_nuisance = None
 
-    def build(self, num_inputs, num_nuisances, lambda_val):
-        self.lambda_val = lambda_val
+    @classmethod
+    def from_file(cls, config_dir, classifier_model = SimpleModel):
+        # first, load back the meta configuration variables of the graph
+        gconfig = ConfigParser()
+        gconfig.read(os.path.join(config_dir, "meta.conf"))
+        global_pars = {key: val for key, val in gconfig["global"].items()}
+        MINE_hyperpars = {key: val for key, val in gconfig["MINE"].items()}
+        classifier_hyperpars = {key: val for key, val in gconfig["classifier"].items()}
+
+        mod = classifier_model("simpmod", hyperpars = classifier_hyperpars)
+        obj = cls(mod)
+        obj.global_pars.update(global_pars)
+        obj.MINE_hyperpars.update(MINE_hyperpars)
+
+        # then re-build the graph using these settings
+        obj.build()
+
+        # finally, load back the weights and preprocessors, if available
+        obj.load(config_dir)        
+
+        return obj
+
+    def build(self, num_inputs = None, num_nuisances = None, lambda_val = None):
+        # fall back to default values in case they are needed
+        num_inputs = num_inputs if num_inputs is not None else int(float(self.global_pars["num_inputs"]))
+        num_nuisances = num_nuisances if num_nuisances is not None else int(float(self.global_pars["num_nuisances"]))
+        lambda_val = lambda_val if lambda_val is not None else float(self.global_pars["lambda"])
+
+        if "lambda" not in self.global_pars:
+            self.global_pars["lambda"] = lambda_val
+
+        if "num_inputs" not in self.global_pars:
+            self.global_pars["num_inputs"] = num_inputs
+
+        if "num_nuisances" not in self.global_pars:
+            self.global_pars["num_nuisances"] = num_nuisances
+
         print("building MINEClassifierEnvironment using lambda = {}".format(lambda_val))
         with self.graph.as_default():
             self.pre = PCAWhiteningPreprocessor(num_inputs)
@@ -34,11 +74,11 @@ class MINEClassifierEnvironment(TFEnvironment):
 
             # mutual information between the classifier output and the nuisance parameters
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.MI_nuisances = MINEModel(name = "MINE_nuisances", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
+            self.MI_nuisances = MINEModel(name = "MINE_nuisances", hyperpars = self.MINE_hyperpars)
             self.MINE_loss, self.MINE_vars = self.MI_nuisances.MINE_loss(self.classifier_out_single, self.nuisances_in)
             
             # total adversarial loss
-            self.adv_loss = self.classification_loss + self.lambda_val * (-self.MINE_loss)
+            self.adv_loss = self.classification_loss + lambda_val * (-self.MINE_loss)
             
             # optimizers for the classifier and MINE
             self.train_classifier = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
@@ -108,17 +148,39 @@ class MINEClassifierEnvironment(TFEnvironment):
 
         return retdict
 
-    def load(self, file_path):
+    def load(self, indir):
+        file_path = os.path.join(indir, "model.dat")
+
         with self.graph.as_default():
-            self.saver.restore(self.sess, file_path)
+            try:
+                self.saver.restore(self.sess, file_path)
+                print("weights successfully loaded for " + indir)
+            except:
+                print("no model checkpoint found, continuing with uninitialized graph!")
 
-        self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
-        self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+        try:
+            self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
+            self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+            print("preprocessors successfully loaded for " + indir)
+        except FileNotFoundError:
+            print("no preprocessors found")
 
-    def save(self, file_path):
-        outdir = os.path.dirname(file_path)
+    def save(self, outdir):
+        file_path = os.path.join(outdir, "model.dat")
+
+        # save all the variables in the graph
         with self.graph.as_default():
             self.saver.save(self.sess, file_path)
 
+        # save the preprocessors
         self.pre.save(os.path.join(outdir, 'pre.pkl'))
         self.pre_nuisance.save(os.path.join(outdir, 'pre_nuis.pkl'))
+
+        # save some meta-information about the graph
+        gconfig = ConfigParser()
+        gconfig["global"] = self.global_pars
+        gconfig["classifier"] = self.classifier_model.hyperpars
+        gconfig["MINE"] = self.MINE_hyperpars
+        with open(os.path.join(outdir, "meta.conf"), 'w') as metafile:
+            gconfig.write(metafile)
+

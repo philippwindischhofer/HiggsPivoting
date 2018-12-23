@@ -10,8 +10,8 @@ class SimpleModel:
         with tf.variable_scope(self.name):
             lay = classifier_input
 
-            for layer in range(int(self.hyperpars["num_hidden_layers"])):
-                lay = layers.relu(lay, int(self.hyperpars["num_units"]))
+            for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
+                lay = layers.relu(lay, int(float(self.hyperpars["num_units"])))
 
             lay = layers.relu(lay, 2)
             outputs = layers.softmax(lay)

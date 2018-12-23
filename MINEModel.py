@@ -5,16 +5,14 @@ class MINEModel:
     def __init__(self, name, hyperpars):
         self.name = name
         self.hyperpars = hyperpars
-        self.num_hidden_layers = self.hyperpars["num_hidden_layers"]
-        self.num_units = self.hyperpars["num_units"]
 
     def MINE_network(self, data_input):
         print("setting up MINE network with the following hyperparameters: " + str(self.hyperpars))
         with tf.variable_scope(self.name, reuse = tf.AUTO_REUSE):
             lay = data_input
 
-            for layer in range(self.num_hidden_layers):
-                lay = layers.relu(lay, self.num_units)
+            for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
+                lay = layers.relu(lay, int(float(self.hyperpars["num_units"])))
 
             outputs = layers.linear(lay, 1)
 

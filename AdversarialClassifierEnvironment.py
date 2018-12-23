@@ -14,7 +14,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         super(AdversarialClassifierEnvironment, self).__init__()
         self.classifier_model = classifier_model
         self.adversary_hyperpars = {"num_hidden_layers": 3, "num_units": 30, "num_components": 5}
-        self.global_pars = {}
+        self.global_pars = {"type": "AdversarialClassifierEnvironment"}
 
         self.pre = None
         self.pre_nuisance = None
@@ -25,9 +25,9 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
-        global_pars = {key: float(val) for key, val in gconfig["global"].items()}
-        adversary_hyperpars = {key: float(val) for key, val in gconfig["adversary"].items()}
-        classifier_hyperpars = {key: float(val) for key, val in gconfig["classifier"].items()}
+        global_pars = {key: val for key, val in gconfig["global"].items()}
+        adversary_hyperpars = {key: val for key, val in gconfig["adversary"].items()}
+        classifier_hyperpars = {key: val for key, val in gconfig["classifier"].items()}
 
         mod = classifier_model("simpmod", hyperpars = classifier_hyperpars)
         obj = cls(mod)
@@ -44,9 +44,9 @@ class AdversarialClassifierEnvironment(TFEnvironment):
 
     def build(self, num_inputs = None, num_nuisances = None, lambda_val = None):
         # fall back to default values in case they are needed
-        num_inputs = num_inputs if num_inputs is not None else int(self.global_pars["num_inputs"])
-        num_nuisances = num_nuisances if num_nuisances is not None else int(self.global_pars["num_nuisances"])
-        lambda_val = lambda_val if lambda_val is not None else self.global_pars["lambda"]
+        num_inputs = num_inputs if num_inputs is not None else int(float(self.global_pars["num_inputs"]))
+        num_nuisances = num_nuisances if num_nuisances is not None else int(float(self.global_pars["num_nuisances"]))
+        lambda_val = lambda_val if lambda_val is not None else float(self.global_pars["lambda"])
 
         if "lambda" not in self.global_pars:
             self.global_pars["lambda"] = lambda_val
@@ -92,10 +92,10 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         with tf.variable_scope(name):
             lay = in_tensor
 
-            for layer in range(int(hyperpars["num_hidden_layers"])):
-                lay = layers.relu(lay, int(hyperpars["num_units"]))
+            for layer in range(int(float(hyperpars["num_hidden_layers"]))):
+                lay = layers.relu(lay, int(float(hyperpars["num_units"])))
 
-            nc = int(hyperpars["num_components"])
+            nc = int(float(hyperpars["num_components"]))
             pre_output = layers.linear(lay, 3 * nc)
             
             mu_val = pre_output[:,:nc] # no sign restriction on the mean values
@@ -180,15 +180,15 @@ class AdversarialClassifierEnvironment(TFEnvironment):
             try:
                 self.saver.restore(self.sess, file_path)
                 print("weights successfully loaded for " + indir)
-            except FileNotFoundError:
-                pass # have found no weights
+            except:
+                print("no model checkpoint found, continuing with uninitialized graph!")
 
         try:
             self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
             self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
             print("preprocessors successfully loaded for " + indir)
         except FileNotFoundError:
-            pass # have found no preprocessors
+            print("no preprocessors found")
 
     # save the entire environment such that it can be set up again from here
     def save(self, outdir):
