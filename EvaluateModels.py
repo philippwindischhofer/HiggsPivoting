@@ -9,9 +9,6 @@ from SimpleModel import SimpleModel
 from ModelEvaluator import ModelEvaluator
 from TrainingStatisticsPlotter import TrainingStatisticsPlotter
 
-# from MINEClassifierEnvironment import MINEClassifierEnvironment
-# from AdversarialClassifierEnvironment import AdversarialClassifierEnvironment
-
 from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
 
