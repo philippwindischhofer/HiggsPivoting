@@ -5,6 +5,7 @@ lib/
 lib64
 *.json
 *.cfg
+*.pyc
 __pycache__/
 models/
 adversarial_models/
