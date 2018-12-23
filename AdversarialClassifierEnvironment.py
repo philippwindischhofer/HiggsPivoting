@@ -2,19 +2,61 @@ import os
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
+from configparser import ConfigParser
 
 from TFEnvironment import TFEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
+from SimpleModel import SimpleModel
 
 class AdversarialClassifierEnvironment(TFEnvironment):
     
     def __init__(self, classifier_model):
         super(AdversarialClassifierEnvironment, self).__init__()
         self.classifier_model = classifier_model
+        self.adversary_hyperpars = {"num_hidden_layers": 3, "num_units": 30, "num_components": 5}
+        self.global_pars = {}
+
         self.pre = None
         self.pre_nuisance = None
 
-    def build(self, num_inputs, num_nuisances, lambda_val):
+    # attempt to reconstruct a previously built graph, including loading back its weights
+    @classmethod
+    def from_file(cls, config_dir, classifier_model = SimpleModel):
+        # first, load back the meta configuration variables of the graph
+        gconfig = ConfigParser()
+        gconfig.read(os.path.join(config_dir, "meta.conf"))
+        global_pars = {key: float(val) for key, val in gconfig["global"].items()}
+        adversary_hyperpars = {key: float(val) for key, val in gconfig["adversary"].items()}
+        classifier_hyperpars = {key: float(val) for key, val in gconfig["classifier"].items()}
+
+        mod = classifier_model("simpmod", hyperpars = classifier_hyperpars)
+        obj = cls(mod)
+        obj.global_pars = global_pars
+        obj.adversary_hyperpars = adversary_hyperpars
+
+        # then re-build the graph using these settings
+        obj.build()
+
+        # finally, load back the weights and preprocessors, if available
+        obj.load(config_dir)        
+
+        return obj
+
+    def build(self, num_inputs = None, num_nuisances = None, lambda_val = None):
+        # fall back to default values in case they are needed
+        num_inputs = num_inputs if num_inputs is not None else int(self.global_pars["num_inputs"])
+        num_nuisances = num_nuisances if num_nuisances is not None else int(self.global_pars["num_nuisances"])
+        lambda_val = lambda_val if lambda_val is not None else self.global_pars["lambda"]
+
+        if "lambda" not in self.global_pars:
+            self.global_pars["lambda"] = lambda_val
+
+        if "num_inputs" not in self.global_pars:
+            self.global_pars["num_inputs"] = num_inputs
+
+        if "num_nuisances" not in self.global_pars:
+            self.global_pars["num_nuisances"] = num_nuisances
+
         print("building AdversarialClassifierEnvironment using lambda = {}".format(lambda_val))
         with self.graph.as_default():
             self.pre = PCAWhiteningPreprocessor(num_inputs)
@@ -34,9 +76,9 @@ class AdversarialClassifierEnvironment(TFEnvironment):
             # set up the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
             self.mu, self.sigma, self.frac, self.adversary_vars = self._build_parameter_adversary(in_tensor = self.classifier_out_single,
-                                                                                                  hyperpars = {"num_hidden_layers": 3, "num_units": 30, "num_components": 5})
+                                                                                                  hyperpars = self.adversary_hyperpars)
 
-            self.GMM_loss = -self._GMM_loglik(self.mu, self.sigma, self.frac, num_components = 5, data = self.nuisances_in)
+            self.GMM_loss = -self._GMM_loglik(self.mu, self.sigma, self.frac, data = self.nuisances_in)
             self.adv_loss = self.classification_loss + lambda_val * (-self.GMM_loss)
             
             # optimizers for the classifier and the adversary
@@ -50,10 +92,10 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         with tf.variable_scope(name):
             lay = in_tensor
 
-            for layer in range(hyperpars["num_hidden_layers"]):
-                lay = layers.relu(lay, hyperpars["num_units"])
+            for layer in range(int(hyperpars["num_hidden_layers"])):
+                lay = layers.relu(lay, int(hyperpars["num_units"]))
 
-            nc = hyperpars["num_components"]
+            nc = int(hyperpars["num_components"])
             pre_output = layers.linear(lay, 3 * nc)
             
             mu_val = pre_output[:,:nc] # no sign restriction on the mean values
@@ -65,7 +107,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         return mu_val, sigma_val, frac_val, these_vars
 
     # returns the log(L) of 'data' under the Gaussian mixture model given by (mu, sigma, frac)
-    def _GMM_loglik(self, mu, sigma, frac, num_components, data):
+    def _GMM_loglik(self, mu, sigma, frac, data):
         # mu, sigma and frac are of shape (batch_size, num_components)
         comps_val = 1.0 / (np.sqrt(2.0 * np.pi)) * frac / sigma * tf.math.exp(-0.5 * tf.square(mu - data) / tf.square(sigma))
 
@@ -130,17 +172,40 @@ class AdversarialClassifierEnvironment(TFEnvironment):
         retdict["adv. loss"] = self.evaluate_adversary_loss(data, nuisances, labels)
         return retdict
 
-    def load(self, file_path):
+    # try to load back the environment
+    def load(self, indir):
+        file_path = os.path.join(indir, "model.dat")
+
         with self.graph.as_default():
-            self.saver.restore(self.sess, file_path)
+            try:
+                self.saver.restore(self.sess, file_path)
+                print("weights successfully loaded for " + indir)
+            except FileNotFoundError:
+                pass # have found no weights
 
-        self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
-        self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+        try:
+            self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
+            self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+            print("preprocessors successfully loaded for " + indir)
+        except FileNotFoundError:
+            pass # have found no preprocessors
 
-    def save(self, file_path):
+    # save the entire environment such that it can be set up again from here
+    def save(self, outdir):
+        file_path = os.path.join(outdir, "model.dat")
+
+        # save all the variables in the graph
         with self.graph.as_default():
             self.saver.save(self.sess, file_path)
 
-        self.pre.save(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
-        self.pre_nuisance.save(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+        # save the preprocessors
+        self.pre.save(os.path.join(outdir, 'pre.pkl'))
+        self.pre_nuisance.save(os.path.join(outdir, 'pre_nuis.pkl'))
 
+        # save some meta-information about the graph, such that it can be fully reconstructed
+        gconfig = ConfigParser()
+        gconfig["global"] = self.global_pars
+        gconfig["classifier"] = self.classifier_model.hyperpars
+        gconfig["adversary"] = self.adversary_hyperpars
+        with open(os.path.join(outdir, "meta.conf"), 'w') as metafile:
+            gconfig.write(metafile)

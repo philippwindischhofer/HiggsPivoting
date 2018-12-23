@@ -15,6 +15,7 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre_nuisance = None
 
     def build(self, num_inputs, num_nuisances, lambda_val):
+        self.lambda_val = lambda_val
         print("building MINEClassifierEnvironment using lambda = {}".format(lambda_val))
         with self.graph.as_default():
             self.pre = PCAWhiteningPreprocessor(num_inputs)
@@ -37,7 +38,7 @@ class MINEClassifierEnvironment(TFEnvironment):
             self.MINE_loss, self.MINE_vars = self.MI_nuisances.MINE_loss(self.classifier_out_single, self.nuisances_in)
             
             # total adversarial loss
-            self.adv_loss = self.classification_loss + lambda_val * (-self.MINE_loss)
+            self.adv_loss = self.classification_loss + self.lambda_val * (-self.MINE_loss)
             
             # optimizers for the classifier and MINE
             self.train_classifier = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
@@ -115,8 +116,9 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
 
     def save(self, file_path):
+        outdir = os.path.dirname(file_path)
         with self.graph.as_default():
             self.saver.save(self.sess, file_path)
 
-        self.pre.save(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
-        self.pre_nuisance.save(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
+        self.pre.save(os.path.join(outdir, 'pre.pkl'))
+        self.pre_nuisance.save(os.path.join(outdir, 'pre_nuis.pkl'))

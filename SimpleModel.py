@@ -4,15 +4,14 @@ import tensorflow.contrib.layers as layers
 class SimpleModel:
     def __init__(self, name, hyperpars):
         self.name = name
-        self.num_hidden_layers = hyperpars["num_hidden_layers"]
-        self.num_units = hyperpars["num_units"]
+        self.hyperpars = hyperpars
 
     def classifier(self, classifier_input):
         with tf.variable_scope(self.name):
             lay = classifier_input
 
-            for layer in range(self.num_hidden_layers):
-                lay = layers.relu(lay, self.num_units)
+            for layer in range(int(self.hyperpars["num_hidden_layers"])):
+                lay = layers.relu(lay, int(self.hyperpars["num_units"]))
 
             lay = layers.relu(lay, 2)
             outputs = layers.softmax(lay)

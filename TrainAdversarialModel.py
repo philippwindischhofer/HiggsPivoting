@@ -39,10 +39,10 @@ def main():
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
 
     # set up the training environment
-    mod = SimpleModel("test_model", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
+    mod = SimpleModel("simpmod", hyperpars = {"num_hidden_layers": 2, "num_units": 30})
     #mce = MINEClassifierEnvironment(classifier_model = mod)
     mce = AdversarialClassifierEnvironment(classifier_model = mod)
-    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.0)
+    mce.build(num_inputs = len(data_branches), num_nuisances = 1, lambda_val = 0.3)
 
     # set up the training
     train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50, "printout_interval": 1})
@@ -51,7 +51,7 @@ def main():
     # save all the necessary information
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    mce.save(os.path.join(outdir, "model.dat"))
+    mce.save(os.path.join(outdir, ))
     train.save_training_statistics(os.path.join(outdir, "training_evolution.pkl"))
 
 if __name__ == "__main__":
