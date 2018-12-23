@@ -8,6 +8,7 @@ from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleModel import SimpleModel
 from ModelEvaluator import ModelEvaluator
 from TrainingStatisticsPlotter import TrainingStatisticsPlotter
+from PerformancePlotter import PerformancePlotter
 
 from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
@@ -34,6 +35,7 @@ def main():
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
 
     mods = []
+    perfdicts = []
     for model_dir in model_dirs:
         print("now evaluating " + model_dir)
 
@@ -53,14 +55,14 @@ def main():
 
         # get performance metrics
         perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
-        print(perfdict)
+        perfdicts.append(perfdict)
 
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
         tsp.plot(outdir = plots_outdir)
 
     # generate combined performance plots that compare all the models
-    
+    PerformancePlotter.plot(perfdicts, outpath = plot_dir)
 
 if __name__ == "__main__":
     main()

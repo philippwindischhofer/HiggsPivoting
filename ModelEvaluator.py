@@ -27,14 +27,32 @@ class ModelEvaluator:
 
         labels_test = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
 
-        # get ROC
+        # get ROC AUC
         retdict["ROCAUC"] = metrics.roc_auc_score(labels_test, pred)
+
+        # get low-level measure for how well the mBB distributions are preserved
+        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.5)]
+        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.5)]
+        mBB_sig_cut_binned, _ = np.histogram(mBB_sig_cut, bins = 100, range = (0, 500), density = True)
+        mBB_bkg_cut_binned, _ = np.histogram(mBB_bkg_cut, bins = 100, range = (0, 500), density = True)
+
+        mBB_sig_binned, _ = np.histogram(mBB_sig, bins = 100, range = (0, 500), density = True)
+        mBB_bkg_binned, _ = np.histogram(mBB_bkg, bins = 100, range = (0, 500), density = True)
+
+        # compute the squared differences between the raw, original distribution and the ones after the cut has been applied
+        mBB_sig_sq_diff = np.sqrt(np.sum(np.square(mBB_sig_cut_binned - mBB_sig_binned)))
+        mBB_bkg_sq_diff = np.sqrt(np.sum(np.square(mBB_bkg_cut_binned - mBB_bkg_binned)))
+        
+        retdict["sig_sq_diff"] = mBB_sig_sq_diff
+        retdict["bkg_sq_diff"] = mBB_bkg_sq_diff
 
         # get mutual information between prediction and true class label
         retdict["I(f,label)"] = mutual_info_regression(pred, labels_test.ravel())[0]
+        #retdict["I(f,label)"] = np.random.random()
 
         # get mutual information between prediction and nuisance
         retdict["I(f,nu)"] = mutual_info_regression(pred, mBB.ravel())[0]
+        #retdict["I(f,nu)"] = np.random.random()
 
         # get additional information about this model and add it - may be important for plotting later
         for key, val in self.env.global_pars.items():
@@ -67,6 +85,7 @@ class ModelEvaluator:
         if not os.path.exists(outpath):
             os.makedirs(outpath)
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
+        plt.close()
 
     def plot_mBB_distortion(self, sig_data_test, bkg_data_test, outpath):
         pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
@@ -84,12 +103,14 @@ class ModelEvaluator:
         # put some loose signal cut on the classifier
         mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.5)]
         mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.5)]
-        self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_05.pdf"), label = [r'VHbb (class. > 0.5)', r'$Z$ + jets (class. > 0.5)'])
+        if len(mBB_sig_cut) > 0 and len(mBB_bkg_cut) > 0:
+            self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_05.pdf"), label = [r'VHbb (class. > 0.5)', r'$Z$ + jets (class. > 0.5)'])
 
         # put some harsh signal cut on the classifier
         mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.85)]
         mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.85)]
-        self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_085.pdf"), label = [r'VHbb (class. > 0.85)', r'$Z$ + jets (class. > 0.85)'])
+        if len(mBB_sig_cut) > 0 and len(mBB_bkg_cut) > 0:
+            self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_085.pdf"), label = [r'VHbb (class. > 0.85)', r'$Z$ + jets (class. > 0.85)'])
 
     def _plot_mBB(self, mBB_sig, mBB_bkg, outfile, label):
         # plot the raw distributions
@@ -102,6 +123,7 @@ class ModelEvaluator:
         ax.set_ylabel('a.u.')
         plt.tight_layout()
         fig.savefig(outfile) 
+        plt.close()
 
     # produce all performance plots
     def performance_plots(self, sig_data_test, bkg_data_test, outpath):
