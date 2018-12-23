@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import mutual_info_regression
 from argparse import ArgumentParser
 
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
@@ -60,6 +61,23 @@ def main():
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
         tsp.plot(outdir = plots_outdir)
+
+    # now add the purely data-based information as well
+    datadict = {"lambdaleglabel": "data"}
+
+    mBB_sig = sig_data_test["mBB"].values
+    mBB_bkg = bkg_data_test["mBB"].values
+    mBB = np.concatenate([mBB_sig, mBB_bkg])
+
+    label_sig = np.ones(len(mBB_sig))
+    label_bkg = np.zeros(len(mBB_bkg))
+    labels = np.concatenate([label_sig, label_bkg])
+
+    data = np.concatenate([sig_data_test.values, bkg_data_test.values], axis = 0)
+
+    datadict["logI(f,label)"] = np.log(mutual_info_regression(data, labels.ravel())[0])
+    datadict["logI(f,nu)"] = np.log(mutual_info_regression(data, mBB.ravel())[0])
+    perfdicts.append(datadict)
 
     # generate combined performance plots that compare all the models
     PerformancePlotter.plot(perfdicts, outpath = plot_dir)

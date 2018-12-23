@@ -47,16 +47,18 @@ class ModelEvaluator:
         retdict["bkg_sq_diff"] = mBB_bkg_sq_diff
 
         # get mutual information between prediction and true class label
-        retdict["I(f,label)"] = mutual_info_regression(pred, labels_test.ravel())[0]
-        #retdict["I(f,label)"] = np.random.random()
+        retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test.ravel())[0])
 
         # get mutual information between prediction and nuisance
-        retdict["I(f,nu)"] = mutual_info_regression(pred, mBB.ravel())[0]
-        #retdict["I(f,nu)"] = np.random.random()
+        retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB.ravel())[0])
 
         # get additional information about this model and add it - may be important for plotting later
         for key, val in self.env.global_pars.items():
             retdict[key] = val
+
+        # possibly prepare labels for important sweep quantities
+        if "lambda" in retdict:
+            retdict["lambdaleglabel"] = r'$\lambda = {:.2f}$'.format(float(retdict["lambda"]))
 
         return retdict
 
