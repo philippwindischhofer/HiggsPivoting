@@ -11,6 +11,32 @@ class ModelEvaluator:
     def __init__(self, env):
         self.env = env
 
+    # computes some characteristics of the data directly, no model involved
+    @staticmethod
+    def get_data_metrics(sig_data_test, bkg_data_test):
+        # now add the purely data-based information as well
+        datadict = {"lambdaleglabel": "data"}
+
+        mBB_sig = sig_data_test["mBB"].values
+        mBB_bkg = bkg_data_test["mBB"].values
+        mBB = np.concatenate([mBB_sig, mBB_bkg])
+        
+        label_sig = np.ones(len(mBB_sig))
+        label_bkg = np.zeros(len(mBB_bkg))
+        labels = np.concatenate([label_sig, label_bkg])
+
+        data = np.concatenate([sig_data_test.values, bkg_data_test.values], axis = 0)
+
+        datadict["logI(f,label)"] = np.log(mutual_info_regression(data, labels.ravel())[0])
+        datadict["logI(f,nu)"] = np.log(mutual_info_regression(data, mBB.ravel())[0])
+
+        # datadict["logI(f,label)"] = np.random.rand()
+        # datadict["logI(f,nu)"] = np.random.rand()
+        
+        datadict["type"] = "data"
+
+        return datadict
+
     # computes a series of performance measures: ROC AUC
     def get_performance_metrics(self, sig_data_test, bkg_data_test):
         retdict = {}
@@ -48,9 +74,11 @@ class ModelEvaluator:
 
         # get mutual information between prediction and true class label
         retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test.ravel())[0])
+        #retdict["logI(f,label)"] = np.random.rand()
 
         # get mutual information between prediction and nuisance
         retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB.ravel())[0])
+        #retdict["logI(f,nu)"] = np.random.rand()
 
         # get additional information about this model and add it - may be important for plotting later
         for key, val in self.env.global_pars.items():

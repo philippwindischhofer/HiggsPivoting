@@ -48,7 +48,7 @@ def main():
 
     # set up the training
     train = AdversarialTrainer(training_pars = {"batch_size": 256, "pretrain_batches": 50, "printout_interval": 1})
-    train.train(mce, number_batches = 150, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
+    train.train(mce, number_batches = 500, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
 
     # save all the necessary information
     if not os.path.exists(outdir):
