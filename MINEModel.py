@@ -28,7 +28,8 @@ class MINEModel:
         T_xy, MINE_vars = self.MINE_network(data_xy)
         T_x_y, MINE_vars_cc = self.MINE_network(data_x_y)
 
-        MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y), axis = 0)))
+        #MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y), axis = 0)))
+        MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.reduce_mean(tf.math.exp(T_x_y - 1), axis = 0))
         MINE_lossval = MINE_lossval[0]
 
         return MINE_lossval, MINE_vars

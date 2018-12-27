@@ -81,9 +81,9 @@ class MINEClassifierEnvironment(TFEnvironment):
             self.adv_loss = self.classification_loss + lambda_val * (-self.MINE_loss)
             
             # optimizers for the classifier and MINE
-            self.train_classifier = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
+            self.train_classifier = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
             self.train_MINE = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.3, beta2 = 0.5).minimize(self.MINE_loss, var_list = self.MINE_vars)
-            self.train_adv = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.3, beta2 = 0.5).minimize(self.adv_loss, var_list = self.classifier_vars)
+            self.train_adv = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.3, beta2 = 0.5).minimize(self.adv_loss, var_list = self.classifier_vars)
         
             self.saver = tf.train.Saver()
 

@@ -84,7 +84,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
             # optimizers for the classifier and the adversary
             self.train_classifier_op = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
             self.train_adversary_op = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.3, beta2 = 0.5).minimize(self.GMM_loss, var_list = self.adversary_vars)
-            self.train_adv_op = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.3, beta2 = 0.5).minimize(self.adv_loss, var_list = self.classifier_vars)
+            self.train_adv_op = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.3, beta2 = 0.5).minimize(self.adv_loss, var_list = self.classifier_vars)
 
             self.saver = tf.train.Saver()
 

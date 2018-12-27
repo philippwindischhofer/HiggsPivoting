@@ -1,4 +1,4 @@
-import os
+import os, pickle
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -48,27 +48,30 @@ def main():
 
         mods.append(mce)
 
-        plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))
+        #plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))
+        plots_outdir = plot_dir
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
         ev.performance_plots(sig_data_test, bkg_data_test, plots_outdir)
 
-        # get performance metrics
+        # get performance metrics and save them
         perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
         perfdicts.append(perfdict)
+        print("got perfdict = " + str(perfdict))
+        with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
+            pickle.dump(perfdict, outfile)
 
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
         tsp.plot(outdir = plots_outdir)
 
-
     # also get the purely data-based performance measures that are available
-    datadict = ModelEvaluator.get_data_metrics(sig_data_test, bkg_data_test)
-    perfdicts.append(datadict)
+    # datadict = ModelEvaluator.get_data_metrics(sig_data, bkg_data)
+    # perfdicts.append(datadict)
 
     # generate combined performance plots that compare all the models
-    PerformancePlotter.plot(perfdicts, outpath = plot_dir)
+    # PerformancePlotter.plot(perfdicts, outpath = plot_dir)
 
 if __name__ == "__main__":
     main()
