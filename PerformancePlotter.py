@@ -12,16 +12,20 @@ class PerformancePlotter:
 
     @staticmethod
     def _AUC_sig_sq_plot(perfdicts, outpath):
-        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "sig_sq_diff", xlabel = "AUC", ylabel = "sig_sq_diff_05", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_sig_sq_plot.pdf"))
+        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "sig_sq_diff", xlabel = "AUC", ylabel = "sig_sq_diff_085", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_sig_sq_plot.pdf"))
 
     @staticmethod
     def _AUC_bkg_sq_plot(perfdicts, outpath):
-        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "bkg_sq_diff", xlabel = "AUC", ylabel = "bkg_sq_diff_05", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_bkg_sq_plot.pdf"))
+        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "bkg_sq_diff", xlabel = "AUC", ylabel = "bkg_sq_diff_085", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_bkg_sq_plot.pdf"))
 
     @staticmethod
     def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, leglabel, colorquant, outfile):
-        markerdict = {"MINEClassifierEnvironment": "o", "AdversarialClassifierEnvironment": "v", "data": "s"}
-        labeldict = {"MINEClassifierEnvironment": "MINE", "AdversarialClassifierEnvironment": "parametrized posterior", "data": "data"}
+        # markerdict = {"MINEClassifierEnvironment": "o", "AdversarialClassifierEnvironment": "v", "data": "s"}
+        # labeldict = {"MINEClassifierEnvironment": "MINE", "AdversarialClassifierEnvironment": "parametrized posterior", "data": "data"}
+
+        markerdict = {"1.0": "o", "2.0": "v", "3.0": "^", "4.0": "<", "5.0": ">", "6.0": "s"}
+        labeldict = {"1.0": "n = 1", "2.0": "n = 2", "3.0": "n = 3", "4.0": "n = 4", "5.0": "n = 5", "6.0": "n = 6"}
+
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -33,7 +37,8 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for ind, perfdict in enumerate(perfdicts):
-            cur_type = perfdict["type"]
+            # cur_type = perfdict["type"]
+            cur_type = perfdict["ncomp"]
 
             label = labeldict[cur_type]
             color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"

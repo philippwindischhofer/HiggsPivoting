@@ -4,8 +4,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn import metrics
-#from sklearn.feature_selection import mutual_info_regression
-from mutual_info import mutual_information
+from sklearn.feature_selection import mutual_info_regression
 
 class ModelEvaluator:
 
@@ -28,8 +27,8 @@ class ModelEvaluator:
 
         data = np.concatenate([sig_data_test.values, bkg_data_test.values], axis = 0)
 
-        datadict["logI(f,label)"] = np.log(mutual_info_regression(data, labels.ravel())[0])
-        datadict["logI(f,nu)"] = np.log(mutual_info_regression(data, mBB.ravel())[0])
+        datadict["logI(f,label)"] = np.log(mutual_info_regression(data, labels.ravel(), copy = False))
+        datadict["logI(f,nu)"] = np.log(mutual_info_regression(data, mBB.ravel(), copy = False))
 
         # datadict["logI(f,label)"] = np.random.rand()
         # datadict["logI(f,nu)"] = np.random.rand()
@@ -58,8 +57,8 @@ class ModelEvaluator:
         retdict["ROCAUC"] = metrics.roc_auc_score(labels_test, pred)
 
         # get low-level measure for how well the mBB distributions are preserved
-        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.5)]
-        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.5)]
+        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.85)]
+        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.85)]
         mBB_sig_cut_binned, _ = np.histogram(mBB_sig_cut, bins = 100, range = (0, 500), density = True)
         mBB_bkg_cut_binned, _ = np.histogram(mBB_bkg_cut, bins = 100, range = (0, 500), density = True)
 
@@ -74,13 +73,11 @@ class ModelEvaluator:
         retdict["bkg_sq_diff"] = mBB_bkg_sq_diff
 
         # get mutual information between prediction and true class label
-        #retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test.ravel())[0])
-        retdict["logI(f,label)"] = mutual_information([pred, np.expand_dims(labels_test, axis = 1)])
+        retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test, copy = False)[0])
         #retdict["logI(f,label)"] = np.random.rand()
 
         # get mutual information between prediction and nuisance
-        #retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB.ravel())[0])
-        retdict["logI(f,nu)"] = mutual_information([pred, np.expand_dims(mBB, axis = 1)])
+        retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB, copy = False)[0])
         #retdict["logI(f,nu)"] = np.random.rand()
 
         # get additional information about this model and add it - may be important for plotting later
