@@ -73,12 +73,12 @@ class ModelEvaluator:
         retdict["bkg_sq_diff"] = mBB_bkg_sq_diff
 
         # get mutual information between prediction and true class label
-        retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test, copy = False)[0])
-        #retdict["logI(f,label)"] = np.random.rand()
+        #retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test, copy = False)[0])
+        retdict["logI(f,label)"] = np.random.rand()
 
         # get mutual information between prediction and nuisance
-        retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB, copy = False)[0])
-        #retdict["logI(f,nu)"] = np.random.rand()
+        #retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB, copy = False)[0])
+        retdict["logI(f,nu)"] = np.random.rand()
 
         # get additional information about this model and add it - may be important for plotting later
         for key, val in self.env.global_pars.items():

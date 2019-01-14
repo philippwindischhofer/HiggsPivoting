@@ -7,6 +7,7 @@ from configparser import ConfigParser
 from TFEnvironment import TFEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from SimpleModel import SimpleModel
+from SimpleProbabilisticModel import SimpleProbabilisticModel
 
 class AdversarialClassifierEnvironment(TFEnvironment):
     
@@ -21,7 +22,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
 
     # attempt to reconstruct a previously built graph, including loading back its weights
     @classmethod
-    def from_file(cls, config_dir, classifier_model = SimpleModel):
+    def from_file(cls, config_dir, classifier_model = SimpleProbabilisticModel):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
@@ -160,6 +161,8 @@ class AdversarialClassifierEnvironment(TFEnvironment):
 
     def predict(self, data):
         data_pre = self.pre.process(data)
+
+        print("predicting")
 
         with self.graph.as_default():
             retval = self.sess.run(self.classifier_out, feed_dict = {self.data_in: data_pre})

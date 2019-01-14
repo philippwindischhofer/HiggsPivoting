@@ -7,6 +7,7 @@ from TFEnvironment import TFEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from MINEModel import MINEModel
 from SimpleModel import SimpleModel
+from SimpleProbabilisticModel import SimpleProbabilisticModel
 
 class MINEClassifierEnvironment(TFEnvironment):
 
@@ -20,7 +21,7 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre_nuisance = None
 
     @classmethod
-    def from_file(cls, config_dir, classifier_model = SimpleModel):
+    def from_file(cls, config_dir, classifier_model = SimpleProbabilisticModel):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
