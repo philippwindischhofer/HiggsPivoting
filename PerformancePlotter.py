@@ -20,11 +20,11 @@ class PerformancePlotter:
 
     @staticmethod
     def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, leglabel, colorquant, outfile):
-        # markerdict = {"MINEClassifierEnvironment": "o", "AdversarialClassifierEnvironment": "v", "data": "s"}
-        # labeldict = {"MINEClassifierEnvironment": "MINE", "AdversarialClassifierEnvironment": "parametrized posterior", "data": "data"}
+        markerdict = {"MINEClassifierEnvironment": "o", "AdversarialClassifierEnvironment": "v", "AdversarialClassifierEnvironmentRandomized": "o", "data": "s"}
+        labeldict = {"MINEClassifierEnvironment": "MINE", "AdversarialClassifierEnvironment": "parametrized posterior", "AdversarialClassifierEnvironmentRandomized": "parametrized posterior, randomized classifier", "data": "data"}
 
-        markerdict = {"1.0": "o", "2.0": "v", "3.0": "^", "4.0": "<", "5.0": ">", "6.0": "s"}
-        labeldict = {"1.0": "n = 1", "2.0": "n = 2", "3.0": "n = 3", "4.0": "n = 4", "5.0": "n = 5", "6.0": "n = 6"}
+        # markerdict = {"1.0": "o", "2.0": "v", "3.0": "^", "4.0": "<", "5.0": ">", "6.0": "s"}
+        # labeldict = {"1.0": "n = 1", "2.0": "n = 2", "3.0": "n = 3", "4.0": "n = 4", "5.0": "n = 5", "6.0": "n = 6"}
 
         cmap = plt.cm.viridis
 
@@ -37,8 +37,8 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for ind, perfdict in enumerate(perfdicts):
-            # cur_type = perfdict["type"]
-            cur_type = perfdict["ncomp"]
+            cur_type = perfdict["type"]
+            #cur_type = perfdict["ncomp"]
 
             label = labeldict[cur_type]
             color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"
