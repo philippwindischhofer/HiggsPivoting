@@ -162,12 +162,20 @@ class AdversarialClassifierEnvironment(TFEnvironment):
     def predict(self, data):
         data_pre = self.pre.process(data)
 
+        datlen = len(data_pre)
+        pred_size = 256
+
+        chunks = np.split(data_pre, datlen / pred_size, axis = 0)
+
         print("predicting")
 
-        with self.graph.as_default():
-            retval = self.sess.run(self.classifier_out, feed_dict = {self.data_in: data_pre})
+        retvals = []
+        for chunk in chunks:
+            with self.graph.as_default():
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk})
+                retvals.append(retval_cur)
 
-        return retval
+        return np.concatenate(retvals, axis = 0)
 
     def get_model_statistics(self, data, nuisances, labels):
         retdict = {}
