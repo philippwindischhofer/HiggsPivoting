@@ -37,7 +37,13 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for ind, perfdict in enumerate(perfdicts):
-            cur_type = perfdict["type"]
+            if ind > 9:
+                cur_type = "AdversarialClassifierEnvironmentRandomized"
+            else:
+                cur_type = "AdversarialClassifierEnvironment"
+            print(ind)
+
+            #cur_type = perfdict["type"]
             #cur_type = perfdict["ncomp"]
 
             label = labeldict[cur_type]

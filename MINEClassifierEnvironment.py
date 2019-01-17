@@ -21,7 +21,7 @@ class MINEClassifierEnvironment(TFEnvironment):
         self.pre_nuisance = None
 
     @classmethod
-    def from_file(cls, config_dir, classifier_model = SimpleProbabilisticModel):
+    def from_file(cls, config_dir, classifier_model = SimpleModel):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))

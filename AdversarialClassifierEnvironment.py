@@ -22,7 +22,7 @@ class AdversarialClassifierEnvironment(TFEnvironment):
 
     # attempt to reconstruct a previously built graph, including loading back its weights
     @classmethod
-    def from_file(cls, config_dir, classifier_model = SimpleProbabilisticModel):
+    def from_file(cls, config_dir, classifier_model = SimpleModel):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
