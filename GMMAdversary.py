@@ -23,7 +23,7 @@ class GMMAdversary(AdversaryModel):
         return -loglik, these_vars
 
     def _adversary_model(self, in_tensor):
-        with tf.variable_scope(name):
+        with tf.variable_scope(self.name):
             lay = in_tensor
 
             for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
@@ -36,7 +36,7 @@ class GMMAdversary(AdversaryModel):
             sigma_val = tf.exp(pre_output[:,nc:2*nc]) # standard deviations need to be positive
             frac_val = tf.nn.softmax(pre_output[:,2*nc:3*nc]) # the mixture fractions need to add up to unity
 
-        these_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = name)
+        these_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = self.name)
 
         return mu_val, sigma_val, frac_val, these_vars
 

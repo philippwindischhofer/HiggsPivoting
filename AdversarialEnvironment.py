@@ -12,7 +12,7 @@ from GMMAdversary import GMMAdversary
 class AdversarialEnvironment(TFEnvironment):
     
     def __init__(self, classifier_model, adversary_model):
-        super(AdversarialClassifierEnvironment, self).__init__()
+        super(AdversarialEnvironment, self).__init__()
         self.classifier_model = classifier_model
         self.adversary_model = adversary_model
 
@@ -74,7 +74,7 @@ class AdversarialEnvironment(TFEnvironment):
 
             # set up the model for the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.adv_loss = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in)
+            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in)
 
             self.total_loss = self.classification_loss + lambda_val * (-self.adv_loss)
 
@@ -104,7 +104,7 @@ class AdversarialEnvironment(TFEnvironment):
         nuisances_pre = self.pre_nuisance.process(nuisances_step)
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_op, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
+            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
 
     def evaluate_classifier_loss(self, data, labels):
         data_pre = self.pre.process(data)

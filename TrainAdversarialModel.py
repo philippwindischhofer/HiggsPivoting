@@ -7,10 +7,9 @@ from argparse import ArgumentParser
 #from MINEClassifierEnvironment import MINEClassifierEnvironment
 from AdversarialEnvironment import AdversarialEnvironment
 
-from SimpleModel import SimpleModel
 from AdversarialTrainer import AdversarialTrainer
 
-from ConfigFileUtils import ConfigFileUtils
+#from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
         
 def main():
