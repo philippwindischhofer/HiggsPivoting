@@ -4,12 +4,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
-#from MINEClassifierEnvironment import MINEClassifierEnvironment
 from AdversarialEnvironment import AdversarialEnvironment
-
 from AdversarialTrainer import AdversarialTrainer
-
-#from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
         
 def main():
@@ -38,19 +34,11 @@ def main():
     sig_data_train, sig_data_test = train_test_split(sig_data, test_size = test_size, random_state = 12345)
     bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
 
-    # set up the training environment
-    # model_type = ConfigFileUtils.get_env_type(outdir)
-    # if model_type is not None:
-    #     mce = model_type.from_file(outdir)
-    # else:
-    #     print("no model type prescribed in this config file, using MINEClassifierEnvironment as default")
-    #     mce = MINEClassifierEnvironment.from_file(outdir)
-
     mce = AdversarialEnvironment.from_file(outdir)
 
     # set up the training
-    train = AdversarialTrainer(training_pars = {"batch_size": 1024, "pretrain_batches": 5000, "printout_interval": 1})
-    train.train(mce, number_batches = 10000, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
+    train = AdversarialTrainer(training_pars = {"batch_size": 1024, "pretrain_batches": 5000, "printout_interval": 100})
+    train.train(mce, number_batches = 4000, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
 
     # save all the necessary information
     if not os.path.exists(outdir):

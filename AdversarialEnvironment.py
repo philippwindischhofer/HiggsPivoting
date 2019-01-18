@@ -6,12 +6,14 @@ from configparser import ConfigParser
 
 from TFEnvironment import TFEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
+
 from SimpleClassifier import SimpleClassifier
 from GMMAdversary import GMMAdversary
+from MINEAdversary import MINEAdversary
 
 class AdversarialEnvironment(TFEnvironment):
     
-    def __init__(self, classifier_model, adversary_model):
+    def __init__(self, classifier_model, adversary_model, global_pars):
         super(AdversarialEnvironment, self).__init__()
         self.classifier_model = classifier_model
         self.adversary_model = adversary_model
@@ -19,21 +21,27 @@ class AdversarialEnvironment(TFEnvironment):
         self.pre = None
         self.pre_nuisance = None
 
+        self.global_pars = global_pars
+
     # attempt to reconstruct a previously built graph, including loading back its weights
     @classmethod
-    def from_file(cls, config_dir, classifier_model = SimpleClassifier, adversary_model = GMMAdversary):
+    def from_file(cls, config_dir):
         # first, load back the meta configuration variables of the graph
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
-        global_pars = {key: val for key, val in gconfig["global"].items()}
-        adversary_hyperpars = {key: val for key, val in gconfig["adversary"].items()}
-        classifier_hyperpars = {key: val for key, val in gconfig["classifier"].items()}
+
+        global_pars = gconfig["AdversarialEnvironment"]
+        classifier_model_type = global_pars["classifier_model"]
+        adversary_model_type = global_pars["adversary_model"]
+        classifier_model = eval(classifier_model_type)
+        adversary_model = eval(adversary_model_type)
+
+        classifier_hyperpars = gconfig[classifier_model_type]
+        adversary_hyperpars = gconfig[adversary_model_type]
 
         mod = classifier_model("class", hyperpars = classifier_hyperpars)
         adv = adversary_model("adv", hyperpars = adversary_hyperpars)
-        obj = cls(mod, adv)
-        obj.global_pars = global_pars
-        obj.adversary_hyperpars = adversary_hyperpars
+        obj = cls(mod, adv, global_pars)
 
         # then re-build the graph using these settings
         obj.build()
@@ -43,19 +51,11 @@ class AdversarialEnvironment(TFEnvironment):
 
         return obj
 
-    def build(self, num_inputs = None, num_nuisances = None, lambda_val = None):
-        num_inputs = num_inputs if num_inputs is not None else int(float(self.global_pars["num_inputs"]))
-        num_nuisances = num_nuisances if num_nuisances is not None else int(float(self.global_pars["num_nuisances"]))
-        lambda_val = lambda_val if lambda_val is not None else float(self.global_pars["lambda"])
+    def build(self):
 
-        if "lambda" not in self.global_pars:
-            self.global_pars["lambda"] = lambda_val
-
-        if "num_inputs" not in self.global_pars:
-            self.global_pars["num_inputs"] = num_inputs
-
-        if "num_nuisances" not in self.global_pars:
-            self.global_pars["num_nuisances"] = num_nuisances
+        lambda_val = float(self.global_pars["lambda"])
+        num_inputs = int(float(self.global_pars["num_inputs"]))
+        num_nuisances = int(float(self.global_pars["num_nuisances"]))
 
         print("building AdversarialEnvironment using lamba = {}".format(lambda_val))
         with self.graph.as_default():
@@ -80,7 +80,7 @@ class AdversarialEnvironment(TFEnvironment):
 
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
-            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = 0.01, beta1 = 0.3, beta2 = 0.5).minimize(self.adv_loss, var_list = self.adversary_vars)
+            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = 0.005, beta1 = 0.9, beta2 = 0.999).minimize(self.adv_loss, var_list = self.adversary_vars)
             self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.3, beta2 = 0.5).minimize(self.total_loss, var_list = self.classifier_vars)
 
             self.saver = tf.train.Saver()
@@ -134,8 +134,6 @@ class AdversarialEnvironment(TFEnvironment):
 
         chunks = np.split(data_pre, datlen / pred_size, axis = 0)
 
-        print("predicting")
-
         retvals = []
         for chunk in chunks:
             with self.graph.as_default():
@@ -160,7 +158,6 @@ class AdversarialEnvironment(TFEnvironment):
                 print("weights successfully loaded for " + indir)
             except:
                 print("no model checkpoint found, continuing with uninitialized graph!")
-
         try:
             self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre.pkl'))
             self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(os.path.dirname(file_path), 'pre_nuis.pkl'))
@@ -182,8 +179,8 @@ class AdversarialEnvironment(TFEnvironment):
 
         # save some meta-information about the graph, such that it can be fully reconstructed
         gconfig = ConfigParser()
-        gconfig["global"] = self.global_pars
-        gconfig["classifier"] = self.classifier_model.hyperpars
-        gconfig["adversary"] = self.adversary_hyperpars
+        gconfig["AdversarialEnvironment"] = self.global_pars
+        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
+        gconfig[self.adversary_model.__class__.__name__] = self.adversary_model.hyperpars
         with open(os.path.join(outdir, "meta.conf"), 'w') as metafile:
             gconfig.write(metafile)

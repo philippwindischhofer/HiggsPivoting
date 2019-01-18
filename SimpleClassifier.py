@@ -5,6 +5,7 @@ import tensorflow.contrib.layers as layers
 
 class SimpleClassifier(ClassifierModel):
     def __init__(self, name, hyperpars):
+        print("initializing a SimpleClassifier")
         self.name = name
         self.hyperpars = hyperpars
 

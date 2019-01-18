@@ -5,13 +5,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import mutual_info_regression
 from argparse import ArgumentParser
 
+from AdversarialEnvironment import AdversarialEnvironment
 from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
-from SimpleModel import SimpleModel
 from ModelEvaluator import ModelEvaluator
 from TrainingStatisticsPlotter import TrainingStatisticsPlotter
 from PerformancePlotter import PerformancePlotter
 
-from ConfigFileUtils import ConfigFileUtils
 from Configs import TrainingConfig
 
 def main():
@@ -40,12 +39,7 @@ def main():
     for model_dir in model_dirs:
         print("now evaluating " + model_dir)
 
-        model_type = ConfigFileUtils.get_env_type(model_dir)
-        if model_type is not None:
-            mce = model_type.from_file(model_dir)
-        else:
-            raise FileNotFoundError("could not determine the type of this model - aborting!")
-
+        mce = AdversarialEnvironment.from_file(model_dir)
         mods.append(mce)
 
         #plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))

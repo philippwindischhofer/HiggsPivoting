@@ -7,6 +7,7 @@ import tensorflow.contrib.layers as layers
 class GMMAdversary(AdversaryModel):
 
     def __init__(self, name, hyperpars):
+        print("initializing a GMMAdversary")
         self.name = name
         self.hyperpars = hyperpars
 
