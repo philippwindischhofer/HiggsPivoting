@@ -4,9 +4,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
-from AdversarialEnvironment import AdversarialEnvironment
-from AdversarialTrainer import AdversarialTrainer
-from Configs import TrainingConfig
+from training.AdversarialEnvironment import AdversarialEnvironment
+from training.AdversarialTrainer import AdversarialTrainer
+from base.Configs import TrainingConfig
         
 def main():
     parser = ArgumentParser(description = "train adversarial networks")

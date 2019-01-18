@@ -1,7 +1,7 @@
 import os, pickle
 from argparse import ArgumentParser
 
-from PerformancePlotter import PerformancePlotter
+from plotting.PerformancePlotter import PerformancePlotter
 
 def MakeGlobalPlots(model_dirs, plot_dir):
     perfdicts = []

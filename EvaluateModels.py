@@ -5,13 +5,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import mutual_info_regression
 from argparse import ArgumentParser
 
-from AdversarialEnvironment import AdversarialEnvironment
-from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
-from ModelEvaluator import ModelEvaluator
-from TrainingStatisticsPlotter import TrainingStatisticsPlotter
-from PerformancePlotter import PerformancePlotter
-
-from Configs import TrainingConfig
+from models.AdversarialEnvironment import AdversarialEnvironment
+from training.ModelEvaluator import ModelEvaluator
+from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
+from plotting.PerformancePlotter import PerformancePlotter
 
 def main():
     parser = ArgumentParser(description = "evaluate adversarial networks")

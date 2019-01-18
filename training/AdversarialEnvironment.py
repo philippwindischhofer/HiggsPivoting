@@ -4,12 +4,11 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 from configparser import ConfigParser
 
-from TFEnvironment import TFEnvironment
-from PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
-
-from SimpleClassifier import SimpleClassifier
-from GMMAdversary import GMMAdversary
-from MINEAdversary import MINEAdversary
+from training.TFEnvironment import TFEnvironment
+from models.SimpleClassifier import SimpleClassifier
+from models.GMMAdversary import GMMAdversary
+from models.MINEAdversary import MINEAdversary
+from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 
 class AdversarialEnvironment(TFEnvironment):
     

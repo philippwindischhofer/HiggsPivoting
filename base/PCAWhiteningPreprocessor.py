@@ -2,7 +2,7 @@ from sklearn.decomposition import PCA
 import numpy as np
 import pickle
 
-from Preprocessor import Preprocessor
+from base.Preprocessor import Preprocessor
 
 class PCAWhiteningPreprocessor(Preprocessor):
 

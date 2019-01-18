@@ -1,6 +1,6 @@
 import sys, os, glob, uuid
 
-from CondorJobSubmitter import CondorJobSubmitter
+from utils.CondorJobSubmitter import CondorJobSubmitter
 
 def create_job_script(model_dir, script_dir, training_data_path):
     script_name = str(uuid.uuid4()) + ".sh"

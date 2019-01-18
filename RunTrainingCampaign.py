@@ -2,7 +2,7 @@ import sys, os, glob, uuid
 sys.path.append("/home/windischhofer/ConfigFileSweeper/")
 
 from ConfigFileSweeper import ConfigFileSweeper
-from CondorJobSubmitter import CondorJobSubmitter
+from utils.CondorJobSubmitter import CondorJobSubmitter
 
 def create_job_script(training_data_path, run_dir, script_dir):
     script_name = str(uuid.uuid4()) + ".sh"

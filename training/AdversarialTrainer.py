@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pickle
 
-from Trainer import Trainer
+from training.Trainer import Trainer
 
 class AdversarialTrainer(Trainer):
 
