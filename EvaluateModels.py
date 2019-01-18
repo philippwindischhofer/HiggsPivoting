@@ -23,7 +23,7 @@ def main():
 
     # read the training data
     print("loading data ...")
-    sig_data, bkg_data = pd.read_hdf(infile_path, key = 'sig'), pd.read_hdf(infile_path, key = 'bkg')
+    sig_data, bkg_data = pd.read_hdf(infile_path, key = 'Hbb'), pd.read_hdf(infile_path, key = 'Zbb')
     print("got " + str(len(sig_data)) + " signal events")
     print("got " + str(len(bkg_data)) + " background events")
 

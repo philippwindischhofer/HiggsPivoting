@@ -5,33 +5,34 @@ from base.Preprocessor import Preprocessor
 
 class SimplePreprocessor(Preprocessor):
     
-    def __init__(self, data_branches, sig_cut, bkg_cut):
+    def __init__(self, data_branches, cuts):
         self.data_branches = data_branches
-        self.sig_cut = sig_cut
-        self.bkg_cut = bkg_cut
+        self.cuts = cuts
 
     def process_generator(self, gen, rettype = 'np'):
-        sig_data = pd.DataFrame()
-        bkg_data = pd.DataFrame()
+        cut_samples = []
+        for cut in self.cuts:
+            cut_samples.append(pd.DataFrame())
 
         for chunk in gen:
-            sig_chunk, bkg_chunk = self.process(chunk)
-
-            if len(sig_chunk) > 0:
-                sig_data = pd.concat([sig_data, sig_chunk])
-            if len(bkg_chunk) > 0:
-                bkg_data = pd.concat([bkg_data, bkg_chunk])
+            pre_chunks = self.process(chunk)
+            
+            for ind, pre_chunk in enumerate(pre_chunks):
+                if len(pre_chunk) > 0:
+                    cut_samples[ind] = pd.concat([cut_samples[ind], pre_chunk])
         
         if rettype == 'pd':
-            return sig_data, bkg_data
+            return cut_samples
         elif rettype == 'np':
-            return self._as_matrix(sig_data), self._as_matrix(bkg_data)
+            return [self._as_matrix(cur) for cur in cut_samples]
 
     def process(self, chunk):
-        sig_chunk = self._rowcol_cut(chunk, self.sig_cut, self.data_branches)
-        bkg_chunk = self._rowcol_cut(chunk, self.bkg_cut, self.data_branches)
+        cut_chunks = []
 
-        return sig_chunk, bkg_chunk
+        for cut in self.cuts:
+            cut_chunks.append(self._rowcol_cut(chunk, cut, self.data_branches))
+
+        return cut_chunks
 
     def _rowcol_cut(self, chunk, row_cut, cols):
         chunk = chunk.loc[chunk.apply(row_cut, axis = 1)]
