@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -92,6 +93,10 @@ class ModelEvaluator:
 
     # plot the ROC of the classifier
     def plot_roc(self, sig_data_test, bkg_data_test, outpath):
+        # need to merge all signal- and background samples
+        sig_data_test = pd.concat(sig_data_test)
+        bkg_data_test = pd.concat(bkg_data_test)
+
         pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
         pred_sig = self.env.predict(data = sig_data_test)[:,1]
 
@@ -117,36 +122,34 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
         plt.close()
 
-    def plot_mBB_distortion(self, sig_data_test, bkg_data_test, outpath):
-        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
-        pred_sig = self.env.predict(data = sig_data_test)[:,1]
+    def plot_mBB_distortion(self, sig_data_test, bkg_data_test, outpath, sig_labels = None, bkg_labels = None):
+        pred_bkg = [self.env.predict(data = sample)[:,1] for sample in bkg_data_test]
+        pred_sig = [self.env.predict(data = sample)[:,1] for sample in sig_data_test]
 
         # create the output directory if it doesn't already exist and save the figure(s)
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
         # plot the original mBB distributions for signal and background
-        mBB_sig = sig_data_test["mBB"].values
-        mBB_bkg = bkg_data_test["mBB"].values
-        self._plot_mBB(mBB_sig, mBB_bkg, os.path.join(outpath, "distributions_raw.pdf"), label = [r'VHbb', r'$Z$ + jets'])
+        mBB_sig = [sample["mBB"].values for sample in sig_data_test]
+        mBB_bkg = [sample["mBB"].values for sample in bkg_data_test]
+        self._plot_mBB(mBB_sig + mBB_bkg, os.path.join(outpath, "distributions_raw.pdf"), label = sig_labels + bkg_labels)
 
         # put some loose signal cut on the classifier
-        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.5)]
-        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.5)]
-        if len(mBB_sig_cut) > 0 and len(mBB_bkg_cut) > 0:
-            self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_05.pdf"), label = [r'VHbb (class. > 0.5)', r'$Z$ + jets (class. > 0.5)'])
+        mBB_sig_cut = [mBB[np.where(pred > 0.5)] for mBB, pred in zip(mBB_sig, pred_sig)]
+        mBB_bkg_cut = [mBB[np.where(pred > 0.5)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
+        self._plot_mBB(mBB_sig_cut + mBB_bkg_cut, os.path.join(outpath, "distributions_cut_05.pdf"), label = [sample_name + " (class. > 0.5)" for sample_name in sig_labels + bkg_labels])
 
         # put some harsh signal cut on the classifier
-        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.85)]
-        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.85)]
-        if len(mBB_sig_cut) > 0 and len(mBB_bkg_cut) > 0:
-            self._plot_mBB(mBB_sig_cut, mBB_bkg_cut, os.path.join(outpath, "distributions_cut_085.pdf"), label = [r'VHbb (class. > 0.85)', r'$Z$ + jets (class. > 0.85)'])
+        mBB_sig_cut = [mBB[np.where(pred > 0.85)] for mBB, pred in zip(mBB_sig, pred_sig)]
+        mBB_bkg_cut = [mBB[np.where(pred > 0.85)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
+        self._plot_mBB(mBB_sig_cut + mBB_bkg_cut, os.path.join(outpath, "distributions_cut_085.pdf"), label = [sample_name + " (class. > 0.85)" for sample_name in sig_labels + bkg_labels])
 
-    def _plot_mBB(self, mBB_sig, mBB_bkg, outfile, label):
+    def _plot_mBB(self, vals, outfile, label):
         # plot the raw distributions
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.hist([mBB_sig, mBB_bkg], 300, density = True, histtype = 'step', stacked = False, fill = False, color = ["seagreen", "orange"], label = label)
+        ax.hist(vals, 300, density = True, histtype = 'step', stacked = False, fill = False, label = label)
         ax.legend()
         ax.set_xlim([0, 500])
         ax.set_xlabel(r'$m_{bb}$ [GeV]')
@@ -156,7 +159,7 @@ class ModelEvaluator:
         plt.close()
 
     # produce all performance plots
-    def performance_plots(self, sig_data_test, bkg_data_test, outpath):
+    def performance_plots(self, sig_data_test, bkg_data_test, outpath, sig_labels = None, bkg_labels = None):
         self.plot_roc(sig_data_test, bkg_data_test, outpath)
-        self.plot_mBB_distortion(sig_data_test, bkg_data_test, outpath)
+        self.plot_mBB_distortion(sig_data_test, bkg_data_test, outpath, sig_labels, bkg_labels)
 

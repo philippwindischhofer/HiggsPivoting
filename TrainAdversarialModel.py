@@ -24,15 +24,34 @@ def main():
     print("using data_branches = " + ", ".join(data_branches))
 
     # read the training data
-    print("loading data ...")
-    sig_data, bkg_data = pd.read_hdf(infile_path, key = 'Hbb'), pd.read_hdf(infile_path, key = 'Zjets')
-    print("got " + str(len(sig_data)) + " signal events")
-    print("got " + str(len(bkg_data)) + " background events")
+    sig_samples = ["Hbb"]
+    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
-    # perform training / testing split
+    print("loading data ...")
+    sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
+    bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
+
+    # extract the training dataset
     test_size = 0.2
-    sig_data_train, sig_data_test = train_test_split(sig_data, test_size = test_size, random_state = 12345)
-    bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
+    sig_data_train = []
+    for sample in sig_data:
+        cur_train, _ = train_test_split(sample, test_size = test_size, random_state = 12345)
+        sig_data_train.append(cur_train)
+
+    bkg_data_train = []
+    for sample in bkg_data:
+        cur_train, _ = train_test_split(sample, test_size = test_size, random_state = 12345)
+        bkg_data_train.append(cur_train)
+
+    sig_data_train = pd.concat(sig_data_train)
+    bkg_data_train = pd.concat(bkg_data_train)
+
+    # shuffle them separately (particularly important for more than one background component)
+    sig_data_train = sig_data_train.sample(frac = 1, random_state = 12345).reset_index(drop = True)
+    bkg_data_train = bkg_data_train.sample(frac = 1, random_state = 12345).reset_index(drop = True)
+
+    print("got " + str(len(sig_data)) + " signal datasets")
+    print("got " + str(len(bkg_data)) + " background datasets")
 
     mce = AdversarialEnvironment.from_file(outdir)
 

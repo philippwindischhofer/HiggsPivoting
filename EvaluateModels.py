@@ -6,7 +6,7 @@ from sklearn.feature_selection import mutual_info_regression
 from argparse import ArgumentParser
 
 from models.AdversarialEnvironment import AdversarialEnvironment
-from training.ModelEvaluator import ModelEvaluator
+from plotting.ModelEvaluator import ModelEvaluator
 from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
 from plotting.PerformancePlotter import PerformancePlotter
 
@@ -22,14 +22,24 @@ def main():
     plot_dir = args["plot_dir"]
 
     # read the training data
-    print("loading data ...")
-    sig_data, bkg_data = pd.read_hdf(infile_path, key = 'Hbb'), pd.read_hdf(infile_path, key = 'Zbb')
-    print("got " + str(len(sig_data)) + " signal events")
-    print("got " + str(len(bkg_data)) + " background events")
+    sig_samples = ["Hbb"]
+    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
+    print("loading data ...")
+    sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
+    bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
+
+    # extract the test dataset
     test_size = 0.2
-    sig_data_train, sig_data_test = train_test_split(sig_data, test_size = test_size, random_state = 12345)
-    bkg_data_train, bkg_data_test = train_test_split(bkg_data, test_size = test_size, random_state = 12345)
+    sig_data_test = []
+    for sample in sig_data:
+        _, cur_test = train_test_split(sample, test_size = test_size, random_state = 12345)
+        sig_data_test.append(cur_test)
+
+    bkg_data_test = []
+    for sample in bkg_data:
+        _, cur_test = train_test_split(sample, test_size = test_size, random_state = 12345)
+        bkg_data_test.append(cur_test)
 
     mods = []
     perfdicts = []
@@ -44,14 +54,15 @@ def main():
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.performance_plots(sig_data_test, bkg_data_test, plots_outdir)
+        ev.performance_plots(sig_data_test, bkg_data_test, plots_outdir,
+                             sig_labels = sig_samples, bkg_labels = bkg_samples)
 
         # get performance metrics and save them
-        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
-        perfdicts.append(perfdict)
-        print("got perfdict = " + str(perfdict))
-        with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
-            pickle.dump(perfdict, outfile)
+        #perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
+        #perfdicts.append(perfdict)
+        #print("got perfdict = " + str(perfdict))
+        #with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
+        #    pickle.dump(perfdict, outfile)
 
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
