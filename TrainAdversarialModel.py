@@ -53,6 +53,7 @@ def main():
     print("got " + str(len(sig_data)) + " signal datasets")
     print("got " + str(len(bkg_data)) + " background datasets")
 
+    print("starting up")
     mce = AdversarialEnvironment.from_file(outdir)
 
     # set up the training

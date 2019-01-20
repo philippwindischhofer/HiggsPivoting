@@ -6,6 +6,7 @@ from configparser import ConfigParser
 
 from training.TFEnvironment import TFEnvironment
 from models.SimpleClassifier import SimpleClassifier
+from models.SimpleProbabilisticClassifier import SimpleProbabilisticClassifier
 from models.GMMAdversary import GMMAdversary
 from models.MINEAdversary import MINEAdversary
 from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
