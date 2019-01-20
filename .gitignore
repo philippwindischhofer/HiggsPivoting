@@ -7,5 +7,3 @@ lib64
 *.cfg
 *.pyc
 __pycache__/
-models/
-adversarial_models/

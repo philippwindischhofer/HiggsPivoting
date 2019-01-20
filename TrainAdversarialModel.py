@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
-from training.AdversarialEnvironment import AdversarialEnvironment
+from models.AdversarialEnvironment import AdversarialEnvironment
 from training.AdversarialTrainer import AdversarialTrainer
 from base.Configs import TrainingConfig
         
