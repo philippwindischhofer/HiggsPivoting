@@ -133,27 +133,47 @@ class ModelEvaluator:
         # plot the original mBB distributions for signal and background
         mBB_sig = [sample["mBB"].values for sample in sig_data_test]
         mBB_bkg = [sample["mBB"].values for sample in bkg_data_test]
-        self._plot_mBB(mBB_sig + mBB_bkg, os.path.join(outpath, "distributions_raw.pdf"), label = sig_labels + bkg_labels)
+
+        # find the cut values that lead to a certain signal efficiency
+        cutval_sigeff_50 = np.percentile(pred_sig, 50)
+        cutval_sigeff_25 = np.percentile(pred_sig, 75)
+
+        print("classifier cut for 50% signal efficiency: {}".format(cutval_sigeff_50))
+        print("classifier cut for 25% signal efficiency: {}".format(cutval_sigeff_25))
 
         # put some loose signal cut on the classifier
-        mBB_sig_cut = [mBB[np.where(pred > 0.5)] for mBB, pred in zip(mBB_sig, pred_sig)]
-        mBB_bkg_cut = [mBB[np.where(pred > 0.5)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
-        self._plot_mBB(mBB_sig_cut + mBB_bkg_cut, os.path.join(outpath, "distributions_cut_05.pdf"), label = [sample_name + " (class. > 0.5)" for sample_name in sig_labels + bkg_labels])
+        mBB_sig_cut_50 = [mBB[np.where(pred > cutval_sigeff_50)] for mBB, pred in zip(mBB_sig, pred_sig)]
+        mBB_bkg_cut_50 = [mBB[np.where(pred > cutval_sigeff_50)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
 
         # put some harsh signal cut on the classifier
-        mBB_sig_cut = [mBB[np.where(pred > 0.85)] for mBB, pred in zip(mBB_sig, pred_sig)]
-        mBB_bkg_cut = [mBB[np.where(pred > 0.85)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
-        self._plot_mBB(mBB_sig_cut + mBB_bkg_cut, os.path.join(outpath, "distributions_cut_085.pdf"), label = [sample_name + " (class. > 0.85)" for sample_name in sig_labels + bkg_labels])
+        mBB_sig_cut_25 = [mBB[np.where(pred > cutval_sigeff_25)] for mBB, pred in zip(mBB_sig, pred_sig)]
+        mBB_bkg_cut_25 = [mBB[np.where(pred > cutval_sigeff_25)] for mBB, pred in zip(mBB_bkg, pred_bkg)]
 
-    def _plot_mBB(self, vals, outfile, label):
+        to_plot = [[data for data in WPs] for WPs in zip(mBB_sig + mBB_bkg,
+                                                         mBB_sig_cut_50 + mBB_bkg_cut_50,
+                                                         mBB_sig_cut_25 + mBB_bkg_cut_25)]
+        labels = [[label for label in WP_label] for WP_label in zip(sig_labels + bkg_labels,
+                                                                    [sample_name + " (50% signal eff.)" for sample_name in sig_labels + bkg_labels],
+                                                                    [sample_name + " (25% signal eff.)" for sample_name in sig_labels + bkg_labels])]
+
+        self._plot_mBB(to_plot, 
+                       os.path.join(outpath, "distributions_combined.pdf"), 
+                       labels = labels)
+        
+    def _plot_mBB(self, vals, outfile, labels, num_cols = 2):
+        num_rows = len(vals) / num_cols
+
         # plot the raw distributions
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.hist(vals, 300, density = True, histtype = 'step', stacked = False, fill = False, label = label)
-        ax.legend()
-        ax.set_xlim([0, 500])
-        ax.set_xlabel(r'$m_{bb}$ [GeV]')
-        ax.set_ylabel('a.u.')
+        fig = plt.figure(figsize = (15, 10))
+
+        for ind, (cur_val, cur_label) in enumerate(zip(vals, labels)):
+            ax = fig.add_subplot(num_rows, num_cols, ind + 1)
+            ax.hist(cur_val, 300, density = True, histtype = 'step', stacked = False, fill = False, label = cur_label)
+            ax.legend()
+            ax.set_xlim([0, 500])
+            ax.set_xlabel(r'$m_{bb}$ [GeV]')
+            ax.set_ylabel('a.u.')
+
         plt.tight_layout()
         fig.savefig(outfile) 
         plt.close()
