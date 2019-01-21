@@ -6,8 +6,11 @@ from sklearn.model_selection import train_test_split
 import base.Generators as gens
 from base.SimplePreprocessor import SimplePreprocessor
 from base.Configs import TrainingConfig
-        
-def main():
+
+def TrainNuisAuxSplit(indat):
+    return indat[TrainingConfig.training_branches].values, indat[TrainingConfig.nuisance_branches].values, indat[TrainingConfig.auxiliary_branches].values
+
+def PrepareDataset():
     infile_path = "/data/atlas/atlasdata/windischhofer/Hbb/hist-all-mc16d.root"
     outfile_path = "/data/atlas/atlasdata/windischhofer/Hbb/training-mc16d-multibackground_weights.h5"
 
@@ -46,4 +49,4 @@ def main():
     print("done!")
         
 if __name__ == "__main__":
-    main()
+    PrepareDataset()

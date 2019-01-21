@@ -9,6 +9,7 @@ from models.AdversarialEnvironment import AdversarialEnvironment
 from plotting.ModelEvaluator import ModelEvaluator
 from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
 from plotting.PerformancePlotter import PerformancePlotter
+from DatasetExtractor import TrainNuisAuxSplit
 
 def main():
     parser = ArgumentParser(description = "evaluate adversarial networks")
@@ -32,14 +33,20 @@ def main():
     # extract the test dataset
     test_size = 0.2
     sig_data_test = []
+    sig_nuis_test = []
     for sample in sig_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        sig_data_test.append(cur_test)
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
+        sig_data_test.append(cur_testdata)
+        sig_nuis_test.append(cur_nuisdata)
 
     bkg_data_test = []
+    bkg_nuis_test = []
     for sample in bkg_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        bkg_data_test.append(cur_test)
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
+        bkg_data_test.append(cur_testdata)
+        bkg_nuis_test.append(cur_nuisdata)
 
     mods = []
     perfdicts = []
@@ -54,8 +61,8 @@ def main():
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.performance_plots(sig_data_test, bkg_data_test, plots_outdir,
-                             sig_labels = sig_samples, bkg_labels = bkg_samples)
+        ev.performance_plots(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test,
+                             plots_outdir, sig_labels = sig_samples, bkg_labels = bkg_samples)
 
         # get performance metrics and save them
         #perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)

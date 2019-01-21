@@ -11,15 +11,18 @@ class AdversarialTrainer(Trainer):
         self.statistics_dict = {}
 
     # overload the 'train' method here
-    def train(self, env, number_batches, df_sig, df_bkg, nuisances):
+    def train(self, env, number_batches, traindat_sig, traindat_bkg, nuisances_sig, nuisances_bkg):
         # this assumes that the nuisances are indeed part of the training data,
         # and furthermore that the 'nuisances' argument is a list of the corresponding
         # column names
-        nuisances_sig = df_sig[nuisances].values
-        nuisances_bkg = df_bkg[nuisances].values
+        # nuisances_sig = df_sig[nuisances].values
+        # nuisances_bkg = df_bkg[nuisances].values
 
-        data_sig = df_sig.values                
-        data_bkg = df_bkg.values
+        # data_sig = df_sig.values                
+        # data_bkg = df_bkg.values
+
+        data_sig = traindat_sig
+        data_bkg = traindat_bkg
 
         labels_sig = np.ones(len(data_sig))
         labels_bkg = np.zeros(len(data_bkg))

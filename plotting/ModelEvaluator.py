@@ -94,8 +94,8 @@ class ModelEvaluator:
     # plot the ROC of the classifier
     def plot_roc(self, sig_data_test, bkg_data_test, outpath):
         # need to merge all signal- and background samples
-        sig_data_test = pd.concat(sig_data_test)
-        bkg_data_test = pd.concat(bkg_data_test)
+        sig_data_test = np.concatenate(sig_data_test, axis = 0)
+        bkg_data_test = np.concatenate(bkg_data_test, axis = 0)
 
         pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
         pred_sig = self.env.predict(data = sig_data_test)[:,1]
@@ -122,7 +122,7 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
         plt.close()
 
-    def plot_mBB_distortion(self, sig_data_test, bkg_data_test, outpath, sig_labels = None, bkg_labels = None):
+    def plot_mBB_distortion(self, sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, outpath, sig_labels = None, bkg_labels = None):
         pred_bkg = [self.env.predict(data = sample)[:,1] for sample in bkg_data_test]
         pred_sig = [self.env.predict(data = sample)[:,1] for sample in sig_data_test]
 
@@ -131,8 +131,10 @@ class ModelEvaluator:
             os.makedirs(outpath)
 
         # plot the original mBB distributions for signal and background
-        mBB_sig = [sample["mBB"].values for sample in sig_data_test]
-        mBB_bkg = [sample["mBB"].values for sample in bkg_data_test]
+        # mBB_sig = [sample["mBB"].values for sample in sig_data_test]
+        # mBB_bkg = [sample["mBB"].values for sample in bkg_data_test]
+        mBB_sig = sig_nuis_test
+        mBB_bkg = bkg_nuis_test
 
         # find the cut values that lead to a certain signal efficiency
         cutval_sigeff_50 = np.percentile(pred_sig, 50)
@@ -179,7 +181,7 @@ class ModelEvaluator:
         plt.close()
 
     # produce all performance plots
-    def performance_plots(self, sig_data_test, bkg_data_test, outpath, sig_labels = None, bkg_labels = None):
+    def performance_plots(self, sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, outpath, sig_labels = None, bkg_labels = None):
         self.plot_roc(sig_data_test, bkg_data_test, outpath)
-        self.plot_mBB_distortion(sig_data_test, bkg_data_test, outpath, sig_labels, bkg_labels)
+        self.plot_mBB_distortion(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, outpath, sig_labels, bkg_labels)
 

@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from models.AdversarialEnvironment import AdversarialEnvironment
 from training.AdversarialTrainer import AdversarialTrainer
 from base.Configs import TrainingConfig
+from DatasetExtractor import TrainNuisAuxSplit
         
 def main():
     parser = ArgumentParser(description = "train adversarial networks")
@@ -53,12 +54,16 @@ def main():
     print("got " + str(len(sig_data)) + " signal datasets")
     print("got " + str(len(bkg_data)) + " background datasets")
 
+    # split the dataset into training branches, nuisances and event weights
+    traindat_sig, nuisdat_sig, weightdat_sig = TrainNuisAuxSplit(sig_data_train)
+    traindat_bkg, nuisdat_bkg, weightdat_bkg = TrainNuisAuxSplit(bkg_data_train)
+
     print("starting up")
     mce = AdversarialEnvironment.from_file(outdir)
 
     # set up the training
     train = AdversarialTrainer(training_pars = {"batch_size": 1024, "pretrain_batches": 300, "printout_interval": 100})
-    train.train(mce, number_batches = 2000, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
+    train.train(mce, number_batches = 2000, traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg)
 
     # save all the necessary information
     if not os.path.exists(outdir):
