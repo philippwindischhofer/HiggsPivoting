@@ -33,12 +33,12 @@ def main():
     test_size = 0.2
     sig_data_test = []
     for sample in sig_data:
-        _, cur_test = train_test_split(sample, test_size = test_size, random_state = 12345)
+        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         sig_data_test.append(cur_test)
 
     bkg_data_test = []
     for sample in bkg_data:
-        _, cur_test = train_test_split(sample, test_size = test_size, random_state = 12345)
+        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         bkg_data_test.append(cur_test)
 
     mods = []

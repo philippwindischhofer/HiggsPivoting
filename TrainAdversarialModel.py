@@ -35,12 +35,12 @@ def main():
     test_size = 0.2
     sig_data_train = []
     for sample in sig_data:
-        cur_train, _ = train_test_split(sample, test_size = test_size, random_state = 12345)
+        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
     for sample in bkg_data:
-        cur_train, _ = train_test_split(sample, test_size = test_size, random_state = 12345)
+        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         bkg_data_train.append(cur_train)
 
     sig_data_train = pd.concat(sig_data_train)
@@ -57,8 +57,8 @@ def main():
     mce = AdversarialEnvironment.from_file(outdir)
 
     # set up the training
-    train = AdversarialTrainer(training_pars = {"batch_size": 1024, "pretrain_batches": 5000, "printout_interval": 100})
-    train.train(mce, number_batches = 4000, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
+    train = AdversarialTrainer(training_pars = {"batch_size": 1024, "pretrain_batches": 300, "printout_interval": 100})
+    train.train(mce, number_batches = 2000, df_sig = sig_data_train, df_bkg = bkg_data_train, nuisances = ["mBB"])
 
     # save all the necessary information
     if not os.path.exists(outdir):
