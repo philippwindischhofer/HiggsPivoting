@@ -11,14 +11,19 @@ class AdversarialTrainer(Trainer):
         self.statistics_dict = {}
 
     def sample_from(self, sources_sig, weights_sig, sources_bkg, weights_bkg, batchsize):
-        inds_sig = np.random.choice(len(sources_sig[0]), int(batchsize / 2))
-        inds_bkg = np.random.choice(len(sources_bkg[0]), int(batchsize / 2))
+        inds_sig = np.random.choice(len(sources_sig[0]), 5 * int(batchsize / 2))
+        inds_bkg = np.random.choice(len(sources_bkg[0]), int(0.5 * batchsize / 2))
 
         sampled_sig = [cur_source[inds_sig] for cur_source in sources_sig]
         sampled_bkg = [cur_source[inds_bkg] for cur_source in sources_bkg]
 
         sampled = [np.concatenate([sample_sig, sample_bkg], axis = 0) for sample_sig, sample_bkg in zip(sampled_sig, sampled_bkg)]
-        sampled_weights = np.concatenate([weights_sig[inds_sig], weights_bkg[inds_bkg]], axis = 0)
+        sampled_weights_sig = weights_sig[inds_sig]
+        sampled_weights_bkg = weights_bkg[inds_bkg]
+        print("sig sow = " + str(np.sum(sampled_weights_sig)))
+        print("bkg sow = " + str(np.sum(sampled_weights_bkg)))
+
+        sampled_weights = np.concatenate([sampled_weights_sig, sampled_weights_bkg], axis = 0)
 
         return sampled, sampled_weights
 
@@ -43,7 +48,7 @@ class AdversarialTrainer(Trainer):
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
                                                                                           batchsize = self.training_pars["batch_size"])
 
-            weights_batch = np.ones(len(labels_batch))
+            #weights_batch = np.full(len(labels_batch), 0.05)
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)
@@ -55,7 +60,7 @@ class AdversarialTrainer(Trainer):
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
                                                                                           batchsize = self.training_pars["batch_size"])
 
-            weights_batch = np.ones(len(labels_batch))
+            #weights_batch = np.full(len(labels_batch), 0.05)
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)

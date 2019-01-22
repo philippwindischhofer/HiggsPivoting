@@ -218,9 +218,8 @@ class ModelEvaluator:
 
         for ind, (cur_val, cur_weights, cur_label) in enumerate(zip(vals, weights, labels)):
             ax = fig.add_subplot(num_rows, num_cols, ind + 1)
-            ax.hist(cur_val, bins = 300, weights = cur_weights, density = True, histtype = 'step', stacked = False, fill = False, label = cur_label)
+            ax.hist(cur_val, weights = cur_weights, bins = 40, range = (0, 500), density = True, histtype = 'step', stacked = False, fill = False, label = cur_label)
             ax.legend()
-            ax.set_xlim([0, 500])
             ax.set_xlabel(r'$m_{bb}$ [GeV]')
             ax.set_ylabel('a.u.')
 
