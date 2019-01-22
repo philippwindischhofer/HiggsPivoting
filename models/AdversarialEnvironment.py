@@ -66,15 +66,16 @@ class AdversarialEnvironment(TFEnvironment):
             self.labels_in = tf.placeholder(tf.int32, [None, ], name = 'labels_in')
             self.data_in = tf.placeholder(tf.float32, [None, num_inputs], name = 'data_in')
             self.nuisances_in = tf.placeholder(tf.float32, [None, num_nuisances], name = 'nuisances_in')
+            self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
 
             # set up the classifier model
             self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in)
             self.labels_one_hot = tf.one_hot(self.labels_in, depth = 2)
-            self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot)
+            self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot, weights = self.weights_in)
 
             # set up the model for the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in)
+            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_in)
 
             self.total_loss = self.classification_loss + lambda_val * (-self.adv_loss)
 
@@ -92,38 +93,44 @@ class AdversarialEnvironment(TFEnvironment):
         with self.graph.as_default():
             self.sess.run(tf.global_variables_initializer())
     
-    def train_step(self, data_step, nuisances_step, labels_step):
+    def train_step(self, data_step, nuisances_step, labels_step, weights_step):
         data_pre = self.pre.process(data_step)
         nuisances_pre = self.pre_nuisance.process(nuisances_step)
+        weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
+            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step})
 
-    def train_adversary(self, data_step, nuisances_step, labels_step):
+    def train_adversary(self, data_step, nuisances_step, labels_step, weights_step):
         data_pre = self.pre.process(data_step)
         nuisances_pre = self.pre_nuisance.process(nuisances_step)
+        weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step})
+            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step})
 
-    def evaluate_classifier_loss(self, data, labels):
+    def evaluate_classifier_loss(self, data, labels, weights_step):
         data_pre = self.pre.process(data)
+        weights_step = weights_step.flatten()
+
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels})
+            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step})
         return classifier_lossval
 
-    def evaluate_adversary_loss(self, data, nuisances, labels):
+    def evaluate_adversary_loss(self, data, nuisances, labels, weights_step):
         data_pre = self.pre.process(data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels})
+            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step})
 
         return retval
 
-    def dump_loss_information(self, data, nuisances, labels):
-        classifier_lossval = self.evaluate_classifier_loss(data, labels)
-        adversary_lossval = self.evaluate_adversary_loss(data, nuisances, labels)
+    def dump_loss_information(self, data, nuisances, labels, weights):
+        classifier_lossval = self.evaluate_classifier_loss(data, labels, weights)
+        adversary_lossval = self.evaluate_adversary_loss(data, nuisances, labels, weights)
+        weights = weights.flatten()
         print("classifier loss: {:.4f}, adv. loss = {:.4f}".format(classifier_lossval, adversary_lossval))
 
     def predict(self, data):
@@ -142,10 +149,10 @@ class AdversarialEnvironment(TFEnvironment):
 
         return np.concatenate(retvals, axis = 0)
 
-    def get_model_statistics(self, data, nuisances, labels):
+    def get_model_statistics(self, data, nuisances, labels, weights):
         retdict = {}
-        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels)
-        retdict["adv. loss"] = self.evaluate_adversary_loss(data, nuisances, labels)
+        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels, weights)
+        retdict["adv. loss"] = self.evaluate_adversary_loss(data, nuisances, labels, weights)
         return retdict
 
     # try to load back the environment

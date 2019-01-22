@@ -11,7 +11,7 @@ class GMMAdversary(AdversaryModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_loss(self, pred, nuisance):
+    def build_loss(self, pred, nuisance, weights = 1.0):
         mu, sigma, frac, these_vars = self._adversary_model(pred)
 
         # mu, sigma and frac are of shape (batch_size, num_components)
@@ -19,7 +19,7 @@ class GMMAdversary(AdversaryModel):
 
         pdfval = tf.reduce_sum(comps_val, axis = 1) # sum over components
         logpdf = tf.math.log(pdfval + 1e-5)
-        loglik = tf.reduce_mean(logpdf, axis = 0) # sum over batch
+        loglik = tf.reduce_mean(logpdf * weights, axis = 0) # sum over batch
 
         return -loglik, these_vars
 

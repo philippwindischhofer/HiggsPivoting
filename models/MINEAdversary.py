@@ -10,7 +10,7 @@ class MINEAdversary(AdversaryModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_loss(self, pred, nuisance):
+    def build_loss(self, pred, nuisance, weights = 1.0):
         nuisance_shuffled = tf.random_shuffle(nuisance)
 
         data_xy = tf.concat([pred, nuisance], axis = 1)
@@ -19,8 +19,8 @@ class MINEAdversary(AdversaryModel):
         T_xy, these_vars = self._adversary_model(data_xy)
         T_x_y, these_vars_cc = self._adversary_model(data_x_y)
 
-        #MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y), axis = 0)))
-        MINE_lossval = -(tf.reduce_mean(T_xy, axis = 0) - tf.reduce_mean(tf.math.exp(T_x_y - 1), axis = 0))
+        #MINE_lossval = -(tf.reduce_mean(T_xy * weights, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y) * weights, axis = 0)))
+        MINE_lossval = -(tf.reduce_mean(T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(T_x_y - 1) * weights, axis = 0))
         MINE_lossval = MINE_lossval[0]
 
         return MINE_lossval, these_vars

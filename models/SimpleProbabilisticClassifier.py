@@ -39,7 +39,8 @@ class SimpleProbabilisticClassifier(ClassifierModel):
     
         return outputs, these_vars
 
-    def build_loss(self, pred, labels_one_hot):
+    def build_loss(self, pred, labels_one_hot, weights = 1.0):
         classification_loss = tf.losses.softmax_cross_entropy(onehot_labels = labels_one_hot,
-                                                              logits = pred)
+                                                              logits = pred,
+                                                              weights = weights)
         return classification_loss
