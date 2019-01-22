@@ -34,19 +34,23 @@ def main():
     test_size = 0.2
     sig_data_test = []
     sig_nuis_test = []
+    sig_weights_test = []
     for sample in sig_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
         sig_data_test.append(cur_testdata)
         sig_nuis_test.append(cur_nuisdata)
+        sig_weights_test.append(cur_weights)
 
     bkg_data_test = []
     bkg_nuis_test = []
+    bkg_weights_test = []
     for sample in bkg_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
         bkg_data_test.append(cur_testdata)
         bkg_nuis_test.append(cur_nuisdata)
+        bkg_weights_test.append(cur_weights)
 
     mods = []
     perfdicts = []
@@ -61,7 +65,7 @@ def main():
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.performance_plots(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test,
+        ev.performance_plots(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights_test, bkg_weights_test,
                              plots_outdir, sig_labels = sig_samples, bkg_labels = bkg_samples)
 
         # get performance metrics and save them
