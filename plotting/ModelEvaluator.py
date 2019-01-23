@@ -44,7 +44,7 @@ class ModelEvaluator:
 
         mBB_sig = sig_data_test["mBB"].values
         mBB_bkg = bkg_data_test["mBB"].values
-        mBB = np.concatenate([mBB_sig, mBB_bkg])
+        mBB = np.concatenate([mBB_sig, mBB_bkg])    
 
         # get the model's predictions
         pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
@@ -112,7 +112,7 @@ class ModelEvaluator:
         # plot the ROC
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(fpr, tpr, color = 'black')
+        ax.plot(tpr, fpr, color = 'black')
         ax.set_xlabel("signal efficiency")
         ax.set_ylabel("background efficiency")
         ax.set_aspect(1.0)
@@ -158,6 +158,8 @@ class ModelEvaluator:
         mBB_sig = sig_nuis_test
         mBB_bkg = bkg_nuis_test
 
+        print("original: " + str(len(mBB_sig[0])))
+
         cutval_sigeff_50 = self._weighted_percentile(np.concatenate(pred_sig), 0.50, weights = np.concatenate(sig_weights))
         cutval_sigeff_25 = self._weighted_percentile(np.concatenate(pred_sig), 0.75, weights = np.concatenate(sig_weights))
 
@@ -172,6 +174,8 @@ class ModelEvaluator:
         sig_weights_cut_50 = [cur_weights[inds] for cur_weights, inds in zip(sig_weights, sig_cut_50_passed)]
         bkg_weights_cut_50 = [cur_weights[inds] for cur_weights, inds in zip(bkg_weights, bkg_cut_50_passed)]
 
+        print("50 eff: " + str(mBB_sig_cut_50[0].shape))
+
         # put some harsh signal cut on the classifier
         sig_cut_25_passed = [np.where(pred > cutval_sigeff_25) for pred in pred_sig]
         bkg_cut_25_passed = [np.where(pred > cutval_sigeff_25) for pred in pred_bkg]
@@ -179,6 +183,8 @@ class ModelEvaluator:
         mBB_bkg_cut_25 = [mBB[inds] for mBB, inds in zip(mBB_bkg, bkg_cut_25_passed)]
         sig_weights_cut_25 = [cur_weights[inds] for cur_weights, inds in zip(sig_weights, sig_cut_25_passed)]
         bkg_weights_cut_25 = [cur_weights[inds] for cur_weights, inds in zip(bkg_weights, bkg_cut_25_passed)]
+
+        print("25 eff: " + str(mBB_sig_cut_25[0].shape))
 
         to_plot = [[data for data in WPs] for WPs in zip(mBB_sig + mBB_bkg,
                                                          mBB_sig_cut_50 + mBB_bkg_cut_50,
