@@ -11,7 +11,7 @@ class AdversarialTrainer(Trainer):
         self.statistics_dict = {}
 
     def sample_from(self, sources_sig, weights_sig, sources_bkg, weights_bkg, batchsize):
-        inds_sig = np.random.choice(len(sources_sig[0]), 5 * int(batchsize / 2))
+        inds_sig = np.random.choice(len(sources_sig[0]), 3 * int(batchsize / 2))
         inds_bkg = np.random.choice(len(sources_bkg[0]), int(0.5 * batchsize / 2))
 
         sampled_sig = [cur_source[inds_sig] for cur_source in sources_sig]
