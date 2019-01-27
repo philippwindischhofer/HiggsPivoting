@@ -12,32 +12,6 @@ class ModelEvaluator:
     def __init__(self, env):
         self.env = env
 
-    # computes some characteristics of the data directly, no model involved
-    @staticmethod
-    def get_data_metrics(sig_data_test, bkg_data_test):
-        # now add the purely data-based information as well
-        datadict = {"lambdaleglabel": "data"}
-
-        mBB_sig = sig_data_test["mBB"].values
-        mBB_bkg = bkg_data_test["mBB"].values
-        mBB = np.concatenate([mBB_sig, mBB_bkg])
-        
-        label_sig = np.ones(len(mBB_sig))
-        label_bkg = np.zeros(len(mBB_bkg))
-        labels = np.concatenate([label_sig, label_bkg])
-
-        data = np.concatenate([sig_data_test.values, bkg_data_test.values], axis = 0)
-
-        datadict["logI(f,label)"] = np.log(mutual_info_regression(data, labels.ravel(), copy = False))
-        datadict["logI(f,nu)"] = np.log(mutual_info_regression(data, mBB.ravel(), copy = False))
-
-        # datadict["logI(f,label)"] = np.random.rand()
-        # datadict["logI(f,nu)"] = np.random.rand()
-        
-        datadict["type"] = "data"
-
-        return datadict
-
     # computes a series of performance measures: ROC AUC
     def get_performance_metrics(self, sig_data_test, bkg_data_test):
         retdict = {}
@@ -92,22 +66,22 @@ class ModelEvaluator:
         return retdict
 
     # plot the ROC of the classifier
-    def plot_roc(self, sig_data_test, bkg_data_test, sig_weights, bkg_weights, outpath):
+    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath):
         # need to merge all signal- and background samples
-        sig_data_test = np.concatenate(sig_data_test, axis = 0)
-        bkg_data_test = np.concatenate(bkg_data_test, axis = 0)
+        data_sig = np.concatenate(data_sig, axis = 0)
+        data_bkg = np.concatenate(data_bkg, axis = 0)
         sig_weights = np.concatenate(sig_weights, axis = 0)
         bkg_weights = np.concatenate(bkg_weights, axis = 0)
 
-        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
-        pred_sig = self.env.predict(data = sig_data_test)[:,1]
+        pred_bkg = self.env.predict(data = data_bkg)[:,1]
+        pred_sig = self.env.predict(data = data_sig)[:,1]
 
         pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
         weights = np.concatenate([sig_weights, bkg_weights], axis = 0)
-        labels_test = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
+        labels = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
 
-        fpr, tpr, thresholds = metrics.roc_curve(labels_test, pred, sample_weight = weights)
-        auc = metrics.roc_auc_score(labels_test, pred, sample_weight = weights)
+        fpr, tpr, thresholds = metrics.roc_curve(labels, pred, sample_weight = weights)
+        auc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
 
         # plot the ROC
         fig = plt.figure()
@@ -123,6 +97,51 @@ class ModelEvaluator:
         if not os.path.exists(outpath):
             os.makedirs(outpath)
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
+        plt.close()
+
+    # plot the mBB spectrum of the passed signal and background datasets
+    def plot_mBB_distortion(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2):
+        pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
+        pred_sig = [self.env.predict(data = sample)[:,1] for sample in data_sig]
+        
+        # create the output directory if it doesn't already exist and save the figure(s)
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
+        
+        # compute the classifier cut values needed to achieve a certain signal efficiency
+        pred_sig_merged = np.concatenate(pred_sig)
+        weights_sig_merged = np.concatenate(weights_sig)
+        cutvals = [self._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
+
+        for cutval, sigeff in zip(cutvals, sigeffs):
+            print("classifier cut for {}% signal efficiency: {}".format(sigeff * 100, cutval))
+
+        pred = pred_sig + pred_bkg
+        nuis = nuis_sig + nuis_bkg
+        weights = weights_sig + weights_bkg
+        labels = labels_sig + labels_bkg
+
+        fig = plt.figure(figsize = (15, 10))
+        num_rows = len(pred) / num_cols
+
+        # iterate over all data samples and fill a separate subplot for each
+        for ind, (cur_pred, cur_nuis, cur_weights, cur_label) in enumerate(zip(pred, nuis, weights, labels)):
+            plot_data = [cur_nuis]
+            plot_weights = [cur_weights]
+            plot_labels = [cur_label]
+
+            # apply the classifier cuts
+            for cutval, sigeff in zip(cutvals, sigeffs):
+                cut_passed = np.where(cur_pred > cutval)
+                plot_data.append(cur_nuis[cut_passed])
+                plot_weights.append(cur_weights[cut_passed])
+                plot_labels.append(cur_label + " ({}% signal eff.)".format(sigeff * 100))
+                
+            self._add_subplot(fig, vals = plot_data, weights = plot_weights, labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1)
+            
+        # save the completed figure
+        plt.tight_layout()
+        fig.savefig(os.path.join(outpath, "dists_separate.pdf")) 
         plt.close()
 
     def _weighted_percentile(self, data, percentile, weights):
@@ -146,95 +165,14 @@ class ModelEvaluator:
         retval = np.interp(percentile, weighted_percentiles, data)
         return retval
 
-    def plot_mBB_distortion(self, sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights, bkg_weights, outpath, sig_labels = None, bkg_labels = None):
-        pred_bkg = [self.env.predict(data = sample)[:,1] for sample in bkg_data_test]
-        pred_sig = [self.env.predict(data = sample)[:,1] for sample in sig_data_test]
-
-        # create the output directory if it doesn't already exist and save the figure(s)
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
-
-        # plot the original mBB distributions for signal and background
-        mBB_sig = sig_nuis_test
-        mBB_bkg = bkg_nuis_test
-
-        print("original: " + str(len(mBB_sig[0])))
-
-        cutval_sigeff_50 = self._weighted_percentile(np.concatenate(pred_sig), 0.50, weights = np.concatenate(sig_weights))
-        cutval_sigeff_25 = self._weighted_percentile(np.concatenate(pred_sig), 0.75, weights = np.concatenate(sig_weights))
-
-        print("classifier cut for 50% signal efficiency: {}".format(cutval_sigeff_50))
-        print("classifier cut for 25% signal efficiency: {}".format(cutval_sigeff_25))
-
-        # put some loose signal cut on the classifier
-        sig_cut_50_passed = [np.where(pred > cutval_sigeff_50) for pred in pred_sig]
-        bkg_cut_50_passed = [np.where(pred > cutval_sigeff_50) for pred in pred_bkg]
-        mBB_sig_cut_50 = [mBB[inds] for mBB, inds in zip(mBB_sig, sig_cut_50_passed)]
-        mBB_bkg_cut_50 = [mBB[inds] for mBB, inds in zip(mBB_bkg, bkg_cut_50_passed)]
-        sig_weights_cut_50 = [cur_weights[inds] for cur_weights, inds in zip(sig_weights, sig_cut_50_passed)]
-        bkg_weights_cut_50 = [cur_weights[inds] for cur_weights, inds in zip(bkg_weights, bkg_cut_50_passed)]
-
-        print("50 eff: " + str(mBB_sig_cut_50[0].shape))
-
-        # put some harsh signal cut on the classifier
-        sig_cut_25_passed = [np.where(pred > cutval_sigeff_25) for pred in pred_sig]
-        bkg_cut_25_passed = [np.where(pred > cutval_sigeff_25) for pred in pred_bkg]
-        mBB_sig_cut_25 = [mBB[inds] for mBB, inds in zip(mBB_sig, sig_cut_25_passed)]
-        mBB_bkg_cut_25 = [mBB[inds] for mBB, inds in zip(mBB_bkg, bkg_cut_25_passed)]
-        sig_weights_cut_25 = [cur_weights[inds] for cur_weights, inds in zip(sig_weights, sig_cut_25_passed)]
-        bkg_weights_cut_25 = [cur_weights[inds] for cur_weights, inds in zip(bkg_weights, bkg_cut_25_passed)]
-
-        print("25 eff: " + str(mBB_sig_cut_25[0].shape))
-
-        to_plot = [[data for data in WPs] for WPs in zip(mBB_sig + mBB_bkg,
-                                                         mBB_sig_cut_50 + mBB_bkg_cut_50,
-                                                         mBB_sig_cut_25 + mBB_bkg_cut_25)]
-        plot_weights = [[weights for weights in WPs] for WPs in zip(sig_weights + bkg_weights,
-                                                                    sig_weights_cut_50 + bkg_weights_cut_50,
-                                                                    sig_weights_cut_25 + bkg_weights_cut_25)]
-        labels = [[label for label in WP_label] for WP_label in zip(sig_labels + bkg_labels,
-                                                                    [sample_name + " (50% signal eff.)" for sample_name in sig_labels + bkg_labels],
-                                                                    [sample_name + " (25% signal eff.)" for sample_name in sig_labels + bkg_labels])]
-
-        self._plot_mBB(to_plot, weights = plot_weights,
-                       outfile = os.path.join(outpath, "distributions_separate.pdf"), 
-                       labels = labels)
-
-
-        to_plot = [[data for data in WPs] for WPs in zip([np.concatenate(mBB_bkg, axis = 0)],
-                                                         [np.concatenate(mBB_bkg_cut_50, axis = 0)],
-                                                         [np.concatenate(mBB_bkg_cut_25, axis = 0)])]
-        plot_weights = [[weights for weights in WPs] for WPs in zip([np.concatenate(bkg_weights, axis = 0)],
-                                                                    [np.concatenate(bkg_weights_cut_50, axis = 0)],
-                                                                    [np.concatenate(bkg_weights_cut_25, axis = 0)])]
-        labels = [[label for label in WP_label] for WP_label in zip([["total background"]],
-                                                                    [["total background (50% signal eff.)"]],
-                                                                    [["total background (25% signal eff.)"]])]
-
-        self._plot_mBB(to_plot, weights = plot_weights,
-                       outfile = os.path.join(outpath, "distributions_merged.pdf"), 
-                       labels = labels, num_cols = 1)
+    def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num):
+        ax = fig.add_subplot(nrows, ncols, num)
+        ax.hist(vals, weights = weights, bins = 40, range = (0, 500), density = True, histtype = 'step', stacked = False, fill = False, label = labels)
+        ax.legend()
+        ax.set_xlabel(r'$m_{bb}$ [GeV]')
+        ax.set_ylabel('a.u.')
         
-    def _plot_mBB(self, vals, weights, outfile, labels, num_cols = 2):
-        num_rows = len(vals) / num_cols
-        print(num_rows)
-
-        # plot the raw distributions
-        fig = plt.figure(figsize = (15, 10))
-
-        for ind, (cur_val, cur_weights, cur_label) in enumerate(zip(vals, weights, labels)):
-            ax = fig.add_subplot(num_rows, num_cols, ind + 1)
-            ax.hist(cur_val, weights = cur_weights, bins = 40, range = (0, 500), density = True, histtype = 'step', stacked = False, fill = False, label = cur_label)
-            ax.legend()
-            ax.set_xlabel(r'$m_{bb}$ [GeV]')
-            ax.set_ylabel('a.u.')
-
-        plt.tight_layout()
-        fig.savefig(outfile) 
-        plt.close()
-
     # produce all performance plots
-    def performance_plots(self, sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights, bkg_weights, outpath, sig_labels = None, bkg_labels = None):
-        self.plot_roc(sig_data_test, bkg_data_test, sig_weights, bkg_weights, outpath)
-        self.plot_mBB_distortion(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights, bkg_weights, outpath, sig_labels, bkg_labels)
-
+    def performance_plots(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, outpath, labels_sig = None, labels_bkg = None):
+        self.plot_roc(data_sig, data_bkg, weights_sig, weights_bkg, outpath)
+        self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [0.5, 0.25], outpath, labels_sig, labels_bkg)
