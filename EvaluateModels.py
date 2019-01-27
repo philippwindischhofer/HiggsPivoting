@@ -66,7 +66,7 @@ def main():
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
         ev.performance_plots(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights_test, bkg_weights_test,
-                             plots_outdir, sig_labels = sig_samples, bkg_labels = bkg_samples)
+                             plots_outdir, labels_sig = sig_samples, labels_bkg = bkg_samples)
 
         # get performance metrics and save them
         #perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
