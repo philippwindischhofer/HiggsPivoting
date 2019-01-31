@@ -82,7 +82,6 @@ class AdversarialEnvironment(TFEnvironment):
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999).minimize(self.classification_loss, var_list = self.classifier_vars)
             self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = 0.005, beta1 = 0.9, beta2 = 0.999).minimize(self.adv_loss, var_list = self.adversary_vars)
-            #self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.3, beta2 = 0.5).minimize(self.total_loss, var_list = self.classifier_vars)
             self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999).minimize(self.total_loss, var_list = self.classifier_vars)
 
             self.saver = tf.train.Saver()
@@ -132,14 +131,13 @@ class AdversarialEnvironment(TFEnvironment):
         classifier_lossval = self.evaluate_classifier_loss(data, labels, weights)
         adversary_lossval = self.evaluate_adversary_loss(data, nuisances, labels, weights)
         weights = weights.flatten()
-        print("classifier loss: {:.4f}, adv. loss = {:.4f}".format(classifier_lossval, adversary_lossval))
+        print("classifier loss: {:.4e}, adv. loss = {:.4e}".format(classifier_lossval, adversary_lossval))
 
-    def predict(self, data):
+    # use the model to make predictions on 'data', adhering to a certain batch size for evolution
+    def predict(self, data, pred_size = 256):
         data_pre = self.pre.process(data)
 
         datlen = len(data_pre)
-        pred_size = 256
-
         chunks = np.split(data_pre, datlen / pred_size, axis = 0)
 
         retvals = []
