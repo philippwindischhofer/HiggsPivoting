@@ -21,7 +21,7 @@ def create_job_script(training_data_path, run_dir, script_dir):
     
 def RunTrainingCampaign(master_confpath):
     # some global settings
-    training_data_path = "/home/windischhofer/data/Hbb/training-mc16d.h5"
+    training_data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
     
     # first, generate the actual configuration files, starting from the master file
     campaign_dir = os.path.dirname(master_confpath)
