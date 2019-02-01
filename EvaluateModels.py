@@ -52,15 +52,11 @@ def main():
         bkg_nuis_test.append(cur_nuisdata)
         bkg_weights_test.append(cur_weights)
 
-    mods = []
-    perfdicts = []
     for model_dir in model_dirs:
         print("now evaluating " + model_dir)
 
         mce = AdversarialEnvironment.from_file(model_dir)
-        mods.append(mce)
 
-        #plots_outdir = os.path.join(plot_dir, os.path.basename(os.path.normpath(model_dir)))
         plots_outdir = plot_dir
 
         # generate performance plots for each model individually
@@ -69,22 +65,15 @@ def main():
                              plots_outdir, labels_sig = sig_samples, labels_bkg = bkg_samples)
 
         # get performance metrics and save them
-        #perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test)
-        #perfdicts.append(perfdict)
-        #print("got perfdict = " + str(perfdict))
-        #with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
-        #    pickle.dump(perfdict, outfile)
+        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights_test, 
+                                              bkg_weights_test, labels_sig = sig_samples, labels_bkg = bkg_samples)
+        print("got perfdict = " + str(perfdict))
+        with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
+           pickle.dump(perfdict, outfile)
 
         # generate plots showing the evolution of certain parameters during training
         tsp = TrainingStatisticsPlotter(model_dir)
         tsp.plot(outdir = plots_outdir)
-
-    # also get the purely data-based performance measures that are available
-    # datadict = ModelEvaluator.get_data_metrics(sig_data, bkg_data)
-    # perfdicts.append(datadict)
-
-    # generate combined performance plots that compare all the models
-    # PerformancePlotter.plot(perfdicts, outpath = plot_dir)
 
 if __name__ == "__main__":
     main()

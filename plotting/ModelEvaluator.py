@@ -12,58 +12,95 @@ class ModelEvaluator:
     def __init__(self, env):
         self.env = env
 
-    # computes a series of performance measures: ROC AUC
-    def get_performance_metrics(self, sig_data_test, bkg_data_test):
-        retdict = {}
+    # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
+    def _get_KS(self, p, p_weights, q, q_weights, num_pts = 1000):
+        if len(p) == 0 or len(q) == 0:
+            return 1.0
 
-        mBB_sig = sig_data_test["mBB"].values
-        mBB_bkg = bkg_data_test["mBB"].values
-        mBB = np.concatenate([mBB_sig, mBB_bkg])    
+        p = p.flatten()
+        q = q.flatten()
 
-        # get the model's predictions
-        pred_bkg = self.env.predict(data = bkg_data_test)[:,1]
-        pred_sig = self.env.predict(data = sig_data_test)[:,1]
-        pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
-        pred = np.expand_dims(pred, axis = 1)
+        # first, need to compute the cumulative distributions
+        p_inds_sorted = np.argsort(p)
+        p_sorted = p[p_inds_sorted]
+        p_weights_sorted = p_weights[p_inds_sorted]
 
-        labels_test = np.concatenate([np.ones(len(pred_sig)), np.zeros(len(pred_bkg))], axis = 0)
+        q_inds_sorted = np.argsort(q)
+        q_sorted = q[q_inds_sorted]
+        q_weights_sorted = q_weights[q_inds_sorted]
 
-        # get ROC AUC
-        retdict["ROCAUC"] = metrics.roc_auc_score(labels_test, pred)
+        # these hold the values of the cumulative distributions, evaluated at the positions
+        # corresponding to "p_stored" and "q_stored"
+        p_cum = np.cumsum(p_weights_sorted)
+        p_cum /= p_cum[-1]
 
-        # get low-level measure for how well the mBB distributions are preserved
-        mBB_sig_cut = mBB_sig[np.where(pred_sig > 0.85)]
-        mBB_bkg_cut = mBB_bkg[np.where(pred_bkg > 0.85)]
-        mBB_sig_cut_binned, _ = np.histogram(mBB_sig_cut, bins = 100, range = (0, 500), density = True)
-        mBB_bkg_cut_binned, _ = np.histogram(mBB_bkg_cut, bins = 100, range = (0, 500), density = True)
+        q_cum = np.cumsum(q_weights_sorted)
+        q_cum /= q_cum[-1]
 
-        mBB_sig_binned, _ = np.histogram(mBB_sig, bins = 100, range = (0, 500), density = True)
-        mBB_bkg_binned, _ = np.histogram(mBB_bkg, bins = 100, range = (0, 500), density = True)
+        # now, need to evaluate them on a common grid such that can look for the maximum absolute difference between 
+        # the two distributions
+        absmin = min(p_sorted[0], q_sorted[0])
+        absmax = max(p_sorted[-1], q_sorted[-1])
+        valgrid = np.linspace(absmin, absmax, num_pts)
 
-        # compute the squared differences between the raw, original distribution and the ones after the cut has been applied
-        mBB_sig_sq_diff = np.sqrt(np.sum(np.square(mBB_sig_cut_binned - mBB_sig_binned)))
-        mBB_bkg_sq_diff = np.sqrt(np.sum(np.square(mBB_bkg_cut_binned - mBB_bkg_binned)))
-        
-        retdict["sig_sq_diff"] = mBB_sig_sq_diff
-        retdict["bkg_sq_diff"] = mBB_bkg_sq_diff
+        p_cum_interp = np.interp(valgrid, p_sorted, p_cum, left = 0.0, right = 1.0)
+        q_cum_interp = np.interp(valgrid, q_sorted, q_cum, left = 0.0, right = 1.0)
 
-        # get mutual information between prediction and true class label
-        #retdict["logI(f,label)"] = np.log(mutual_info_regression(pred, labels_test, copy = False)[0])
-        retdict["logI(f,label)"] = np.random.rand()
+        # then get the KS metric as the maximum distance between them
+        KS = np.amax(np.abs(p_cum_interp - q_cum_interp))
 
-        # get mutual information between prediction and nuisance
-        #retdict["logI(f,nu)"] = np.log(mutual_info_regression(pred, mBB, copy = False)[0])
-        retdict["logI(f,nu)"] = np.random.rand()
+        return KS
 
-        # get additional information about this model and add it - may be important for plotting later
+    # computes a series of performance measures and saves them to a file
+    # currently, computes AUROC as robust performance measure, KL as robust fairness measure
+    def get_performance_metrics(self, data_sig, data_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25]):
+        perfdict = {}
+
+        pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
+        pred_sig = [self.env.predict(data = sample)[:,1] for sample in data_sig]
+
+        pred_sig_merged = np.concatenate(pred_sig)
+        pred_bkg_merged = np.concatenate(pred_bkg)
+
+        # compute the AUROC of this classifier
+        pred = np.concatenate([pred_sig_merged, pred_bkg_merged], axis = 0)
+        weights = np.concatenate(sig_weights + bkg_weights, axis = 0)
+        labels = np.concatenate([np.ones(len(pred_sig_merged)), np.zeros(len(pred_bkg_merged))], axis = 0)
+
+        auroc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
+        perfdict["AUROC"] = auroc
+
+        # to get the KS fairness metrics, need to compute the cut values for the given signal efficiencies
+        pred_sig_merged = np.concatenate(pred_sig, axis = 0)
+        weights_sig_merged = np.concatenate(sig_weights, axis = 0)
+
+        cutvals = [self._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
+
+        # apply the classifier cuts
+        for cutval, sigeff in zip(cutvals, sigeffs):
+
+            KS_vals = []
+
+            # compute the KS test statistic separately for each signal and background component, as well as for each given signal efficiency
+            for cur_pred, cur_nuis, cur_weights, cur_label in zip(pred_sig + pred_bkg, nuis_sig + nuis_bkg, sig_weights + bkg_weights, labels_sig + labels_bkg):
+
+                cut_passed = np.where(cur_pred > cutval)
+                cur_nuis_passed = cur_nuis[cut_passed]
+                cur_weights_passed = cur_weights[cut_passed]
+
+                cur_KS = self._get_KS(cur_nuis, cur_weights, cur_nuis_passed, cur_weights_passed)
+                KS_vals.append(cur_KS)
+
+                cur_dictlabel = "KS_" + str(int(sigeff * 100)) + "_" + cur_label
+                perfdict[cur_dictlabel] = cur_KS
+
+            perfdict["KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
+
+        # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
         for key, val in self.env.global_pars.items():
-            retdict[key] = val
+            perfdict[key] = val
 
-        # possibly prepare labels for important sweep quantities
-        if "lambda" in retdict:
-            retdict["lambdaleglabel"] = r'$\lambda = {:.2f}$'.format(float(retdict["lambda"]))
-
-        return retdict
+        return perfdict
 
     # plot the ROC of the classifier
     def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath):
@@ -172,7 +209,7 @@ class ModelEvaluator:
         ax.set_xlabel(r'$m_{bb}$ [GeV]')
         ax.set_ylabel('a.u.')
         
-    # produce all performance plots
+    # produce all performance plots showing an individual model: show the ROC curve as well as the distortion of the mBB spectrum
     def performance_plots(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, outpath, labels_sig = None, labels_bkg = None):
         self.plot_roc(data_sig, data_bkg, weights_sig, weights_bkg, outpath)
         self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [0.5, 0.25], outpath, labels_sig, labels_bkg)

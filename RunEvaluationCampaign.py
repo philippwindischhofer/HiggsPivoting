@@ -18,11 +18,11 @@ def create_job_script(model_dir, script_dir, training_data_path):
     return script_path
 
 def RunEvaluationCampaign(model_dirs):
-    training_data_path = "/home/windischhofer/data/Hbb/training-mc16d.h5"
+    training_data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path)
-        #CondorJobSubmitter.submit_job(job_script)
+        CondorJobSubmitter.submit_job(job_script)
 
 if __name__ == "__main__":
     model_dirs = sys.argv[1:]

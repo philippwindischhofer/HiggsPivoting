@@ -1,4 +1,4 @@
-import os
+import os, re
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -7,25 +7,29 @@ from matplotlib.lines import Line2D
 class PerformancePlotter:
 
     @staticmethod
-    def _II_plot(perfdicts, outpath):
-        PerformancePlotter._perfdict_plot(perfdicts, xquant = "logI(f,label)", yquant = "logI(f,nu)", xlabel = r'$\mathrm{log}\,\,I(f, \mathrm{label})$', ylabel = r'$\mathrm{log}\,\,I(f, \nu)$', leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "II_plot.pdf"))
+    def _AUROC_KS_plot(perfdicts, KS_regex, outpath):
+        typ_perfdict = perfdicts[0]
+        available_fields = typ_perfdict.keys()
 
+        KS_fields = filter(KS_regex.match, available_fields)
+
+        get_marker = lambda typestring: 'o'
+        get_label = lambda typestring: typestring
+
+        for KS_field in KS_fields:
+            PerformancePlotter._perfdict_plot(perfdicts, xquant = "AUROC", yquant = KS_field, xlabel = "AUROC", ylabel = KS_field, 
+                                              colorquant = "lambda", markerquant = "adversary_model", markerstyle = get_marker,
+                                              markerlabel = get_label, outfile = os.path.join(outpath, "AUROC_" + KS_field + ".pdf"))
+
+    # worker method for flexible plotting: takes as inputs the list of perfdicts created by the ModelEvaluator
+    # x/yquant ... quantity that should be printed along x/y
+    # x/ylabel ... labels to be used for the x/y axis
+    # colorquant ... quantity that controls the color
+    # markerquant ... quantity that controls the type of marker that is to be used
+    # markerstyle ... lambda of the form marker_style = lambda markerquant: return "marker_style"
+    # markerlabel ... lambda of the form legend_entry = lambda markerquant: return "legend_entry"
     @staticmethod
-    def _AUC_sig_sq_plot(perfdicts, outpath):
-        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "sig_sq_diff", xlabel = "AUC", ylabel = "sig_sq_diff_085", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_sig_sq_plot.pdf"))
-
-    @staticmethod
-    def _AUC_bkg_sq_plot(perfdicts, outpath):
-        PerformancePlotter._perfdict_plot(perfdicts, xquant = "ROCAUC", yquant = "bkg_sq_diff", xlabel = "AUC", ylabel = "bkg_sq_diff_085", leglabel = "lambdaleglabel", colorquant = "lambda", outfile = os.path.join(outpath, "AUC_bkg_sq_plot.pdf"))
-
-    @staticmethod
-    def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, leglabel, colorquant, outfile):
-        markerdict = {"MINEClassifierEnvironment": "o", "AdversarialClassifierEnvironment": "v", "AdversarialClassifierEnvironmentRandomized": "o", "data": "s"}
-        labeldict = {"MINEClassifierEnvironment": "MINE", "AdversarialClassifierEnvironment": "parametrized posterior", "AdversarialClassifierEnvironmentRandomized": "parametrized posterior, randomized classifier", "data": "data"}
-
-        # markerdict = {"1.0": "o", "2.0": "v", "3.0": "^", "4.0": "<", "5.0": ">", "6.0": "s"}
-        # labeldict = {"1.0": "n = 1", "2.0": "n = 2", "3.0": "n = 3", "4.0": "n = 4", "5.0": "n = 5", "6.0": "n = 6"}
-
+    def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, colorquant, markerquant, markerstyle, markerlabel, outfile):
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -37,18 +41,11 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for ind, perfdict in enumerate(perfdicts):
-            if ind > 9:
-                cur_type = "AdversarialClassifierEnvironmentRandomized"
-            else:
-                cur_type = "AdversarialClassifierEnvironment"
-            print(ind)
-
-            #cur_type = perfdict["type"]
-            #cur_type = perfdict["ncomp"]
-
-            label = labeldict[cur_type]
+            cur_type = perfdict[markerquant]
+            label = markerlabel(cur_type)
+            marker = markerstyle(cur_type)
             color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"
-            marker = markerdict[cur_type]
+
             if xquant in perfdict and yquant in perfdict:
                 if not cur_type in seen_types:
                     seen_types.append(cur_type)
@@ -56,7 +53,7 @@ class PerformancePlotter:
                 ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = label, marker = marker)
 
         # make legend with the different types that were encountered
-        legend_elems = [Line2D([0], [0], marker = markerdict[cur_type], color = 'white', markerfacecolor = "black", label = labeldict[cur_type]) for cur_type in seen_types]
+        legend_elems = [Line2D([0], [0], marker = markerstyle(cur_type), color = 'white', markerfacecolor = "black", label = markerlabel(cur_type)) for cur_type in seen_types]
         ax.legend(handles = legend_elems)
 
         # make colorbar for the range of encountered legended values
@@ -78,6 +75,5 @@ class PerformancePlotter:
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._II_plot(perfdicts, outpath)
-        PerformancePlotter._AUC_sig_sq_plot(perfdicts, outpath)
-        PerformancePlotter._AUC_bkg_sq_plot(perfdicts, outpath)
+        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_50_.*"), outpath)
+        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_25_.*"), outpath)

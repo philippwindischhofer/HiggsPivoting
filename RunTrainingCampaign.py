@@ -1,5 +1,7 @@
 import sys, os, glob, uuid
 sys.path.append("/home/windischhofer/ConfigFileSweeper/")
+from argparse import ArgumentParser
+from shutil import copyfile
 
 from ConfigFileSweeper import ConfigFileSweeper
 from utils.CondorJobSubmitter import CondorJobSubmitter
@@ -19,7 +21,7 @@ def create_job_script(training_data_path, run_dir, script_dir):
 
     return script_path
     
-def RunTrainingCampaign(master_confpath):
+def RunTrainingCampaign(master_confpath, nrep = 1):
     # some global settings
     training_data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
     
@@ -32,19 +34,30 @@ def RunTrainingCampaign(master_confpath):
     for config_file in config_files:
         config_file_basename, _ = os.path.splitext(config_file)
         config_file_fundname = config_file_basename.replace('.conf', '')
-        run_dir = os.path.join(campaign_dir, config_file_fundname)
 
-        print("creating run directory '" + run_dir + "'")
-        if not os.path.exists(run_dir):
-            os.makedirs(run_dir)
-        os.rename(config_file, os.path.join(run_dir, "meta.conf"))
+        for rep in range(nrep):
+            run_dir = os.path.join(campaign_dir, config_file_fundname + "." + str(rep))
+
+            print("creating run directory '" + run_dir + "'")
+            if not os.path.exists(run_dir):
+                os.makedirs(run_dir)
+            copyfile(config_file, os.path.join(run_dir, "meta.conf"))
+            #os.rename(config_file, os.path.join(run_dir, "meta.conf"))
         
-        # create the job scripts
-        job_script = create_job_script(training_data_path, run_dir, run_dir)
+            # create the job scripts
+            job_script = create_job_script(training_data_path, run_dir, run_dir)
 
-        # submit them to the condor batch system
-        CondorJobSubmitter.submit_job(job_script)
+            # submit them to the condor batch system
+            CondorJobSubmitter.submit_job(job_script)
+
+        os.remove(config_file)
 
 if __name__ == "__main__":
-    master_confpath = sys.argv[1]
-    RunTrainingCampaign(master_confpath)
+    parser = ArgumentParser(description = "launch training campaign")
+    parser.add_argument("--confpath", action = "store", dest = "master_confpath")
+    parser.add_argument("--nrep", action = "store", dest = "nrep")
+    args = vars(parser.parse_args())
+
+    master_confpath = args["master_confpath"]
+    nrep = int(args["nrep"])
+    RunTrainingCampaign(master_confpath, nrep = nrep)
