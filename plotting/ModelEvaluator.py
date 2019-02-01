@@ -14,7 +14,12 @@ class ModelEvaluator:
 
     # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
     def _get_KS(self, p, p_weights, q, q_weights, num_pts = 1000):
+        # don't attempt to do anything if there is no data
         if len(p) == 0 or len(q) == 0:
+            return 1.0
+
+        # also refuse to do anything for very unbalanced data
+        if min(len(p), len(q)) / max(len(p), len(q)) < 0.05:
             return 1.0
 
         p = p.flatten()
@@ -93,7 +98,7 @@ class ModelEvaluator:
 
                 cur_dictlabel = "KS_" + str(int(sigeff * 100)) + "_" + cur_label
                 perfdict[cur_dictlabel] = cur_KS
-
+                
             perfdict["KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
