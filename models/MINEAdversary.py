@@ -20,7 +20,7 @@ class MINEAdversary(AdversaryModel):
         T_x_y, these_vars_cc = self._adversary_model(data_x_y)
 
         # add gradient regularization
-        reg_strength = tf.math.exp(-batchnum * 0.001) + 0.1
+        reg_strength = tf.math.exp(-batchnum) + 0.001
 
         T_x_y_grad = tf.gradients(T_x_y, data_x_y)[0] # returns a list of length 1, where the only entry is the tensor holding the gradients
         T_x_y_grad_norm = tf.math.sqrt(tf.reduce_sum(tf.math.square(T_x_y_grad), axis = 1) + eps)

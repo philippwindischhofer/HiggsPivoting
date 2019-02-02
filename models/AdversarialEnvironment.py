@@ -53,11 +53,11 @@ class AdversarialEnvironment(TFEnvironment):
 
     def build(self):
 
-        lambda_val = float(self.global_pars["lambda"])
+        self.lambda_final = float(self.global_pars["lambda"])
         num_inputs = int(float(self.global_pars["num_inputs"]))
         num_nuisances = int(float(self.global_pars["num_nuisances"]))
 
-        print("building AdversarialEnvironment using lamba = {}".format(lambda_val))
+        print("building AdversarialEnvironment using lambda = {}".format(self.lambda_final))
         with self.graph.as_default():
             self.pre = PCAWhiteningPreprocessor(num_inputs)
             self.pre_nuisance = PCAWhiteningPreprocessor(num_nuisances)
@@ -68,6 +68,7 @@ class AdversarialEnvironment(TFEnvironment):
             self.nuisances_in = tf.placeholder(tf.float32, [None, num_nuisances], name = 'nuisances_in')
             self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
             self.batchnum = tf.placeholder(tf.float32, [1], name = 'batchnum')
+            self.lambdaval = tf.placeholder(tf.float32, [1], name = 'lambdaval')
 
             # set up the classifier model
             self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in)
@@ -78,7 +79,7 @@ class AdversarialEnvironment(TFEnvironment):
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
             self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_in, batchnum = self.batchnum)
 
-            self.total_loss = self.classification_loss + lambda_val * (-self.adv_loss)
+            self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
 
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.classification_loss, var_list = self.classifier_vars)
@@ -99,8 +100,10 @@ class AdversarialEnvironment(TFEnvironment):
         nuisances_pre = self.pre_nuisance.process(nuisances_step)
         weights_step = weights_step.flatten()
 
+        lambda_cur = self.lambda_final - np.exp(-batchnum * 0.05)
+
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum]})
+            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum]})
 
     def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
         data_pre = self.pre.process(data_step)
