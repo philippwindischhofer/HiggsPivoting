@@ -10,7 +10,7 @@ class MINEAdversary(AdversaryModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_loss(self, pred, nuisance, weights = 1.0, eps = 1e-6, reg_strength = 0.1):
+    def build_loss(self, pred, nuisance, weights = 1.0, eps = 1e-6, batchnum = 0):
         nuisance_shuffled = tf.random_shuffle(nuisance)
 
         data_xy = tf.concat([pred, nuisance], axis = 1)
@@ -20,6 +20,8 @@ class MINEAdversary(AdversaryModel):
         T_x_y, these_vars_cc = self._adversary_model(data_x_y)
 
         # add gradient regularization
+        reg_strength = tf.math.exp(-batchnum * 0.001) + 0.1
+
         T_x_y_grad = tf.gradients(T_x_y, data_x_y)[0] # returns a list of length 1, where the only entry is the tensor holding the gradients
         T_x_y_grad_norm = tf.math.sqrt(tf.reduce_sum(tf.math.square(T_x_y_grad), axis = 1) + eps)
         T_x_y_reg = tf.math.exp(T_x_y - 1) * T_x_y_grad_norm
