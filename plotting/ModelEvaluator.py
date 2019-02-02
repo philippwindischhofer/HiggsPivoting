@@ -67,6 +67,9 @@ class ModelEvaluator:
         pred_sig_merged = np.concatenate(pred_sig)
         pred_bkg_merged = np.concatenate(pred_bkg)
 
+        nuis_bkg_merged = np.concatenate(nuis_bkg)
+        weights_bkg_merged = np.concatenate(bkg_weights)
+
         # compute the AUROC of this classifier
         pred = np.concatenate([pred_sig_merged, pred_bkg_merged], axis = 0)
         weights = np.concatenate(sig_weights + bkg_weights, axis = 0)
@@ -100,6 +103,13 @@ class ModelEvaluator:
                 perfdict[cur_dictlabel] = cur_KS
                 
             perfdict["KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
+
+            # also compute KS for the combined background (all components merged)
+            cut_passed = np.where(pred_bkg_merged > cutval)
+            cur_nuis_passed = nuis_bkg_merged[cut_passed]
+            cur_weights_passed = weights_bkg_merged[cut_passed]
+            cur_KS = self._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
+            perfdict["KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
         for key, val in self.env.global_pars.items():
