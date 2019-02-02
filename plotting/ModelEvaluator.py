@@ -112,8 +112,8 @@ class ModelEvaluator:
             perfdict["KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
-        for key, val in self.env.global_pars.items():
-            perfdict[key] = val
+        paramdict = self.env.create_paramdict()
+        perfdict.update(paramdict)
 
         return perfdict
 

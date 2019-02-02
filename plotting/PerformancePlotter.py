@@ -7,7 +7,7 @@ from matplotlib.lines import Line2D
 class PerformancePlotter:
 
     @staticmethod
-    def _AUROC_KS_plot(perfdicts, KS_regex, outpath):
+    def _AUROC_KS_plot(perfdicts, KS_regex, colorquant, outpath):
         typ_perfdict = perfdicts[0]
         available_fields = typ_perfdict.keys()
 
@@ -18,7 +18,7 @@ class PerformancePlotter:
 
         for KS_field in KS_fields:
             PerformancePlotter._perfdict_plot(perfdicts, xquant = "AUROC", yquant = KS_field, xlabel = "AUROC", ylabel = KS_field, 
-                                              colorquant = "lambda", markerquant = "adversary_model", markerstyle = get_marker,
+                                              colorquant = colorquant, markerquant = "adversary_model", markerstyle = get_marker,
                                               markerlabel = get_label, outfile = os.path.join(outpath, "AUROC_" + KS_field + ".pdf"))
 
     # worker method for flexible plotting: takes as inputs the list of perfdicts created by the ModelEvaluator
@@ -71,9 +71,9 @@ class PerformancePlotter:
         plt.close()        
 
     @staticmethod
-    def plot(perfdicts, outpath):
+    def plot(perfdicts, outpath, colorquant = "lambda"):
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_50_.*"), outpath)
-        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_25_.*"), outpath)
+        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_50_.*"), colorquant, outpath)
+        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_25_.*"), colorquant, outpath)

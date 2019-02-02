@@ -76,7 +76,7 @@ class AdversarialTrainer(Trainer):
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
                                                                                           initial_req = 100, sow_target = self.training_pars["sow_target"])
 
-            env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)
+            env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, reg_strength = [0.1])
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)
 
         print("pretraining complete!")
@@ -88,7 +88,9 @@ class AdversarialTrainer(Trainer):
                                                                                           initial_req = 100, sow_target = self.training_pars["sow_target"])
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)
-            env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch)
+            cur_regstrength = np.exp(-batch * 0.001) + 0.05
+            print("using current regularization strength = " + str(cur_regstrength))
+            env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, reg_strength = [cur_regstrength])
 
             # callbacks to keep track of the parameter evolution during training
             stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)

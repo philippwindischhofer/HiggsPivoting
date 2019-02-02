@@ -13,7 +13,7 @@ def MakeGlobalPlots(model_dirs, plot_dir):
         perfdicts.append(perfdict)
 
     # generate combined performance plots that compare all the models
-    PerformancePlotter.plot(perfdicts, outpath = plot_dir)
+    PerformancePlotter.plot(perfdicts, outpath = plot_dir, colorquant = "adv_gradreg_strength")
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "create global comparison plots")
