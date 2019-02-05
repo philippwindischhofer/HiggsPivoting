@@ -15,6 +15,7 @@ class SimpleProbabilisticClassifier(ClassifierModel):
 
             for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
                 lay = layers.relu(lay, int(float(self.hyperpars["num_units"])))
+                lay = layers.dropout(lay, keep_prob = 0.9)
 
             nc = int(float(self.hyperpars["num_components"]))
             pre_output = layers.linear(lay, 3 * nc)
