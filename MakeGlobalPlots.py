@@ -13,7 +13,7 @@ def MakeGlobalPlots(model_dirs, plot_dir):
                 perfdict = pickle.load(infile)
             perfdicts.append(perfdict)
         except:
-            print("no information found for model '{}'".format{model_dir})
+            print("no information found for model '{}'".format(model_dir))
 
     # generate combined performance plots that compare all the models
     PerformancePlotter.plot(perfdicts, outpath = plot_dir, colorquant = "lambda")

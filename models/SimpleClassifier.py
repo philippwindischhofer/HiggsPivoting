@@ -15,6 +15,7 @@ class SimpleClassifier(ClassifierModel):
 
             for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
                 lay = layers.relu(lay, int(float(self.hyperpars["num_units"])))
+                lay = layers.dropout(lay, keep_prob = 0.9)
 
             lay = layers.relu(lay, 2)
             outputs = layers.softmax(lay)

@@ -40,6 +40,12 @@ class PerformancePlotter:
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
+
+        ax.set_axisbelow(True)
+        ax.minorticks_on()
+        ax.grid(which = 'major', color = 'gray', linestyle = '-')
+        ax.grid(which = 'minor', color = 'lightgray', linestyle = '--')
+
         for ind, perfdict in enumerate(perfdicts):
             cur_type = perfdict[markerquant]
             label = markerlabel(cur_type)
@@ -63,6 +69,10 @@ class PerformancePlotter:
                                        norm = norm,
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
+
+        # set limits
+        ax.set_xlim([0.5, 1.0])
+        ax.set_ylim([0.0, 1.0])
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
