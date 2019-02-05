@@ -62,8 +62,8 @@ def main():
     mce = AdversarialEnvironment.from_file(outdir)
 
     # set up the training
-    train = AdversarialTrainer(training_pars = {"sow_target": 0.50, "pretrain_batches": 100, "printout_interval": 10})
-    train.train(mce, number_batches = 50, traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
+    train = AdversarialTrainer(training_pars = {"sow_target": 0.3, "pretrain_batches": 100, "printout_interval": 10})
+    train.train(mce, number_batches = 400, traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
 
     # save all the necessary information
     if not os.path.exists(outdir):

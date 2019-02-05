@@ -100,7 +100,8 @@ class AdversarialEnvironment(TFEnvironment):
         nuisances_pre = self.pre_nuisance.process(nuisances_step)
         weights_step = weights_step.flatten()
 
-        lambda_cur = self.lambda_final - np.exp(-batchnum * 0.05)
+        # use a constant lambda for the time being
+        lambda_cur = self.lambda_final
 
         with self.graph.as_default():
             self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum]})
