@@ -8,9 +8,12 @@ def MakeGlobalPlots(model_dirs, plot_dir):
 
     # load back the prepared performance metrics
     for model_dir in model_dirs:
-        with open(os.path.join(model_dir, "perfdict.pkl"), "rb") as infile:
-            perfdict = pickle.load(infile)
-        perfdicts.append(perfdict)
+        try:
+            with open(os.path.join(model_dir, "perfdict.pkl"), "rb") as infile:
+                perfdict = pickle.load(infile)
+            perfdicts.append(perfdict)
+        except:
+            print("no information found for model '{}'".format{model_dir})
 
     # generate combined performance plots that compare all the models
     PerformancePlotter.plot(perfdicts, outpath = plot_dir, colorquant = "lambda")
