@@ -151,6 +151,20 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, "ROC.pdf"))
         plt.close()
 
+    # plots the classifier output distribution for the passed signal and background datasets
+    def plot_clf_distribution(self, data, weights, outpath, labels = None, num_cols = 2):
+        pred = [self.env.predict(data = sample)[:,1] for sample in data]
+
+        fig = plt.figure(figsize = (15, 10))
+        num_rows = len(pred) / num_cols
+
+        for ind, (cur_pred, cur_weights, cur_label) in enumerate(zip(pred, weights, labels)):
+            self._add_subplot(fig, vals = [cur_pred], weights = [cur_weights.flatten()], labels = [cur_label], nrows = num_rows, ncols = num_cols, num = ind + 1, xlabel = "classifier output", ylabel = "normalized to 1", histrange = (0, 1))
+
+        plt.tight_layout()
+        fig.savefig(os.path.join(outpath, "dists_clf.pdf")) 
+        plt.close()
+
     # plot the mBB spectrum of the passed signal and background datasets
     def plot_mBB_distortion(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2):
         pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
@@ -217,14 +231,15 @@ class ModelEvaluator:
         retval = np.interp(percentile, weighted_percentiles, data)
         return retval
 
-    def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num):
+    def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', histrange = (0, 500)):
         ax = fig.add_subplot(nrows, ncols, num)
-        ax.hist(vals, weights = weights, bins = 40, range = (0, 500), density = True, histtype = 'step', stacked = False, fill = False, label = labels)
+        ax.hist(vals, weights = weights, bins = 40, range = histrange, density = True, histtype = 'step', stacked = False, fill = False, label = labels)
         ax.legend()
-        ax.set_xlabel(r'$m_{bb}$ [GeV]')
-        ax.set_ylabel('a.u.')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         
     # produce all performance plots showing an individual model: show the ROC curve as well as the distortion of the mBB spectrum
     def performance_plots(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, outpath, labels_sig = None, labels_bkg = None):
         self.plot_roc(data_sig, data_bkg, weights_sig, weights_bkg, outpath)
         self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [0.5, 0.25], outpath, labels_sig, labels_bkg)
+        self.plot_clf_distribution(data = data_sig + data_bkg, weights = weights_sig + weights_bkg, outpath = outpath, labels = labels_sig + labels_bkg, num_cols = 2)
