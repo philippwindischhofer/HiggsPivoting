@@ -11,7 +11,7 @@ class GMMAdversary(AdversaryModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_loss(self, pred, nuisance, weights = 1.0, batchnum = 0):
+    def build_loss(self, pred, nuisance, is_training, weights = 1.0, batchnum = 0):
         mu, sigma, frac, these_vars = self._adversary_model(pred)
 
         # mu, sigma and frac are of shape (batch_size, num_components)

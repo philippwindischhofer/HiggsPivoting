@@ -68,16 +68,17 @@ class AdversarialEnvironment(TFEnvironment):
             self.nuisances_in = tf.placeholder(tf.float32, [None, num_nuisances], name = 'nuisances_in')
             self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
             self.batchnum = tf.placeholder(tf.float32, [1], name = 'batchnum')
+            self.is_training = tf.placeholder(tf.bool, name = 'is_training')
             self.lambdaval = tf.placeholder(tf.float32, [1], name = 'lambdaval')
 
             # set up the classifier model
-            self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in)
+            self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in, is_training = self.is_training)
             self.labels_one_hot = tf.one_hot(self.labels_in, depth = 2)
             self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot, weights = self.weights_in, batchnum = self.batchnum)
 
             # set up the model for the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_in, batchnum = self.batchnum)
+            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_in, batchnum = self.batchnum, is_training = self.is_training)
 
             self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
 
@@ -104,7 +105,7 @@ class AdversarialEnvironment(TFEnvironment):
         lambda_cur = self.lambda_final
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum]})
+            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True})
 
     def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
         data_pre = self.pre.process(data_step)
@@ -112,14 +113,14 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum]})
+            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True})
 
     def evaluate_classifier_loss(self, data, labels, weights_step):
         data_pre = self.pre.process(data)
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step})
+            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
         return classifier_lossval
 
     def evaluate_adversary_loss(self, data, nuisances, labels, weights_step, batchnum = 0):
@@ -128,7 +129,7 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum]})
+            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True})
 
         return retval
 
@@ -148,7 +149,7 @@ class AdversarialEnvironment(TFEnvironment):
         retvals = []
         for chunk in chunks:
             with self.graph.as_default():
-                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk})
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False})
                 retvals.append(retval_cur)
 
         return np.concatenate(retvals, axis = 0)

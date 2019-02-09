@@ -9,13 +9,13 @@ class SimpleClassifier(ClassifierModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_model(self, in_tensor):
+    def build_model(self, in_tensor, is_training):
         with tf.variable_scope(self.name):
             lay = in_tensor
 
             for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
                 lay = layers.relu(lay, int(float(self.hyperpars["num_units"])))
-                lay = layers.dropout(lay, keep_prob = 0.9)
+                lay = layers.dropout(lay, keep_prob = 1 - float(self.hyperpars["dropout_rate"]), is_training = is_training)
 
             lay = layers.relu(lay, 2)
             outputs = layers.softmax(lay)
