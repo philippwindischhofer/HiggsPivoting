@@ -70,7 +70,7 @@ class AdversarialTrainer(Trainer):
         env.init(data_train = data_train, data_nuisance = nuisances_train)
 
         # pre-train the adversary
-        print("pretraining adversarial network for {} batches".format(self.training_pars["pretrain_batches"]))
+        print("pretraining adversarial network for {} batches".format(self.training_pars["adversary_pretrain_batches"]))
         for batch in range(int(self.training_pars["pretrain_batches"])):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
@@ -78,10 +78,21 @@ class AdversarialTrainer(Trainer):
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)
+        print("adversary pretraining complete!")
 
-        print("pretraining complete!")
+        # pre-train the classifier
+        print("pretraining classifier for {} batches".format(self.training_pars["classifier_pretrain_batches"]))
+        for batch in range(int(self.training_pars["classifier_pretrain_batches"])):
+            # sample coherently from (data, nuisance, label) tuples
+            (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
+                                                                                          initial_req = 100, sow_target = self.training_pars["sow_target"])
 
-        print("starting training:")
+            env.train_classifier(data_step = data_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
+            env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)            
+        print("classifier pretraining complete!")
+
+        # start the actual adversarial training
+        print("starting adversarial training:")
         for batch in range(int(number_batches)):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 

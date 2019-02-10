@@ -58,6 +58,10 @@ class AdversarialEnvironment(TFEnvironment):
         num_nuisances = int(float(self.global_pars["num_nuisances"]))
 
         print("building AdversarialEnvironment using lambda = {}".format(self.lambda_final))
+        print("global_pars:")
+        for key, val in self.global_pars.items():
+            print(key + ": " + str(val))
+
         with self.graph.as_default():
             self.pre = PCAWhiteningPreprocessor(num_inputs)
             self.pre_nuisance = PCAWhiteningPreprocessor(num_nuisances)
@@ -83,9 +87,24 @@ class AdversarialEnvironment(TFEnvironment):
             self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
 
             # set up the optimizers for both classifier and adversary
-            self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.classification_loss, var_list = self.classifier_vars)
-            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = 0.005, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.adv_loss, var_list = self.adversary_vars)
-            self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = 0.0003, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.total_loss, var_list = self.classifier_vars)
+            # self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = 0.003, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.classification_loss, var_list = self.classifier_vars)
+            # self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = 0.005, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.adv_loss, var_list = self.adversary_vars)
+            # self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = 0.0003, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-9).minimize(self.total_loss, var_list = self.classifier_vars)
+
+            self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
+                                                                      beta1 = float(self.global_pars["adam_clf_beta1"]), 
+                                                                      beta2 = float(self.global_pars["adam_clf_beta2"]), 
+                                                                      epsilon = float(self.global_pars["adam_clf_eps"])).minimize(self.classification_loss, var_list = self.classifier_vars)
+
+            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_adv_lr"]),
+                                                                     beta1 = float(self.global_pars["adam_adv_beta1"]), 
+                                                                     beta2 = float(self.global_pars["adam_adv_beta2"]), 
+                                                                     epsilon = float(self.global_pars["adam_adv_eps"])).minimize(self.adv_loss, var_list = self.adversary_vars)
+
+            self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_adv_lr"]), 
+                                                               beta1 = float(self.global_pars["adam_clf_adv_beta1"]), 
+                                                               beta2 = float(self.global_pars["adam_clf_adv_beta2"]), 
+                                                               epsilon = float(self.global_pars["adam_clf_adv_eps"])).minimize(self.total_loss, var_list = self.classifier_vars)            
 
             self.saver = tf.train.Saver()
 
@@ -114,6 +133,13 @@ class AdversarialEnvironment(TFEnvironment):
 
         with self.graph.as_default():
             self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True})
+
+    def train_classifier(self, data_step, labels_step, weights_step, batchnum):
+        data_pre = self.pre.process(data_step)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            self.sess.run(self.train_classifier_standalone, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True})
 
     def evaluate_classifier_loss(self, data, labels, weights_step):
         data_pre = self.pre.process(data)
