@@ -140,7 +140,7 @@ class AdversarialEnvironment(TFEnvironment):
         print("classifier loss: {:.4e}, adv. loss = {:.4e}".format(classifier_lossval, adversary_lossval))
 
     # use the model to make predictions on 'data', adhering to a certain batch size for evolution
-    def predict(self, data, pred_size = 256):
+    def predict(self, data, pred_size = 256, use_dropout = True):
         data_pre = self.pre.process(data)
 
         datlen = len(data_pre)
@@ -149,7 +149,7 @@ class AdversarialEnvironment(TFEnvironment):
         retvals = []
         for chunk in chunks:
             with self.graph.as_default():
-                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False})
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout})
                 retvals.append(retval_cur)
 
         return np.concatenate(retvals, axis = 0)

@@ -71,7 +71,7 @@ class AdversarialTrainer(Trainer):
 
         # pre-train the adversary
         print("pretraining adversarial network for {} batches".format(self.training_pars["pretrain_batches"]))
-        for batch in range(self.training_pars["pretrain_batches"]):
+        for batch in range(int(self.training_pars["pretrain_batches"])):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
                                                                                           initial_req = 100, sow_target = self.training_pars["sow_target"])
@@ -82,7 +82,7 @@ class AdversarialTrainer(Trainer):
         print("pretraining complete!")
 
         print("starting training:")
-        for batch in range(number_batches):
+        for batch in range(int(number_batches)):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_from([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
                                                                                           initial_req = 100, sow_target = self.training_pars["sow_target"])
@@ -100,7 +100,7 @@ class AdversarialTrainer(Trainer):
                 self.statistics_dict[key].append(val)
 
             # some status printouts
-            if not batch % self.training_pars["printout_interval"]:
+            if not batch % int(self.training_pars["printout_interval"]):
                 print("batch {}:".format(batch))
                 print("dynamic batch size = " + str(len(data_batch)))
                 env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)

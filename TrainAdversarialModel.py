@@ -21,7 +21,8 @@ def main():
     print("using infile_path = " + infile_path)
     print("using outdir = " + outdir)
 
-    data_branches = TrainingConfig.training_branches
+    tconf = TrainingConfig.from_file(outdir)
+    data_branches = tconf.training_branches
     print("using data_branches = " + ", ".join(data_branches))
 
     # read the training data
@@ -61,9 +62,14 @@ def main():
     print("starting up")
     mce = AdversarialEnvironment.from_file(outdir)
 
+    training_pars = tconf.training_pars
+    print("using the following training parameters:")
+    for key, val in training_pars.items():
+        print(key + " = " + str(val))
+
     # set up the training
-    train = AdversarialTrainer(training_pars = {"sow_target": 0.3, "pretrain_batches": 100, "printout_interval": 10})
-    train.train(mce, number_batches = 800, traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
+    train = AdversarialTrainer(training_pars = training_pars)
+    train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
 
     # save all the necessary information
     if not os.path.exists(outdir):
