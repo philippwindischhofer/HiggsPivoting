@@ -12,7 +12,7 @@ def TrainNuisAuxSplit(indat):
 
 def PrepareDataset():
     infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16d.root"
-    outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16d-multibackground_multisignal.h5"
+    outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
     data_branches = TrainingConfig.training_branches + TrainingConfig.auxiliary_branches
     truth_branches = ["Sample"]
