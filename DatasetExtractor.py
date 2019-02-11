@@ -11,18 +11,18 @@ def TrainNuisAuxSplit(indat):
     return indat[TrainingConfig.training_branches].values, indat[TrainingConfig.nuisance_branches].values, indat[TrainingConfig.auxiliary_branches].values
 
 def PrepareDataset():
-    infile_path = "/data/atlas/atlasdata/windischhofer/Hbb/hist-all-mc16d.root"
-    outfile_path = "/data/atlas/atlasdata/windischhofer/Hbb/training-mc16d-multibackground_multisignal_allweights.h5"
+    infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16d.root"
+    outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16d-multibackground_multisignal.h5"
 
     data_branches = TrainingConfig.training_branches + TrainingConfig.auxiliary_branches
     truth_branches = ["Sample"]
     read_branches = data_branches + truth_branches
 
-    sample_defs = {"Hbb": ["ggZvvH125", "qqZvvH125", "qqWlvH125", "qqZllH125", "qqWlvH125cc"], 
+    sample_defs = {"Hbb": ["ggZvvH125", "qqZvvH125", "qqWlvH125", "qqZllH125", "qqWlvH125cc", "ggZvvH125cc", "ggZllH125"], 
                    "Zjets": ["Zbb", "Zbc", "Zbl", "Zcc", "Zcl", "Zl"],
                    "Wjets": ["Wbb", "Wbc", "Wbl", "Wcc", "Wcl", "Wl"],
                    "ttbar": ["ttbar"],
-                   "diboson": ["WW", "ZZ", "WZ"],
+                   "diboson": ["WW", "ZZ", "WZ", "ggWW", "ggZZ"],
                    "singletop": ["stopWt", "stopt", "stops"]}
 
     # prepare the necessary cuts for the individual samples
