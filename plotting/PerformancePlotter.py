@@ -81,9 +81,68 @@ class PerformancePlotter:
         plt.close()        
 
     @staticmethod
-    def plot(perfdicts, outpath, colorquant = "lambda"):
+    def plot_AUROC_KS(perfdicts, outpath, colorquant = "lambda"):
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
         PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_50_.*"), colorquant, outpath)
         PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_25_.*"), colorquant, outpath)
+
+    # combine the passed plots and save them
+    @staticmethod
+    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = []):
+        cmap = plt.cm.viridis
+
+        # find the proper normalization of the color map
+        colorrange = [float(perfdict[colorquant]) for perfdict in perfdicts if colorquant in perfdict]
+        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+
+        if len(perfdicts) != len(hist_data):
+            raise Exception("need to get the same number of perfdicts and plots")
+
+        bin_values = []
+        bin_centers = []
+        colors = []
+
+        for perfdict, cur_hist in zip(perfdicts, hist_data):
+            cur_bin_values = cur_hist[0]
+            edges = cur_hist[1]
+            xlabel = cur_hist[3]
+            ylabel = cur_hist[4]
+
+            color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"
+            colors.append(color)
+
+            low_edges = edges[:-1]
+            high_edges = edges[1:]
+            cur_centers = 0.5 * (low_edges + high_edges)
+
+            bin_centers.append(cur_centers)
+            bin_values.append(cur_bin_values)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        # plot the combined histograms
+        for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
+            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.1)
+        
+        # plot the overlays
+        for (x, y, opts) in overlays:
+            ax.plot(x, y, **opts)
+            ax.legend()
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(plot_title)
+
+        # make colorbar for the range of encountered legended values
+        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
+        fig.subplots_adjust(right = 0.8)
+        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                       norm = norm,
+                                       orientation = 'vertical')
+        cb.set_label(r'$\lambda$')
+
+        fig.savefig(outpath)
+        plt.close()

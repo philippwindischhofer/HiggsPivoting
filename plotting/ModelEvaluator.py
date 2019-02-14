@@ -1,4 +1,4 @@
-import os
+import os, pickle
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -159,9 +159,17 @@ class ModelEvaluator:
         num_rows = len(pred) / num_cols
 
         for ind, (cur_pred, cur_weights, cur_label) in enumerate(zip(pred, weights, labels)):
-            self._add_subplot(fig, vals = [cur_pred], weights = [cur_weights.flatten()], labels = [cur_label], nrows = num_rows, ncols = num_cols, num = ind + 1, xlabel = "classifier output", ylabel = "normalized to 1", histrange = (0, 1))
+            xlabel = "classifier output"
+            ylabel = "normalized to 1"
+            plot_labels = [cur_label]
+
+            n, bins, patches = self._add_subplot(fig, vals = [cur_pred], weights = [cur_weights.flatten()], labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1, xlabel = xlabel, ylabel = ylabel, histrange = (0, 1))
+
+            with open(os.path.join(outpath, "dist_clf_" + cur_label + ".pkl"), "wb") as outfile:
+                pickle.dump((n, bins, patches, xlabel, ylabel, cur_label), outfile)
 
         plt.tight_layout()
+
         fig.savefig(os.path.join(outpath, "dists_clf.pdf")) 
         plt.close()
 
@@ -192,9 +200,13 @@ class ModelEvaluator:
 
         # iterate over all data samples and fill a separate subplot for each
         for ind, (cur_pred, cur_nuis, cur_weights, cur_label) in enumerate(zip(pred, nuis, weights, labels)):
-            plot_data = [cur_nuis]
-            plot_weights = [cur_weights]
-            plot_labels = [cur_label]
+            # plot_data = [cur_nuis]
+            # plot_weights = [cur_weights]
+            # plot_labels = [cur_label]
+
+            plot_data = []
+            plot_weights = []
+            plot_labels = []
 
             # apply the classifier cuts
             for cutval, sigeff in zip(cutvals, sigeffs):
@@ -203,7 +215,15 @@ class ModelEvaluator:
                 plot_weights.append(cur_weights[cut_passed])
                 plot_labels.append(cur_label + " ({}% signal eff.)".format(sigeff * 100))
                 
-            self._add_subplot(fig, vals = plot_data, weights = plot_weights, labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1)
+            xlabel = r'$m_{bb}$ [GeV]'
+            ylabel = 'a.u.'
+
+            (n, bins, patches) = self._add_subplot(fig, vals = plot_data, weights = plot_weights, xlabel = xlabel, ylabel = ylabel, labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1)
+
+            # save them individually
+            for cur_n, cur_patches, sigeff in zip(n, patches, sigeffs):
+                with open(os.path.join(outpath, "dist_mBB_" + cur_label + "_{}.pkl".format(sigeff * 100)), "wb") as outfile:
+                    pickle.dump((cur_n, bins, cur_patches, xlabel, ylabel, cur_label), outfile)
             
         # save the completed figure
         plt.tight_layout()
@@ -233,13 +253,15 @@ class ModelEvaluator:
 
     def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', histrange = (0, 500)):
         ax = fig.add_subplot(nrows, ncols, num)
-        ax.hist(vals, weights = weights, bins = 40, range = histrange, density = True, histtype = 'step', stacked = False, fill = False, label = labels)
+        n, bins, patches = ax.hist(vals, weights = weights, bins = 40, range = histrange, density = True, histtype = 'step', stacked = False, fill = False, label = labels)
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+
+        return n, bins, patches
         
     # produce all performance plots showing an individual model: show the ROC curve as well as the distortion of the mBB spectrum
     def performance_plots(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, outpath, labels_sig = None, labels_bkg = None):
         self.plot_roc(data_sig, data_bkg, weights_sig, weights_bkg, outpath)
-        self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [0.5, 0.25], outpath, labels_sig, labels_bkg)
+        self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [1.0, 0.5, 0.25], outpath, labels_sig, labels_bkg)
         self.plot_clf_distribution(data = data_sig + data_bkg, weights = weights_sig + weights_bkg, outpath = outpath, labels = labels_sig + labels_bkg, num_cols = 2)
