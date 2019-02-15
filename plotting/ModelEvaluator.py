@@ -200,10 +200,6 @@ class ModelEvaluator:
 
         # iterate over all data samples and fill a separate subplot for each
         for ind, (cur_pred, cur_nuis, cur_weights, cur_label) in enumerate(zip(pred, nuis, weights, labels)):
-            # plot_data = [cur_nuis]
-            # plot_weights = [cur_weights]
-            # plot_labels = [cur_label]
-
             plot_data = []
             plot_weights = []
             plot_labels = []
