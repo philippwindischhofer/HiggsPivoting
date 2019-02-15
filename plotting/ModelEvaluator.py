@@ -222,6 +222,26 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, path_prefix + "_combined.pdf")) 
         plt.close()
 
+    # plot the PDF of the classifier, when evaluated on the given event
+    def plot_clf_pdf(self, event, outpath, varlabels = [], plotlabel = "", n_samples = 50000):
+        events = np.repeat(event, n_samples, axis = 0)
+        pred = self.env.predict(data = events)[:,1]
+
+        fig = plt.figure()
+        (n, bins, patches) = self._add_subplot(fig, vals = pred, weights = np.ones(n_samples), xlabel = "classifier output", ylabel = "normalized to 1", nrows = 1, ncols = 1, num = 1, histrange = (0, 1), labels = "", bins = 100, args = {"color": "black"})
+
+        # add the input variables to the classifier
+        if varlabels:
+            labels = ["{} = {:.2f}".format(name, value) for name, value in zip(varlabels, event[0])]
+            text = "\n".join(labels)
+            ax = fig.axes[0]
+            plt.text(0.05, 0.8, text, verticalalignment = 'top', transform = ax.transAxes)
+            plt.text(0.05, 0.87, plotlabel, fontsize = 12, verticalalignment = 'top', transform = ax.transAxes)
+
+        plt.tight_layout()
+        fig.savefig(outpath)
+        plt.close()
+
     def _weighted_percentile(self, data, percentile, weights):
         # ensure that everything operates on flat data
         data = data.flatten()
@@ -243,9 +263,9 @@ class ModelEvaluator:
         retval = np.interp(percentile, weighted_percentiles, data)
         return retval
 
-    def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', histrange = (0, 500)):
+    def _add_subplot(self, fig, vals, weights, labels, nrows, ncols, num, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', histrange = (0, 500), bins = 40, args = {}):
         ax = fig.add_subplot(nrows, ncols, num)
-        n, bins, patches = ax.hist(vals, weights = weights, bins = 40, range = histrange, density = True, histtype = 'step', stacked = False, fill = False, label = labels)
+        n, bins, patches = ax.hist(vals, weights = weights, bins = bins, range = histrange, density = True, histtype = 'step', stacked = False, fill = False, label = labels, **args)
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

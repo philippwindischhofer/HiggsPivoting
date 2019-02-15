@@ -10,6 +10,7 @@ from plotting.ModelEvaluator import ModelEvaluator
 from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
 from plotting.PerformancePlotter import PerformancePlotter
 from DatasetExtractor import TrainNuisAuxSplit
+from base.Configs import TrainingConfig
 
 def main():
     parser = ArgumentParser(description = "evaluate adversarial networks")
@@ -78,6 +79,13 @@ def main():
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
+
+        # plot the output distribution of the classifier for a few events from each sample
+        for sample, sample_name in zip(sig_data_test + bkg_data_test, sig_samples + bkg_samples):
+            for event_num in range(10):
+                event = sample[[event_num]]
+                ev.plot_clf_pdf(event = event, varlabels = TrainingConfig.training_branches, plotlabel = sample_name, outpath = os.path.join(plots_outdir, "clf_pdf_" + sample_name + "_" + str(event_num) + ".pdf"))
+
         ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
 
         # generate distortion plots
