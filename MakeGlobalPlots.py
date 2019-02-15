@@ -65,13 +65,25 @@ if __name__ == "__main__":
     to_combine = [
         "dist_clf_Hbb", "dist_clf_diboson", "dist_clf_ttbar", "dist_clf_Wjets", "dist_clf_singletop", "dist_clf_Zjets",
         "dist_mBB_singletop_50.0", "dist_mBB_Zjets_50.0", "dist_mBB_diboson_50.0", "dist_mBB_ttbar_50.0", "dist_mBB_Hbb_50.0", "dist_mBB_Wjets_50.0",
-        "dist_mBB_singletop_25.0", "dist_mBB_Zjets_25.0", "dist_mBB_diboson_25.0", "dist_mBB_ttbar_25.0", "dist_mBB_Hbb_25.0", "dist_mBB_Wjets_25.0"
+        "dist_mBB_singletop_25.0", "dist_mBB_Zjets_25.0", "dist_mBB_diboson_25.0", "dist_mBB_ttbar_25.0", "dist_mBB_Hbb_25.0", "dist_mBB_Wjets_25.0",
+        "dist_dRBB_singletop_50.0", "dist_dRBB_Zjets_50.0", "dist_dRBB_diboson_50.0", "dist_dRBB_ttbar_50.0", "dist_dRBB_Hbb_50.0", "dist_dRBB_Wjets_50.0",
+        "dist_dRBB_singletop_25.0", "dist_dRBB_Zjets_25.0", "dist_dRBB_diboson_25.0", "dist_dRBB_ttbar_25.0", "dist_dRBB_Hbb_25.0", "dist_dRBB_Wjets_25.0",
+        "dist_pTB1_singletop_50.0", "dist_pTB1_Zjets_50.0", "dist_pTB1_diboson_50.0", "dist_pTB1_ttbar_50.0", "dist_pTB1_Hbb_50.0", "dist_pTB1_Wjets_50.0",
+        "dist_pTB1_singletop_25.0", "dist_pTB1_Zjets_25.0", "dist_pTB1_diboson_25.0", "dist_pTB1_ttbar_25.0", "dist_pTB1_Hbb_25.0", "dist_pTB1_Wjets_25.0",
+        "dist_pTB2_singletop_50.0", "dist_pTB2_Zjets_50.0", "dist_pTB2_diboson_50.0", "dist_pTB2_ttbar_50.0", "dist_pTB2_Hbb_50.0", "dist_pTB2_Wjets_50.0",
+        "dist_pTB2_singletop_25.0", "dist_pTB2_Zjets_25.0", "dist_pTB2_diboson_25.0", "dist_pTB2_ttbar_25.0", "dist_pTB2_Hbb_25.0", "dist_pTB2_Wjets_25.0"
     ]
     
     overlays = [
         None, None, None, None, None, None,
         "dist_mBB_singletop_100.0", "dist_mBB_Zjets_100.0", "dist_mBB_diboson_100.0", "dist_mBB_ttbar_100.0", "dist_mBB_Hbb_100.0", "dist_mBB_Wjets_100.0",
-        "dist_mBB_singletop_100.0", "dist_mBB_Zjets_100.0", "dist_mBB_diboson_100.0", "dist_mBB_ttbar_100.0", "dist_mBB_Hbb_100.0", "dist_mBB_Wjets_100.0"
+        "dist_mBB_singletop_100.0", "dist_mBB_Zjets_100.0", "dist_mBB_diboson_100.0", "dist_mBB_ttbar_100.0", "dist_mBB_Hbb_100.0", "dist_mBB_Wjets_100.0",
+        "dist_dRBB_singletop_100.0", "dist_dRBB_Zjets_100.0", "dist_dRBB_diboson_100.0", "dist_dRBB_ttbar_100.0", "dist_dRBB_Hbb_100.0", "dist_dRBB_Wjets_100.0",
+        "dist_dRBB_singletop_100.0", "dist_dRBB_Zjets_100.0", "dist_dRBB_diboson_100.0", "dist_dRBB_ttbar_100.0", "dist_dRBB_Hbb_100.0", "dist_dRBB_Wjets_100.0"
+        "dist_pTB1_singletop_100.0", "dist_pTB1_Zjets_100.0", "dist_pTB1_diboson_100.0", "dist_pTB1_ttbar_100.0", "dist_pTB1_Hbb_100.0", "dist_pTB1_Wjets_100.0",
+        "dist_pTB1_singletop_100.0", "dist_pTB1_Zjets_100.0", "dist_pTB1_diboson_100.0", "dist_pTB1_ttbar_100.0", "dist_pTB1_Hbb_100.0", "dist_pTB1_Wjets_100.0",
+        "dist_pTB2_singletop_100.0", "dist_pTB2_Zjets_100.0", "dist_pTB2_diboson_100.0", "dist_pTB2_ttbar_100.0", "dist_pTB2_Hbb_100.0", "dist_pTB2_Wjets_100.0",
+        "dist_pTB2_singletop_100.0", "dist_pTB2_Zjets_100.0", "dist_pTB2_diboson_100.0", "dist_pTB2_ttbar_100.0", "dist_pTB2_Hbb_100.0", "dist_pTB2_Wjets_100.0"
     ]
 
     for cur, cur_overlay in zip(to_combine, overlays):
