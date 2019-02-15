@@ -33,39 +33,71 @@ def main():
     # extract the test dataset
     test_size = 0.2
     sig_data_test = []
-    sig_nuis_test = []
+    sig_mBB_test = []
+    sig_dRBB_test = []
+    sig_pTB1_test = []
+    sig_pTB2_test = []
     sig_weights_test = []
     for sample in sig_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
+        cur_dRBBdata = cur_test[["dRBB"]].values
+        cur_pTB1data = cur_test[["pTB1"]].values
+        cur_pTB2data = cur_test[["pTB2"]].values
         sig_data_test.append(cur_testdata)
-        sig_nuis_test.append(cur_nuisdata)
+        sig_mBB_test.append(cur_nuisdata)
         sig_weights_test.append(cur_weights)
+        sig_dRBB_test.append(cur_dRBBdata)
+        sig_pTB1_test.append(cur_pTB1data)
+        sig_pTB2_test.append(cur_pTB2data)
 
     bkg_data_test = []
-    bkg_nuis_test = []
+    bkg_mBB_test = []
+    bkg_dRBB_test = []
+    bkg_pTB1_test = []
+    bkg_pTB2_test = []
     bkg_weights_test = []
     for sample in bkg_data:
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test)
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
+        cur_dRBBdata = cur_test[["dRBB"]].values
+        cur_pTB1data = cur_test[["pTB1"]].values
+        cur_pTB2data = cur_test[["pTB2"]].values
         bkg_data_test.append(cur_testdata)
-        bkg_nuis_test.append(cur_nuisdata)
+        bkg_mBB_test.append(cur_nuisdata)
         bkg_weights_test.append(cur_weights)
+        bkg_dRBB_test.append(cur_dRBBdata)
+        bkg_pTB1_test.append(cur_pTB1data)
+        bkg_pTB2_test.append(cur_pTB2data)
 
     for model_dir in model_dirs:
         print("now evaluating " + model_dir)
 
         mce = AdversarialEnvironment.from_file(model_dir)
-
         plots_outdir = plot_dir
 
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
-        ev.performance_plots(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights_test, bkg_weights_test,
-                             plots_outdir, labels_sig = sig_samples, labels_bkg = bkg_samples)
+        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
+
+        # generate distortion plots
+        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_mBB_test, var_bkg = bkg_mBB_test, 
+                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB")
+        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_dRBB_test, var_bkg = bkg_dRBB_test, 
+                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB", histrange = (0, 5))
+        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB1_test, var_bkg = bkg_pTB1_test, 
+                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(1)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB1")
+        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB2_test, var_bkg = bkg_pTB2_test, 
+                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(2)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB2")
+
+        ev.plot_clf_distribution(data = sig_data_test + bkg_data_test, weights = sig_weights_test + bkg_weights_test, outpath = plots_outdir, labels = sig_samples + bkg_samples, num_cols = 2)
 
         # get performance metrics and save them
-        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_nuis_test, bkg_nuis_test, sig_weights_test, 
+        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_mBB_test, bkg_mBB_test, sig_weights_test, 
                                               bkg_weights_test, labels_sig = sig_samples, labels_bkg = bkg_samples)
         print("got perfdict = " + str(perfdict))
         with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:

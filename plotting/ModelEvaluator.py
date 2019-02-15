@@ -173,8 +173,7 @@ class ModelEvaluator:
         fig.savefig(os.path.join(outpath, "dists_clf.pdf")) 
         plt.close()
 
-    # plot the mBB spectrum of the passed signal and background datasets
-    def plot_mBB_distortion(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2):
+    def plot_distortion(self, data_sig, data_bkg, var_sig, var_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', path_prefix = "dist_mBB", histrange = (0, 500)):
         pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
         pred_sig = [self.env.predict(data = sample)[:,1] for sample in data_sig]
         
@@ -191,7 +190,7 @@ class ModelEvaluator:
             print("classifier cut for {}% signal efficiency: {}".format(sigeff * 100, cutval))
 
         pred = pred_sig + pred_bkg
-        nuis = nuis_sig + nuis_bkg
+        nuis = var_sig + var_bkg
         weights = weights_sig + weights_bkg
         labels = labels_sig + labels_bkg
 
@@ -211,19 +210,16 @@ class ModelEvaluator:
                 plot_weights.append(cur_weights[cut_passed])
                 plot_labels.append(cur_label + " ({}% signal eff.)".format(sigeff * 100))
                 
-            xlabel = r'$m_{bb}$ [GeV]'
-            ylabel = 'a.u.'
-
-            (n, bins, patches) = self._add_subplot(fig, vals = plot_data, weights = plot_weights, xlabel = xlabel, ylabel = ylabel, labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1)
+            (n, bins, patches) = self._add_subplot(fig, vals = plot_data, weights = plot_weights, xlabel = xlabel, ylabel = ylabel, labels = plot_labels, nrows = num_rows, ncols = num_cols, num = ind + 1, histrange = histrange)
 
             # save them individually
             for cur_n, cur_patches, sigeff in zip(n, patches, sigeffs):
-                with open(os.path.join(outpath, "dist_mBB_" + cur_label + "_{}.pkl".format(sigeff * 100)), "wb") as outfile:
+                with open(os.path.join(outpath, path_prefix + "_" + cur_label + "_{}.pkl".format(sigeff * 100)), "wb") as outfile:
                     pickle.dump((cur_n, bins, cur_patches, xlabel, ylabel, cur_label), outfile)
             
         # save the completed figure
         plt.tight_layout()
-        fig.savefig(os.path.join(outpath, "dists_separate.pdf")) 
+        fig.savefig(os.path.join(outpath, path_prefix + "_combined.pdf")) 
         plt.close()
 
     def _weighted_percentile(self, data, percentile, weights):
@@ -256,8 +252,3 @@ class ModelEvaluator:
 
         return n, bins, patches
         
-    # produce all performance plots showing an individual model: show the ROC curve as well as the distortion of the mBB spectrum
-    def performance_plots(self, data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, outpath, labels_sig = None, labels_bkg = None):
-        self.plot_roc(data_sig, data_bkg, weights_sig, weights_bkg, outpath)
-        self.plot_mBB_distortion(data_sig, data_bkg, nuis_sig, nuis_bkg, weights_sig, weights_bkg, [1.0, 0.5, 0.25], outpath, labels_sig, labels_bkg)
-        self.plot_clf_distribution(data = data_sig + data_bkg, weights = weights_sig + weights_bkg, outpath = outpath, labels = labels_sig + labels_bkg, num_cols = 2)
