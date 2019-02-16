@@ -82,7 +82,7 @@ class ModelEvaluator:
         pred_sig_merged = np.concatenate(pred_sig, axis = 0)
         weights_sig_merged = np.concatenate(sig_weights, axis = 0)
 
-        cutvals = [self._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
+        cutvals = [ModelEvaluator._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
 
         # apply the classifier cuts
         for cutval, sigeff in zip(cutvals, sigeffs):
@@ -184,7 +184,7 @@ class ModelEvaluator:
         # compute the classifier cut values needed to achieve a certain signal efficiency
         pred_sig_merged = np.concatenate(pred_sig)
         weights_sig_merged = np.concatenate(weights_sig)
-        cutvals = [self._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
+        cutvals = [ModelEvaluator._weighted_percentile(pred_sig_merged, 1 - sigeff, weights = weights_sig_merged) for sigeff in sigeffs]
 
         for cutval, sigeff in zip(cutvals, sigeffs):
             print("classifier cut for {}% signal efficiency: {}".format(sigeff * 100, cutval))
@@ -242,7 +242,8 @@ class ModelEvaluator:
         fig.savefig(outpath)
         plt.close()
 
-    def _weighted_percentile(self, data, percentile, weights):
+    @staticmethod
+    def _weighted_percentile(data, percentile, weights):
         # ensure that everything operates on flat data
         data = data.flatten()
         weights = weights.flatten()
