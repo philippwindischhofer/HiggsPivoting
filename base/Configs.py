@@ -6,6 +6,7 @@ class TrainingConfig:
     training_branches = ["mBB", "dRBB", "pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet"]
     nuisance_branches = ["mBB"]
     auxiliary_branches = ["EventWeight"]
+    other_branches = ["nJ"]  # any other branches that might be necessary for purposes other than training and evaluating a classifier
 
     training_pars = {"sow_target": 0.3, "pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 

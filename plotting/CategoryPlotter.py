@@ -48,7 +48,7 @@ class CategoryPlotter:
         # add the labels, if provided
         if plotlabel:
             text = "\n".join(plotlabel)
-            plt.text(0.55, 0.95, text, verticalalignment = 'top', transform = ax.transAxes)
+            plt.text(0.72, 0.95, text, verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 
         plt.tight_layout()
         fig.savefig(outpath)

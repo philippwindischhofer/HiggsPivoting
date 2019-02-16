@@ -14,9 +14,9 @@ def PrepareDataset():
     infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16d.root"
     outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
-    data_branches = TrainingConfig.training_branches + TrainingConfig.auxiliary_branches
-    other_branches = ["Sample", "nJ"] # any other branches that might be necessary for purposes other than training and evaluating a classifier
-    read_branches = data_branches + other_branches
+    data_branches = TrainingConfig.training_branches + TrainingConfig.auxiliary_branches + TrainingConfig.other_branches
+    truth_branches = ["Sample"]
+    read_branches = data_branches + other_branches + truth_branches
 
     sample_defs = {"Hbb": ["ggZvvH125", "qqZvvH125", "qqWlvH125", "qqZllH125", "qqWlvH125cc", "ggZvvH125cc", "ggZllH125"], 
                    "Zjets": ["Zbb", "Zbc", "Zbl", "Zcc", "Zcl", "Zl"],

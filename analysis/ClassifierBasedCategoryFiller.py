@@ -2,11 +2,12 @@ import numpy as np
 
 from analysis.Category import Category
 from plotting.ModelEvaluator import ModelEvaluator
+from base.Configs import TrainingConfig
 
 class ClassifierBasedCategoryFiller:
 
     @staticmethod
-    def create_classifier_category(env, process_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0)):
+    def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2):
         if(classifier_sigeff_range[0] < classifier_sigeff_range[1]):
             raise Exception("Warning: are you sure you understand what these cuts are doing? Lower signal efficiencies correspond to _harsher_ cuts, so expect (higher number, lower number)!")
 
@@ -22,11 +23,13 @@ class ClassifierBasedCategoryFiller:
         print("translated signal efficiency range ({}, {}) to classifier output range ({}, {})".format(classifier_sigeff_range[0], classifier_sigeff_range[1], 
                                                                                                        classifier_range[0], classifier_range[1]))
         
-        for cur_events, cur_weights, process_name in zip(process_events, process_weights, process_names):
+        for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # get the classifier predictions
             cur_pred = env.predict(data = cur_events)[:,1]
 
-            cut = np.logical_and.reduce((cur_pred > classifier_range[0], cur_pred < classifier_range[1]))
+            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+
+            cut = np.logical_and.reduce((cur_pred > classifier_range[0], cur_pred < classifier_range[1], cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]

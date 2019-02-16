@@ -10,15 +10,17 @@ class CutBasedCategoryFiller:
     # MET > 150 GeV && MET < 200 GeV
     # dRBB < 1.8
     @staticmethod
-    def create_low_MET_category(process_events, process_weights, process_names):
+    def create_low_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2):
         retcat = Category("low_MET")
 
-        for cur_events, cur_weights, process_name in zip(process_events, process_weights, process_names):
+        for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # extract the branches that are needed for the cut
             cur_MET = cur_events[:, TrainingConfig.training_branches.index("MET")]
             cur_dRBB = cur_events[:, TrainingConfig.training_branches.index("dRBB")]
 
-            cut = np.logical_and.reduce((cur_MET > 150, cur_MET < 200, cur_dRBB < 1.8))
+            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+
+            cut = np.logical_and.reduce((cur_MET > 150, cur_MET < 200, cur_dRBB < 1.8, cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
@@ -31,15 +33,17 @@ class CutBasedCategoryFiller:
     # MET > 200 GeV
     # dRBB < 1.2
     @staticmethod
-    def create_high_MET_category(process_events, process_weights, process_names):
+    def create_high_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2):
         retcat = Category("high_MET")
 
-        for cur_events, cur_weights, process_name in zip(process_events, process_weights, process_names):
+        for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # extract the branches that are needed for the cut
             cur_MET = cur_events[:, TrainingConfig.training_branches.index("MET")]
             cur_dRBB = cur_events[:, TrainingConfig.training_branches.index("dRBB")]
 
-            cut = np.logical_and.reduce((cur_MET > 200, cur_dRBB < 1.2))
+            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+
+            cut = np.logical_and.reduce((cur_MET > 200, cur_dRBB < 1.2, cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
