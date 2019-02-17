@@ -34,7 +34,7 @@ def main():
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
     # extract the training dataset
-    test_size = 0.2
+    test_size = TrainingConfig.test_size
     sig_data_train = []
     for sample in sig_data:
         cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)

@@ -32,7 +32,7 @@ def main():
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
     # extract the test dataset
-    test_size = 0.2
+    test_size = TrainingConfig.test_size
     sig_data_test = []
     sig_mBB_test = []
     sig_dRBB_test = []

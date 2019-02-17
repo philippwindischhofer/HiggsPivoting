@@ -10,6 +10,8 @@ class TrainingConfig:
 
     training_pars = {"sow_target": 0.3, "pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
+    test_size = 0.5
+
     @classmethod
     def from_file(cls, config_dir):
         gconfig = ConfigParser()

@@ -22,7 +22,7 @@ def main():
     model_dir = args["model_dir"]
     plotdir = args["plot_dir"]
 
-    test_size = 0.2 # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
+    test_size = TrainingConfig.test_size # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
     sig_samples = ["Hbb"]
