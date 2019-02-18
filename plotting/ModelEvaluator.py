@@ -4,8 +4,11 @@ import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import NullFormatter
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_regression
+
+from base.Configs import TrainingConfig
 
 class ModelEvaluator:
 
@@ -77,6 +80,9 @@ class ModelEvaluator:
 
         auroc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
         perfdict["AUROC"] = auroc
+
+        # compute the linear Pearson correlation coefficient
+        
 
         # to get the KS fairness metrics, need to compute the cut values for the given signal efficiencies
         pred_sig_merged = np.concatenate(pred_sig, axis = 0)
@@ -171,6 +177,72 @@ class ModelEvaluator:
         plt.tight_layout()
 
         fig.savefig(os.path.join(outpath, "dists_clf.pdf")) 
+        plt.close()
+
+    def plot_clf_correlations(self, varname, data_sig, weights_sig, labels_sig, data_bkg, weights_bkg, labels_bkg, outpath, xlabel = r'$m_{bb}$ [GeV]', ylabel = "classifier output", histrange = ((0, 500), (0,1))):
+        # generate the data to plot
+        vardata_sig = [cur_data[:, TrainingConfig.training_branches.index(varname)] for cur_data in data_sig]
+        vardata_bkg = [cur_data[:, TrainingConfig.training_branches.index(varname)] for cur_data in data_bkg]
+
+        data_bkg_merged = np.concatenate(data_bkg)
+        weights_bkg_merged = np.concatenate(weights_bkg)
+        vardata_bkg_merged = np.concatenate(vardata_bkg)
+
+        # first, generate the plots for each signal- and background component individually
+        for cur_data, cur_weights, cur_vardata, cur_label in zip(data_sig + data_bkg, weights_sig + weights_bkg, vardata_sig + vardata_bkg, labels_sig + labels_bkg):
+            self.plot_clf_correlation(data = cur_data, weights = cur_weights, vardata = cur_vardata, outpath = os.path.join(outpath, "clf_2d_dist_" + cur_label + ".pdf"), xlabel = xlabel, histrange = histrange)
+
+        # then, also make the plot for the combined background
+        self.plot_clf_correlation(data = data_bkg_merged, weights = weights_bkg_merged, vardata = vardata_bkg_merged, outpath = os.path.join(outpath, "clf_2d_dist_bkg.pdf"), xlabel = xlabel, histrange = histrange)
+
+    # show a 2d plot of the classifier output together with some variable
+    def plot_clf_correlation(self, data, weights, vardata, outpath, xlabel = r'$m_{bb}$ [GeV]', ylabel = "classifier output", plotlabel = [""], histrange = ((0, 500), (0,1))):
+        pred = self.env.predict(data = data)[:,1] # will be shown on the y-axis
+        weights = weights.flatten()
+
+        h, x_edges, y_edges = np.histogram2d(vardata, pred, bins = 20, weights = weights, range = histrange)
+        
+        x_lower = x_edges[:-1]
+        x_upper = x_edges[1:]
+        x_center = 0.5 * (x_lower + x_upper)
+
+        y_lower = y_edges[:1]
+        y_upper = y_edges[1:]
+        y_center = 0.5 * (y_lower + y_upper)
+        
+        # definitions for the axes
+        left, width = 0.1, 0.65
+        bottom, height = 0.1, 0.65
+        bottom_h = left_h = left + width + 0.04
+
+        rect_main = [left, bottom, width, height]
+        rect_histx = [left, bottom_h, width, 0.2]
+        rect_histy = [left_h, bottom, 0.2, height]
+
+        # do the actual plotting
+        fig = plt.figure(figsize = (8, 8))
+        ax_main = plt.axes(rect_main)
+        ax_margx = plt.axes(rect_histx)
+        ax_margy = plt.axes(rect_histy)
+
+        histrange_flat = [item for sublist in histrange for item in sublist]
+        ax_main.imshow(np.transpose(h), cmap = plt.cm.viridis, interpolation = 'nearest', origin = 'lower', vmin = 0.0, extent = histrange_flat, aspect = 'auto')
+        ax_main.set_xlabel(xlabel)
+        ax_main.set_ylabel(ylabel)
+        hy, hx = h.sum(axis = 0), h.sum(axis = 1)
+
+        ax_margx.hist(x_center, weights = hx, bins = len(x_center), density = True)
+        ax_margx.margins(0.0)
+        ax_margx.xaxis.set_major_formatter(NullFormatter())
+        ax_margx.yaxis.set_major_formatter(NullFormatter())
+        ax_margy.hist(y_center, weights = hy, bins = len(y_center), orientation = 'horizontal', density = True)
+        ax_margy.margins(0.0)
+        ax_margy.yaxis.set_major_formatter(NullFormatter())
+        ax_margy.xaxis.set_major_formatter(NullFormatter())
+
+        plt.text(1.05, 0.5, "\n".join(plotlabel), transform = ax_margx.transAxes, horizontalalignment = "center", verticalalignment = "center")
+
+        fig.savefig(outpath)
         plt.close()
 
     def plot_distortion(self, data_sig, data_bkg, var_sig, var_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', path_prefix = "dist_mBB", histrange = (0, 500)):
