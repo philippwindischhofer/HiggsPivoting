@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,7 +17,10 @@ class CategoryPlotter:
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
-    def plot_category_composition(category, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {"range": (0, 500), "bins": 25}):
+    def plot_category_composition(category, binning, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {"range": (0, 500)}):
+        if not isinstance(binning, (list, np.ndarray)):
+            raise Exception("Error: expect a list of explicit bin edges for this function!")
+        
         colors = []
         data = []
         weights = []
@@ -33,17 +37,19 @@ class CategoryPlotter:
             color = CategoryPlotter.process_colors[process_name]
 
             colors.append(color)
-            data.append(process_events[:, TrainingConfig.training_branches.index(var)])
+            clipped_values = np.clip(process_events[:, TrainingConfig.training_branches.index(var)], binning[0], binning[-1])
+            data.append(clipped_values)
             weights.append(process_weights)
             labels.append(process_name)
 
         # then plot the histogram
         fig = plt.figure(figsize = (6, 5))
         ax = fig.add_subplot(111)
-        n, bins, patches = ax.hist(data, weights = weights, histtype = 'step', fill = True, stacked = True, density = False, color = colors, label = labels, **args)
+        n, bins, patches = ax.hist(data, weights = weights, histtype = 'step', fill = True, stacked = True, density = False, color = colors, label = labels, bins = binning, **args)
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        ax.margins(0.0)
 
         # add the labels, if provided
         if plotlabel:
