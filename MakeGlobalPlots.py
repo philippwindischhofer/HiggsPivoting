@@ -49,7 +49,7 @@ def MakeGlobalComparisonPlot(model_dirs, outpath, source_basename, overlay_path 
     # generate the combined plot
     PerformancePlotter.combine_hists(perfdicts, plot_data, outpath, colorquant = "lambda", plot_title = os.path.splitext(source_basename)[0], overlays = overlays)
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(description = "create global comparison plots")
     parser.add_argument("--plotdir")
     parser.add_argument("model_dirs", nargs = '+', action = "store")
@@ -88,3 +88,6 @@ if __name__ == "__main__":
 
     for cur, cur_overlay in zip(to_combine, overlays):
         MakeGlobalComparisonPlot(model_dirs, outpath = os.path.join(plot_dir, cur + ".pdf"), source_basename = cur + ".pkl", overlay_path = cur_overlay + ".pkl" if cur_overlay is not None else None)
+
+if __name__ == "__main__":
+    main()

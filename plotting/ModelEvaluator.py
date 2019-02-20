@@ -16,7 +16,8 @@ class ModelEvaluator:
         self.env = env
 
     # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
-    def _get_KS(self, p, p_weights, q, q_weights, num_pts = 1000):
+    @staticmethod
+    def _get_KS(p, p_weights, q, q_weights, num_pts = 1000):
         # don't attempt to do anything if there is no data
         if len(p) == 0 or len(q) == 0:
             return 1.0
@@ -102,7 +103,7 @@ class ModelEvaluator:
                 cur_nuis_passed = cur_nuis[cut_passed]
                 cur_weights_passed = cur_weights[cut_passed]
 
-                cur_KS = self._get_KS(cur_nuis, cur_weights, cur_nuis_passed, cur_weights_passed)
+                cur_KS = ModelEvaluator._get_KS(cur_nuis, cur_weights, cur_nuis_passed, cur_weights_passed)
                 KS_vals.append(cur_KS)
 
                 cur_dictlabel = "KS_" + str(int(sigeff * 100)) + "_" + cur_label
@@ -114,7 +115,7 @@ class ModelEvaluator:
             cut_passed = np.where(pred_bkg_merged > cutval)
             cur_nuis_passed = nuis_bkg_merged[cut_passed]
             cur_weights_passed = weights_bkg_merged[cut_passed]
-            cur_KS = self._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
+            cur_KS = ModelEvaluator._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
             perfdict["KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on

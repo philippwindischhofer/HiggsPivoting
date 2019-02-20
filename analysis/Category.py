@@ -9,14 +9,16 @@ class Category:
         self.name = name
         self.event_content = {}
         self.weight_content = {}
+        self.event_variables = {}
 
-    def add_events(self, events, weights, process):
+    def add_events(self, events, weights, process, event_variables):
         if len(events) != len(weights):
             raise Exception("Need to have exactly one weight per event!")
 
         if not process in self.event_content:
             self.event_content[process] = events
             self.weight_content[process] = weights
+            self.event_variables[process] = event_variables
         else:
             self.event_content[process] = np.append(self.event_content[process], events, axis = 0)
             self.weight_content[process] = np.append(self.weight_content[process], weights, axis = 0)
@@ -27,6 +29,20 @@ class Category:
             return 0.0
 
         return np.sum(self.weight_content[process])
+
+    def get_event_variable(self, processes, var):
+        event_retval = []
+        weight_retval = []
+
+        for process in processes:
+            event_vars = self.event_variables[process]
+            event_retval.append(self.event_content[process][:, event_vars.index(var)])
+            weight_retval.append(self.weight_content[process])
+
+        event_retval = np.concatenate(event_retval)
+        weight_retval = np.concatenate(weight_retval)
+
+        return event_retval, weight_retval
 
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components
@@ -55,6 +71,7 @@ class Category:
         total_binned_signal = np.sum(binned_signal, axis = 0)
         total_binned_background = np.sum(binned_background, axis = 0)
 
+        # exclude almost-empty bins
         invalid_mask = np.logical_or(total_binned_signal <= 0, total_binned_background <= 0)
 
         print("sig vs bkg")
@@ -64,11 +81,6 @@ class Category:
         # compute the binned significance
         binwise_significance = (total_binned_signal + total_binned_background) * np.log(1 + total_binned_signal / total_binned_background) - total_binned_signal
         binwise_significance[invalid_mask] = 0
-
-        # exclude almost-empty bins
-        # binwise_significance = np.nan_to_num(binwise_significance)
-        # binwise_significance[binwise_significance == -np.inf] = 0
-        # binwise_significance[binwise_significance == np.inf] = 0
 
         binned_sig = np.sqrt(2 * np.sum(binwise_significance, axis = 0))
 

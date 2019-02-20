@@ -25,7 +25,7 @@ class CutBasedCategoryFiller:
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name)
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
 
         return retcat
 
@@ -48,6 +48,6 @@ class CutBasedCategoryFiller:
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name)
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
 
         return retcat
