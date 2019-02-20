@@ -3,8 +3,61 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import numpy as np
 
 class PerformancePlotter:
+
+    @staticmethod
+    def plot_significance_KS(sensdicts, outfile):
+        # define the signal regions to combine
+        model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]
+        reference_SRs = ["significance_low_MET_2J", "significance_high_MET_2J", "significance_low_MET_3J", "significance_high_MET_3J"]
+
+        # also define the KS values that go into the plot
+        model_KSs = ["KS_bkg_low_MET_2J", "KS_bkg_high_MET_2J", "KS_bkg_low_MET_3J", "KS_bkg_high_MET_3J"]
+        reference_KSs = ["KS_bkg_class_tight_2J", "KS_bkg_class_loose_2J", "KS_bkg_class_tight_3J", "KS_bkg_class_loose_3J"]
+
+        # make sure to ge the color normalization correct
+        colorquant = "lambda"
+        cmap = plt.cm.viridis
+        colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
+        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        # prepare the individual datasets to plot
+        for sensdict in sensdicts:
+            # compute the combined significance:
+            sigs = [sensdict[cur_sig] for cur_sig in model_SRs]
+            combined_sig = np.sqrt(np.sum(np.square(sigs)))
+            combined_sigs = np.full(len(sigs), combined_sig)
+
+            # get the contributing KS values for the signal regions:
+            KS_vals = [sensdict[cur_KS] for cur_KS in model_KSs]
+
+            color = cmap(norm(float(sensdict[colorquant]))) if colorquant in sensdict else "black"
+            ax.plot(x = combined_sigs, y = KS_vals, color = color, linestyle = '-', marker = '_')
+
+        # also show the reference model
+        sigs = [sensdict[cur_sig] for cur_sig in reference_SRs]
+        combined_sig = np.sqrt(np.sum(np.square(sigs)))
+        combined_sigs = np.full(len(sigs), combined_sig)
+
+        # get the contributing KS values for the signal regions:
+        KS_vals = [sensdict[cur_KS] for cur_KS in reference_KSs]
+        ax.plot(x = combined_sigs, y = KS_vals, color = "black", linestyle = '-', marker = '_')
+
+        # make colorbar for the range of encountered legended values
+        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
+        fig.subplots_adjust(right = 0.8)
+        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                       norm = norm,
+                                       orientation = 'vertical')
+        cb.set_label(r'$\lambda$')
+
+        fig.savefig(outfile)
+        plt.close()                
 
     @staticmethod
     def _AUROC_KS_plot(perfdicts, KS_regex, colorquant, outpath):
