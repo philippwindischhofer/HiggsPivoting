@@ -37,7 +37,7 @@ class PerformancePlotter:
             KS_vals = [sensdict[cur_KS] for cur_KS in model_KSs]
 
             color = cmap(norm(float(sensdict[colorquant]))) if colorquant in sensdict else "black"
-            ax.plot(x = combined_sigs, y = KS_vals, color = color, linestyle = '-', marker = '_')
+            ax.plot(combined_sigs, KS_vals, color = color, linestyle = '-', marker = '_')
 
         # also show the reference model
         sigs = [sensdict[cur_sig] for cur_sig in reference_SRs]
@@ -46,7 +46,7 @@ class PerformancePlotter:
 
         # get the contributing KS values for the signal regions:
         KS_vals = [sensdict[cur_KS] for cur_KS in reference_KSs]
-        ax.plot(x = combined_sigs, y = KS_vals, color = "black", linestyle = '-', marker = '_')
+        ax.plot(combined_sigs, KS_vals, color = "black", linestyle = '-', marker = '_')
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
@@ -55,6 +55,9 @@ class PerformancePlotter:
                                        norm = norm,
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
+
+        ax.set_xlabel("expected sensitivity")
+        ax.set_ylabel("KS")
 
         fig.savefig(outfile)
         plt.close()                
