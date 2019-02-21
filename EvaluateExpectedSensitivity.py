@@ -133,9 +133,9 @@ def main():
 
         # also show the distributions in these two categories
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {"range": (25, 200)})
+                                                  plotlabel = ["MC16d only", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {"range": (25, 200)})
+                                                  plotlabel = ["MC16d only", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
     # load the classifier model and also fill two classifier-based categories
     env = AdversarialEnvironment.from_file(model_dir)
@@ -185,9 +185,9 @@ def main():
 
         # plot their signal composition
         CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "clf tight", "nJ = {}".format(cur_nJ)], args = {"range": (25, 200)})
+                                                  plotlabel = ["MC16d only", "clf tight", "nJ = {}".format(cur_nJ)])
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "clf loose", "nJ = {}".format(cur_nJ)], args = {"range": (25, 200)})
+                                                  plotlabel = ["MC16d only", "clf loose", "nJ = {}".format(cur_nJ)])
 
 
     # plot the summarized significance values and save them
