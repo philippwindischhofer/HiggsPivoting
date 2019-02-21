@@ -22,9 +22,10 @@ class ModelEvaluator:
         if len(p) == 0 or len(q) == 0:
             return 1.0
 
-        # also refuse to do anything for very unbalanced data
-        if min(len(p), len(q)) / max(len(p), len(q)) < 0.05:
-            return 1.0
+        # # also refuse to do anything for very unbalanced data
+        # # NOTE: don't do it for the time being, doesn't seem to be problematic
+        # if min(len(p), len(q)) / max(len(p), len(q)) < 0.05:
+        #     return 1.0
 
         p = p.flatten()
         q = q.flatten()
