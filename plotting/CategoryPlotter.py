@@ -17,7 +17,7 @@ class CategoryPlotter:
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
-    def plot_category_composition(category, binning, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {"range": (0, 500)}):
+    def plot_category_composition(category, binning, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}):
         if not isinstance(binning, (list, np.ndarray)):
             raise Exception("Error: expect a list of explicit bin edges for this function!")
         
@@ -45,7 +45,7 @@ class CategoryPlotter:
         # then plot the histogram
         fig = plt.figure(figsize = (6, 5))
         ax = fig.add_subplot(111)
-        n, bins, patches = ax.hist(data, weights = weights, histtype = 'step', fill = True, stacked = True, density = False, color = colors, label = labels, bins = binning, **args)
+        n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
