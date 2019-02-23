@@ -87,7 +87,7 @@ def main():
     sensdict = {}
 
     # show the inclusive event content
-    CategoryPlotter.plot_category_composition(inclusive, binning = inclusive_binning, outpath = os.path.join(plotdir, "dist_mBB_inclusive.pdf"), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MC16d only", "inclusive"])
+    CategoryPlotter.plot_category_composition(inclusive, binning = inclusive_binning, outpath = os.path.join(plotdir, "dist_mBB_inclusive.pdf"), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MC16d", "inclusive"])
 
     inclusive_events = inclusive.get_number_events("Hbb")
     print("have {} signal events in total".format(inclusive_events))
@@ -133,9 +133,9 @@ def main():
 
         # also show the distributions in these two categories
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
+                                                  plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
+                                                  plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
     # load the classifier model and also fill two classifier-based categories
     env = AdversarialEnvironment.from_file(model_dir)
@@ -148,7 +148,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.30, 0.0),
+                                                                                   classifier_sigeff_range = (0.40, 0.0),
                                                                                    nJ = cur_nJ)
 
         class_cat_loose = ClassifierBasedCategoryFiller.create_classifier_category(env, 
@@ -158,7 +158,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.80, 0.30),
+                                                                                   classifier_sigeff_range = (0.80, 0.40),
                                                                                    nJ = cur_nJ)        
 
         # compute and store the signal efficiencies of these categories
@@ -185,9 +185,9 @@ def main():
 
         # plot their signal composition
         CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "clf tight", "nJ = {}".format(cur_nJ)])
+                                                  plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d only", "clf loose", "nJ = {}".format(cur_nJ)])
+                                                  plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
 
 
     # plot the summarized significance values and save them
