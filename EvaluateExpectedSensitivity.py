@@ -148,7 +148,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.40, 0.0),
+                                                                                   classifier_sigeff_range = (0.30, 0.0),
                                                                                    nJ = cur_nJ)
 
         class_cat_loose = ClassifierBasedCategoryFiller.create_classifier_category(env, 
@@ -158,7 +158,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.80, 0.40),
+                                                                                   classifier_sigeff_range = (0.80, 0.30),
                                                                                    nJ = cur_nJ)        
 
         # compute and store the signal efficiencies of these categories
