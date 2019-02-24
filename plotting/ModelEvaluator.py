@@ -5,6 +5,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
+from matplotlib.colors import LogNorm
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_regression
 
@@ -192,17 +193,37 @@ class ModelEvaluator:
 
         # first, generate the plots for each signal- and background component individually
         for cur_data, cur_weights, cur_vardata, cur_label in zip(data_sig + data_bkg, weights_sig + weights_bkg, vardata_sig + vardata_bkg, labels_sig + labels_bkg):
-            self.plot_clf_correlation(data = cur_data, weights = cur_weights, vardata = cur_vardata, outpath = os.path.join(outpath, "clf_2d_dist_" + cur_label + ".pdf"), xlabel = xlabel, histrange = histrange)
+            self.plot_clf_correlation(data = cur_data, weights = cur_weights, vardata = cur_vardata, outpath = os.path.join(outpath, "clf_2d_dist_" + cur_label + ".pdf"), xlabel = xlabel, histrange = histrange, plotlabel = [cur_label])
 
         # then, also make the plot for the combined background
-        self.plot_clf_correlation(data = data_bkg_merged, weights = weights_bkg_merged, vardata = vardata_bkg_merged, outpath = os.path.join(outpath, "clf_2d_dist_bkg.pdf"), xlabel = xlabel, histrange = histrange)
+        self.plot_clf_correlation(data = data_bkg_merged, weights = weights_bkg_merged, vardata = vardata_bkg_merged, outpath = os.path.join(outpath, "clf_2d_dist_bkg.pdf"), xlabel = xlabel, histrange = histrange, plotlabel = ["combined background"])
+
+    @staticmethod
+    def _weighted_variance(x, weights):
+        return np.average(np.square(x), weights = weights) - np.square(np.average(x, weights = weights))
+
+    @staticmethod
+    def _weighted_pearson_corr(x, y, weights):
+        cov = np.average(x * y, weights = weights) - np.average(x, weights = weights) * np.average(y, weights = weights)
+        norm = np.sqrt(ModelEvaluator._weighted_variance(x, weights = weights) * ModelEvaluator._weighted_variance(y, weights = weights))
+
+        return cov / norm
 
     # show a 2d plot of the classifier output together with some variable
-    def plot_clf_correlation(self, data, weights, vardata, outpath, xlabel = r'$m_{bb}$ [GeV]', ylabel = "classifier output", plotlabel = [""], histrange = ((0, 500), (0,1))):
+    def plot_clf_correlation(self, data, weights, vardata, outpath, xlabel = r'$m_{bb}$ [GeV]', ylabel = r'classifier output $f$', plotlabel = [""], histrange = ((0, 500), (0,1))):
         pred = self.env.predict(data = data)[:,1] # will be shown on the y-axis
         weights = weights.flatten()
 
+        # compute the pearson correlation coefficient of the classifier output and the other variable
+        corr = ModelEvaluator._weighted_pearson_corr(vardata, pred, weights = weights)
+
+        # add it to the plot label
+        plotlabel += ['', r'$\rho(f, m_{bb})$' + ' = {:.2f}'.format(corr)]
+
         h, x_edges, y_edges = np.histogram2d(vardata, pred, bins = 20, weights = weights, range = histrange)
+
+        # clip the histogram such that all bins have nonnegative entries
+        h = np.clip(h, a_min = 0.01, a_max = None)
         
         x_lower = x_edges[:-1]
         x_upper = x_edges[1:]
@@ -214,35 +235,43 @@ class ModelEvaluator:
         
         # definitions for the axes
         left, width = 0.1, 0.65
-        bottom, height = 0.1, 0.65
+        bottom, height = 0.14, 0.63
         bottom_h = left_h = left + width + 0.04
 
         rect_main = [left, bottom, width, height]
         rect_histx = [left, bottom_h, width, 0.2]
         rect_histy = [left_h, bottom, 0.2, height]
+        rect_cb = [left, 0.05, width, 0.02]
 
         # do the actual plotting
-        fig = plt.figure(figsize = (8, 8))
-        ax_main = plt.axes(rect_main)
-        ax_margx = plt.axes(rect_histx)
-        ax_margy = plt.axes(rect_histy)
+        fig = plt.figure(figsize = (8, 9))
+        ax_main = fig.add_axes(rect_main)
+        ax_margx = fig.add_axes(rect_histx)
+        ax_margy = fig.add_axes(rect_histy)
+        ax_cb = fig.add_axes(rect_cb)
 
         histrange_flat = [item for sublist in histrange for item in sublist]
-        ax_main.imshow(np.transpose(h), cmap = plt.cm.viridis, interpolation = 'nearest', origin = 'lower', vmin = 0.0, extent = histrange_flat, aspect = 'auto')
+        cmap = plt.cm.Blues
+
+        norm = LogNorm(vmin = 0.01, vmax = np.max(h))
+        ax_main.imshow(np.transpose(h), cmap = cmap, interpolation = 'nearest', origin = 'lower', norm = norm, extent = histrange_flat, aspect = 'auto')
         ax_main.set_xlabel(xlabel)
         ax_main.set_ylabel(ylabel)
         hy, hx = h.sum(axis = 0), h.sum(axis = 1)
 
-        ax_margx.hist(x_center, weights = hx, bins = len(x_center), density = True)
+        ax_margx.hist(x_center, weights = hx, bins = len(x_center), density = True, histtype = 'step', color = cmap(10000))
         ax_margx.margins(0.0)
         ax_margx.xaxis.set_major_formatter(NullFormatter())
         ax_margx.yaxis.set_major_formatter(NullFormatter())
-        ax_margy.hist(y_center, weights = hy, bins = len(y_center), orientation = 'horizontal', density = True)
+        ax_margy.hist(y_center, weights = hy, bins = len(y_center), orientation = 'horizontal', density = True, histtype = 'step', color = cmap(10000))
         ax_margy.margins(0.0)
         ax_margy.yaxis.set_major_formatter(NullFormatter())
         ax_margy.xaxis.set_major_formatter(NullFormatter())
 
-        plt.text(1.05, 0.5, "\n".join(plotlabel), transform = ax_margx.transAxes, horizontalalignment = "center", verticalalignment = "center")
+        plt.text(1.185, 0.5, "\n".join(plotlabel), transform = ax_margx.transAxes, horizontalalignment = "center", verticalalignment = "center")
+
+        cb = mpl.colorbar.ColorbarBase(ax_cb, cmap = cmap, norm = norm, orientation = 'horizontal')
+        cb.set_label("events")
 
         fig.savefig(outpath)
         plt.close()

@@ -22,6 +22,7 @@ class PerformancePlotter:
         cmap = plt.cm.viridis
         colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
         norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+        #norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -37,7 +38,7 @@ class PerformancePlotter:
             KS_vals = [sensdict[cur_KS] for cur_KS in model_KSs]
 
             color = cmap(norm(float(sensdict[colorquant]))) if colorquant in sensdict else "black"
-            ax.plot(combined_sigs, KS_vals, color = color, linestyle = '-', marker = '_')
+            ax.plot(combined_sigs, KS_vals, color = color, linestyle = '-', marker = '_', alpha = 0.5)
 
         # also show the reference model
         sigs = [sensdict[cur_sig] for cur_sig in reference_SRs]
@@ -46,7 +47,7 @@ class PerformancePlotter:
 
         # get the contributing KS values for the signal regions:
         KS_vals = [sensdict[cur_KS] for cur_KS in reference_KSs]
-        ax.plot(combined_sigs, KS_vals, color = "black", linestyle = '-', marker = '_')
+        ax.plot(combined_sigs, KS_vals, color = "tomato", linestyle = '-', marker = '_', label = "cut-based analysis")
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
@@ -56,8 +57,13 @@ class PerformancePlotter:
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
 
-        ax.set_xlabel("expected sensitivity")
-        ax.set_ylabel("KS")
+        ax.set_xlabel(r'expected sensitivity [$\sigma$]')
+        ax.set_ylabel("KS (combined background)")
+        ax.legend(loc = 'upper left')
+
+        # use fixed plot ranges for the time being
+        ax.set_xlim([2.4, 2.7])
+        ax.set_ylim([0.0, 0.45])
 
         fig.savefig(outfile)
         plt.close()                
