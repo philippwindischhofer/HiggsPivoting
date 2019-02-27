@@ -21,8 +21,8 @@ class PerformancePlotter:
         colorquant = "lambda"
         cmap = plt.cm.viridis
         colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
-        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
-        #norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
+        #norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+        norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
