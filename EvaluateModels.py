@@ -108,10 +108,38 @@ def main():
         # plot correlation plots of the classifier with m_BB
         ev.plot_clf_correlations(varname = "mBB", data_sig = sig_data_test, weights_sig = sig_weights_test, labels_sig = sig_samples, data_bkg = bkg_data_test, weights_bkg = bkg_weights_test, labels_bkg = bkg_samples, outpath = plots_outdir)
 
-        # get performance metrics and save them
+        # get inclusive performance metrics and save them
         perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_mBB_test, bkg_mBB_test, sig_weights_test, 
                                               bkg_weights_test, labels_sig = sig_samples, labels_bkg = bkg_samples)
-        print("got perfdict = " + str(perfdict))
+        print("got inclusive perfdict = " + str(perfdict))
+
+        # get performance metrics for the SR mass range only (from 30 GeV < mBB < 210 GeV)
+        sig_data_test_SR = []
+        bkg_data_test_SR = []
+        sig_mBB_test_SR = []
+        bkg_mBB_test_SR = []
+        sig_weights_test_SR = []
+        bkg_weights_test_SR = []
+
+        for cur_data, cur_mBB, cur_weights in zip(sig_data_test, sig_mBB_test, sig_weights_test):
+            cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
+            sig_data_test_SR.append(cur_data[cut_pass])
+            sig_mBB_test_SR.append(cur_mBB[cut_pass])
+            sig_weights_test_SR.append(cur_weights[cut_pass])
+
+        for cur_data, cur_mBB, cur_weights in zip(bkg_data_test, bkg_mBB_test, bkg_weights_test):
+            cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
+            bkg_data_test_SR.append(cur_data[cut_pass])
+            bkg_mBB_test_SR.append(cur_mBB[cut_pass])
+            bkg_weights_test_SR.append(cur_weights[cut_pass])
+
+        perfdict_SR = ev.get_performance_metrics(sig_data_test_SR, bkg_data_test_SR, sig_mBB_test_SR, bkg_mBB_test_SR, sig_weights_test_SR, 
+                                                 bkg_weights_test_SR, labels_sig = sig_samples, labels_bkg = bkg_samples, prefix = "SR_")
+        print("got SR perfdict = " + str(perfdict_SR))
+
+        perfdict.update(perfdict_SR)
+
+        # save the combined perfdict
         with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
            pickle.dump(perfdict, outfile)
 

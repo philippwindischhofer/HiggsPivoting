@@ -64,7 +64,7 @@ class ModelEvaluator:
 
     # computes a series of performance measures and saves them to a file
     # currently, computes AUROC as robust performance measure, KL as robust fairness measure
-    def get_performance_metrics(self, data_sig, data_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25]):
+    def get_performance_metrics(self, data_sig, data_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25], prefix = ""):
         perfdict = {}
 
         pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
@@ -82,10 +82,7 @@ class ModelEvaluator:
         labels = np.concatenate([np.ones(len(pred_sig_merged)), np.zeros(len(pred_bkg_merged))], axis = 0)
 
         auroc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
-        perfdict["AUROC"] = auroc
-
-        # compute the linear Pearson correlation coefficient
-        
+        perfdict[prefix + "AUROC"] = auroc
 
         # to get the KS fairness metrics, need to compute the cut values for the given signal efficiencies
         pred_sig_merged = np.concatenate(pred_sig, axis = 0)
@@ -96,11 +93,10 @@ class ModelEvaluator:
         # apply the classifier cuts
         for cutval, sigeff in zip(cutvals, sigeffs):
 
-            KS_vals = []
+            KS_vals = [] # holds the KS values
 
             # compute the KS test statistic separately for each signal and background component, as well as for each given signal efficiency
             for cur_pred, cur_nuis, cur_weights, cur_label in zip(pred_sig + pred_bkg, nuis_sig + nuis_bkg, sig_weights + bkg_weights, labels_sig + labels_bkg):
-
                 cut_passed = np.where(cur_pred > cutval)
                 cur_nuis_passed = cur_nuis[cut_passed]
                 cur_weights_passed = cur_weights[cut_passed]
@@ -108,34 +104,28 @@ class ModelEvaluator:
                 cur_KS = ModelEvaluator._get_KS(cur_nuis, cur_weights, cur_nuis_passed, cur_weights_passed)
                 KS_vals.append(cur_KS)
 
-                cur_dictlabel = "KS_" + str(int(sigeff * 100)) + "_" + cur_label
+                cur_dictlabel = prefix + "KS_" + str(int(sigeff * 100)) + "_" + cur_label
                 perfdict[cur_dictlabel] = cur_KS
                 
-            perfdict["KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
+            perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
 
             # also compute KS for the combined background (all components merged)
             cut_passed = np.where(pred_bkg_merged > cutval)
             cur_nuis_passed = nuis_bkg_merged[cut_passed]
             cur_weights_passed = weights_bkg_merged[cut_passed]
             cur_KS = ModelEvaluator._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
-            perfdict["KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
+            perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
         paramdict = self.env.create_paramdict()
         perfdict.update(paramdict)
 
         return perfdict
-
-    # plot the ROC of the classifier
-    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath):
-        # need to merge all signal- and background samples
-        data_sig = np.concatenate(data_sig, axis = 0)
-        data_bkg = np.concatenate(data_bkg, axis = 0)
-        sig_weights = np.concatenate(sig_weights, axis = 0)
-        bkg_weights = np.concatenate(bkg_weights, axis = 0)
-
-        pred_bkg = self.env.predict(data = data_bkg)[:,1]
+        
+    # compute fpr / tpr of the given data
+    def get_roc(self, data_sig, data_bkg, sig_weights, bkg_weights):
         pred_sig = self.env.predict(data = data_sig)[:,1]
+        pred_bkg = self.env.predict(data = data_bkg)[:,1]
 
         pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
         weights = np.concatenate([sig_weights, bkg_weights], axis = 0)
@@ -143,15 +133,71 @@ class ModelEvaluator:
 
         fpr, tpr, thresholds = metrics.roc_curve(labels, pred, sample_weight = weights)
         auc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
+        
+        return fpr, tpr, auc
 
-        # plot the ROC
+    # plot the ROC of the classifier
+    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath):
+        # need to merge all signal- and background samples for the inclusive ROC
+        data_sig_inclusive = np.concatenate(data_sig, axis = 0)
+        data_bkg_inclusive = np.concatenate(data_bkg, axis = 0)
+        sig_weights_inclusive = np.concatenate(sig_weights, axis = 0)
+        bkg_weights_inclusive = np.concatenate(bkg_weights, axis = 0)
+
+        mBB_sig = data_sig_inclusive[:, TrainingConfig.training_branches.index("mBB")]
+        mBB_bkg = data_bkg_inclusive[:, TrainingConfig.training_branches.index("mBB")]
+
+        # extract only events close to the Higgs peak
+        cut_sig_central = np.logical_and(mBB_sig > 100.0, mBB_sig < 150.0)
+        cut_bkg_central = np.logical_and(mBB_bkg > 100.0, mBB_bkg < 150.0)
+        data_sig_central = data_sig_inclusive[cut_sig_central]
+        data_bkg_central = data_bkg_inclusive[cut_bkg_central]
+        sig_weights_central = sig_weights_inclusive[cut_sig_central]
+        bkg_weights_central = bkg_weights_inclusive[cut_bkg_central]
+
+        # extract events in the low mBB range, i.e. above the Higgs peak
+        cut_sig_high = mBB_sig > 150.0
+        cut_bkg_high = mBB_bkg > 150.0
+        data_sig_high = data_sig_inclusive[cut_sig_high]
+        data_bkg_high = data_bkg_inclusive[cut_bkg_high]
+        sig_weights_high = sig_weights_inclusive[cut_sig_high]
+        bkg_weights_high = bkg_weights_inclusive[cut_bkg_high]
+
+        # extract events in the low mBB range, i.e. below the Higgs peak
+        cut_sig_low = mBB_sig < 100.0
+        cut_bkg_low = mBB_bkg < 100.0
+        data_sig_low = data_sig_inclusive[cut_sig_low]
+        data_bkg_low = data_bkg_inclusive[cut_bkg_low]
+        sig_weights_low = sig_weights_inclusive[cut_sig_low]
+        bkg_weights_low = bkg_weights_inclusive[cut_bkg_low]
+
+        data_sig_inclusive = np.concatenate([data_sig_central, data_sig_low, data_sig_high], axis = 0)
+        data_bkg_inclusive = np.concatenate([data_bkg_central, data_bkg_low, data_bkg_high], axis = 0)
+        sig_weights_inclusive = np.concatenate([sig_weights_central, sig_weights_low, sig_weights_high], axis = 0)
+        bkg_weights_inclusive = np.concatenate([bkg_weights_central, bkg_weights_low, bkg_weights_high], axis = 0)
+
+        print("SOW(inclusive) = {}".format(np.sum(sig_weights_inclusive) + np.sum(bkg_weights_inclusive)))
+        print("SOW(low) = {}".format(np.sum(sig_weights_low) + np.sum(bkg_weights_low)))
+        print("SOW(high) = {}".format(np.sum(sig_weights_high) + np.sum(bkg_weights_high)))
+        print("SOW(central) = {}".format(np.sum(sig_weights_central) + np.sum(bkg_weights_central)))
+
+        colors = ['black', 'gray', 'tomato', 'royalblue']
+        label_bases = ['inclusive', r'100 GeV $< m_{bb} <$ 150 GeV', r'$m_{bb} > 150$ GeV', r'$m_{bb} < 100$ GeV']
+
+        # plot the ROCs
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(tpr, fpr, color = 'black')
+
+        for cur_data_sig, cur_data_bkg, cur_sig_weights, cur_bkg_weights, color, label_base in zip([data_sig_inclusive, data_sig_central, data_sig_high, data_sig_low], [data_bkg_inclusive, data_bkg_central, data_bkg_high, data_bkg_low],
+                                                                                                   [sig_weights_inclusive, sig_weights_central, sig_weights_high, sig_weights_low], [bkg_weights_inclusive, bkg_weights_central, bkg_weights_high, bkg_weights_low],
+                                                                                                   colors, label_bases):
+            fpr, tpr, auc = self.get_roc(cur_data_sig, cur_data_bkg, cur_sig_weights, cur_bkg_weights)
+            ax.plot(tpr, fpr, color = color, label = label_base + r' (AUC = {:.3f})'.format(auc))
+
         ax.set_xlabel("signal efficiency")
         ax.set_ylabel("background efficiency")
         ax.set_aspect(1.0)
-        ax.text(0.75, 0.0, "AUC = {:.2f}".format(auc))
+        ax.legend()
         plt.tight_layout()
 
         # create the output directory if it doesn't already exist and save the figure(s)

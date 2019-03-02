@@ -121,15 +121,37 @@ def main():
         sensdict["significance_high_MET_{}J".format(cur_nJ)] = significance_high_MET
 
         # compute the distortions to m_BB in the combined background caused by these categories
-        p, p_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
-        q, q_weights = low_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
-        KS_low_MET_cat = ModelEvaluator._get_KS(p, p_weights, q, q_weights)
-        sensdict["KS_bkg_low_MET_{}J".format(cur_nJ)] = KS_low_MET_cat
+        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_cat, mBB_cat_weights = low_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
+        
+        # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
+        cut = np.logical_and.reduce((mBB_inclusive > 30, mBB_inclusive < 210)).flatten()
+        mBB_inclusive_red, mBB_inclusive_red_weights = mBB_inclusive[cut], mBB_inclusive_weights[cut]
 
-        p, p_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
-        q, q_weights = high_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
-        KS_high_MET_cat = ModelEvaluator._get_KS(p, p_weights, q, q_weights)
+        # ... and also for the range around the Higgs peak only (i.e. 30 - 210 GeV)
+        cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
+        mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
+
+        KS_low_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
+        KS_low_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        sensdict["KS_bkg_low_MET_{}J".format(cur_nJ)] = KS_low_MET_cat
+        sensdict["KS_bkg_low_MET_{}J_red".format(cur_nJ)] = KS_low_MET_cat_red
+
+        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_cat, mBB_cat_weights = high_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
+
+        # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
+        cut = np.logical_and.reduce((mBB_inclusive > 30, mBB_inclusive < 210)).flatten()
+        mBB_inclusive_red, mBB_inclusive_red_weights = mBB_inclusive[cut], mBB_inclusive_weights[cut]
+
+        # ... and also for the range around the Higgs peak only (i.e. 30 - 210 GeV)
+        cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
+        mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]        
+
+        KS_high_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
+        KS_high_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
         sensdict["KS_bkg_high_MET_{}J".format(cur_nJ)] = KS_high_MET_cat
+        sensdict["KS_bkg_high_MET_{}J_red".format(cur_nJ)] = KS_high_MET_cat_red
 
         # also show the distributions in these two categories
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
@@ -173,15 +195,37 @@ def main():
         sensdict["significance_clf_tight_{}J".format(cur_nJ)] = significance_clf_tight
 
         # compute the distortions to m_BB caused by these categories
-        p, p_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
-        q, q_weights = class_cat_tight.get_event_variable(processes = bkg_samples, var = "mBB")
-        KS_class_cat_tight = ModelEvaluator._get_KS(p, p_weights, q, q_weights)
-        sensdict["KS_bkg_class_tight_{}J".format(cur_nJ)] = KS_class_cat_tight
+        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_cat, mBB_cat_weights = class_cat_tight.get_event_variable(processes = bkg_samples, var = "mBB")
 
-        p, p_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
-        q, q_weights = class_cat_loose.get_event_variable(processes = bkg_samples, var = "mBB")
-        KS_class_cat_loose = ModelEvaluator._get_KS(p, p_weights, q, q_weights)
+        # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
+        cut = np.logical_and.reduce((mBB_inclusive > 30, mBB_inclusive < 210)).flatten()
+        mBB_inclusive_red, mBB_inclusive_red_weights = mBB_inclusive[cut], mBB_inclusive_weights[cut]
+
+        # ... and also for the range around the Higgs peak only (i.e. 30 - 210 GeV)
+        cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
+        mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
+
+        KS_class_cat_tight = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
+        KS_class_cat_tight_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        sensdict["KS_bkg_class_tight_{}J".format(cur_nJ)] = KS_class_cat_tight
+        sensdict["KS_bkg_class_tight_{}J_red".format(cur_nJ)] = KS_class_cat_tight_red
+
+        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_cat, mBB_cat_weights = class_cat_loose.get_event_variable(processes = bkg_samples, var = "mBB")
+
+        # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
+        cut = np.logical_and.reduce((mBB_inclusive > 30, mBB_inclusive < 210)).flatten()
+        mBB_inclusive_red, mBB_inclusive_red_weights = mBB_inclusive[cut], mBB_inclusive_weights[cut]
+
+        # ... and also for the range around the Higgs peak only (i.e. 30 - 210 GeV)
+        cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
+        mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
+
+        KS_class_cat_loose = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
+        KS_class_cat_loose_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
         sensdict["KS_bkg_class_loose_{}J".format(cur_nJ)] = KS_class_cat_loose
+        sensdict["KS_bkg_class_loose_{}J_red".format(cur_nJ)] = KS_class_cat_loose_red
 
         # plot their signal composition
         CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
