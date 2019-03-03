@@ -166,8 +166,8 @@ class PerformancePlotter:
         for perfdict, cur_hist in zip(perfdicts, hist_data):
             cur_bin_values = cur_hist[0]
             edges = cur_hist[1]
-            xlabel = cur_hist[3]
-            ylabel = cur_hist[4]
+            xlabel = cur_hist[2]
+            ylabel = cur_hist[3]
 
             color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"
             colors.append(color)

@@ -92,6 +92,9 @@ def main():
     inclusive_events = inclusive.get_number_events("Hbb")
     print("have {} signal events in total".format(inclusive_events))
 
+    # export the inclusive background distribution
+    inclusive.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive.pkl"), clipping = False)    
+
     # measure its binned significance
     significance_inclusive = inclusive.get_binned_significance(binning = inclusive_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
     sensdict["significance_inclusive"] = significance_inclusive
@@ -160,6 +163,10 @@ def main():
                                                   plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
+
+        # save the distribution of the combined background
+        low_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+        high_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
 
     # load the classifier model and also fill two classifier-based categories
     env = AdversarialEnvironment.from_file(model_dir)
@@ -235,6 +242,9 @@ def main():
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
 
+        # save the distribution of the combined background
+        class_cat_tight.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
+        class_cat_loose.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
 
     # plot the summarized significance values and save them
     sensdict.update(env.create_paramdict())

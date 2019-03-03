@@ -18,32 +18,58 @@ def MakeGlobalAUROC_KSPlots(model_dirs, plot_dir):
     # generate combined performance plots that compare all the models
     PerformancePlotter.plot_AUROC_KS(perfdicts, outpath = plot_dir, colorquant = "lambda")
 
-def MakeGlobalComparisonPlot(model_dirs, outpath, source_basename, overlay_path = None):
+def MakeGlobalComparisonPlot(model_dirs, outpath, source_basename, overlay_paths = None, overlay_labels = None, overlay_colors = None, mode = 'plt', xlabel = "", ylabel = "", plot_labels = ""):
     perfdicts = []
     plot_data = []
+
+    # exception handling for overlays
+    if overlay_paths:
+        if len(overlay_labels) != len(overlay_paths):
+            overlay_labels = ["inclusive" for overlay_path in overlay_paths]
+
+        if len(overlay_colors) != len(overlay_colors):
+            overlay_colors = ["black" for overlay_path in overlay_paths]
 
     # load the performance dict and also the saved histograms
     for model_dir in model_dirs:
         try:
             with open(os.path.join(model_dir, "perfdict.pkl"), "rb") as perfdict_infile, open(os.path.join(model_dir, source_basename), "rb") as plot_infile:
                 perfdict = pickle.load(perfdict_infile)
-                (n, bins, patches, xlabel, ylabel, plot_labels) = pickle.load(plot_infile)
+
+                if mode == 'plt':
+                    (n, bins, patches, xlabel, ylabel, plot_labels) = pickle.load(plot_infile)
+                elif mode == 'np':
+                    (n, bins) = pickle.load(plot_infile)
+
+                    # explicitly take over the passed default arguments
+                    xlabel = xlabel
+                    ylabel = ylabel
+                    plot_labels = plot_labels
+
             perfdicts.append(perfdict)
-            plot_data.append((n, bins, patches, xlabel, ylabel, plot_labels))
+            plot_data.append((n, bins, xlabel, ylabel, plot_labels))
         except:
             print("no or incomplete information for model '{}'".format(model_dir))
 
-    # load the overlay histogram and plot it as well (always plotted in a neutral color)
+    # load the overlay histograms and plot them as well
     try:
-        print("trying to load from {}".format(os.path.join(model_dir, overlay_path)))
-        with open(os.path.join(model_dir, overlay_path), "rb") as overlay_infile:
-            (bin_contents, edges, _, _, _, _) = pickle.load(overlay_infile)
-            low_edges = edges[:-1]
-            high_edges = edges[1:]
-            centers = 0.5 * (low_edges + high_edges)
-            overlays = [(centers, bin_contents, {'color': 'black', 'lw': 1.2, 'label': "inclusive"})]
+        overlays = []
+
+        for overlay_path, overlay_label, overlay_color in zip(overlay_paths, overlay_labels, overlay_colors):
+            print("trying to load from {}".format(os.path.join(model_dir, overlay_path)))
+            with open(os.path.join(model_dir, overlay_path), "rb") as overlay_infile:
+
+                if mode == 'plt':
+                    (bin_contents, edges, _, _, _, _) = pickle.load(overlay_infile)
+                elif mode == 'np':
+                    (bin_contents, edges) = pickle.load(overlay_infile)
+
+                low_edges = edges[:-1]
+                high_edges = edges[1:]
+                centers = 0.5 * (low_edges + high_edges)
+
+                overlays.append((centers, bin_contents, {'color': overlay_color, 'lw': 1.2, 'label': overlay_label}))
     except:
-        print("problem")
         overlays = []
         
     # generate the combined plot
@@ -87,7 +113,8 @@ def main():
     ]
 
     for cur, cur_overlay in zip(to_combine, overlays):
-        MakeGlobalComparisonPlot(model_dirs, outpath = os.path.join(plot_dir, cur + ".pdf"), source_basename = cur + ".pkl", overlay_path = cur_overlay + ".pkl" if cur_overlay is not None else None)
+        MakeGlobalComparisonPlot(model_dirs, outpath = os.path.join(plot_dir, cur + ".pdf"), source_basename = cur + ".pkl", 
+                                 overlay_paths = [cur_overlay + ".pkl"] if cur_overlay is not None else None, overlay_colors = ["black"], overlay_labels = ["inclusive"])
 
 if __name__ == "__main__":
     main()

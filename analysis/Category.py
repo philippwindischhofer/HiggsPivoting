@@ -1,5 +1,6 @@
 from base.Configs import TrainingConfig
 
+import pickle
 import numpy as np
 
 class Category:
@@ -43,6 +44,20 @@ class Category:
         weight_retval = np.concatenate(weight_retval)
 
         return event_retval, weight_retval
+
+    # computes and exports the histogram of some event variable, as filled in this category
+    def export_histogram(self, binning, processes, var_name, outfile, clipping = False, density = True):
+        # obtain the data that is to be plotted
+        data, weights = self.get_event_variable(processes, var_name)
+
+        # perform the histogramming
+        if clipping:
+            data = np.clip(data, binning[0], binning[-1])
+        
+        n, bins = np.histogram(data, bins = binning, weights = weights.flatten(), density = density)
+
+        with open(outfile, "wb") as outfile:
+            pickle.dump((n, bins), outfile)
 
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components
