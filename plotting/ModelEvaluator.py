@@ -18,10 +18,13 @@ class ModelEvaluator:
 
     # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
     @staticmethod
-    def _get_KS(p, p_weights, q, q_weights, num_pts = 1000):
+    def _get_KS(p, p_weights, q, q_weights, num_pts = 1000, cums_outfile = ""):
         # don't attempt to do anything if there is no data
         if len(p) == 0 or len(q) == 0:
             return 1.0
+
+        if len(p) != len(p_weights) or len(q) != len(q_weights):
+            raise Exception("Problem: don't have the same number of weights and samples!")
 
         # # also refuse to do anything for very unbalanced data
         # # NOTE: don't do it for the time being, doesn't seem to be problematic
@@ -59,6 +62,18 @@ class ModelEvaluator:
 
         # then get the KS metric as the maximum distance between them
         KS = np.amax(np.abs(p_cum_interp - q_cum_interp))
+
+        if cums_outfile:
+            KS_pos = np.argmax(np.abs(p_cum_interp - q_cum_interp))
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.plot(valgrid, p_cum_interp, label = "p_cum_interp")
+            ax.plot(valgrid, q_cum_interp, label = "q_cum_interp")
+            plt.axvline(valgrid[KS_pos], color = "black")
+            plt.text(0.2, 0.7, "KS = {:.2f}".format(KS))
+            ax.legend()
+            fig.savefig(cums_outfile)
 
         return KS
 

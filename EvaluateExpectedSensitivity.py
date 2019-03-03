@@ -120,7 +120,9 @@ def main():
         sensdict["significance_low_MET_{}J".format(cur_nJ)] = significance_low_MET
         sensdict["significance_high_MET_{}J".format(cur_nJ)] = significance_high_MET
 
+        # ----------------------------------------------------------------------------------------
         # compute the distortions to m_BB in the combined background caused by these categories
+        # ----------------------------------------------------------------------------------------
         mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
         mBB_cat, mBB_cat_weights = low_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         
@@ -132,8 +134,8 @@ def main():
         cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
         mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
 
-        KS_low_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
-        KS_low_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        KS_low_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights, cums_outfile = os.path.join(plotdir, "low_MET_KS_cums_{}J.pdf".format(cur_nJ)))
+        KS_low_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights, cums_outfile = os.path.join(plotdir, "low_MET_KS_red_cums_{}J.pdf".format(cur_nJ)))
         sensdict["KS_bkg_low_MET_{}J".format(cur_nJ)] = KS_low_MET_cat
         sensdict["KS_bkg_low_MET_{}J_red".format(cur_nJ)] = KS_low_MET_cat_red
 
@@ -148,8 +150,8 @@ def main():
         cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
         mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]        
 
-        KS_high_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
-        KS_high_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        KS_high_MET_cat = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights, cums_outfile = os.path.join(plotdir, "high_MET_KS_cums_{}J.pdf".format(cur_nJ)))
+        KS_high_MET_cat_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights, cums_outfile = os.path.join(plotdir, "high_MET_KS_red_cums_{}J.pdf".format(cur_nJ)))
         sensdict["KS_bkg_high_MET_{}J".format(cur_nJ)] = KS_high_MET_cat
         sensdict["KS_bkg_high_MET_{}J_red".format(cur_nJ)] = KS_high_MET_cat_red
 
@@ -206,8 +208,8 @@ def main():
         cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
         mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
 
-        KS_class_cat_tight = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
-        KS_class_cat_tight_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        KS_class_cat_tight = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights, cums_outfile = os.path.join(plotdir, "class_tight_KS_cums_{}J.pdf".format(cur_nJ)))
+        KS_class_cat_tight_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights, cums_outfile = os.path.join(plotdir, "class_tight_KS_red_cums_{}J.pdf".format(cur_nJ)))
         sensdict["KS_bkg_class_tight_{}J".format(cur_nJ)] = KS_class_cat_tight
         sensdict["KS_bkg_class_tight_{}J_red".format(cur_nJ)] = KS_class_cat_tight_red
 
@@ -222,8 +224,8 @@ def main():
         cut = np.logical_and.reduce((mBB_cat > 30, mBB_cat < 210)).flatten()
         mBB_cat_red, mBB_cat_red_weights = mBB_cat[cut], mBB_cat_weights[cut]
 
-        KS_class_cat_loose = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights)
-        KS_class_cat_loose_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights)
+        KS_class_cat_loose = ModelEvaluator._get_KS(mBB_inclusive, mBB_inclusive_weights, mBB_cat, mBB_cat_weights, cums_outfile = os.path.join(plotdir, "class_loose_KS_cums_{}J.pdf".format(cur_nJ)))
+        KS_class_cat_loose_red = ModelEvaluator._get_KS(mBB_inclusive_red, mBB_inclusive_red_weights, mBB_cat_red, mBB_cat_red_weights, cums_outfile = os.path.join(plotdir, "class_loose_KS_red_cums_{}J.pdf".format(cur_nJ)))
         sensdict["KS_bkg_class_loose_{}J".format(cur_nJ)] = KS_class_cat_loose
         sensdict["KS_bkg_class_loose_{}J_red".format(cur_nJ)] = KS_class_cat_loose_red
 
