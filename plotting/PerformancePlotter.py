@@ -60,7 +60,7 @@ class PerformancePlotter:
 
         # use fixed plot ranges for the time being
         ax.set_xlim([2.4, 2.7])
-        ax.set_ylim([0.0, 0.45])
+        ax.set_ylim([0.0, 0.35])
 
         fig.savefig(outfile)
         plt.close()                
@@ -194,6 +194,7 @@ class PerformancePlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(plot_title)
+        ax.set_ylim((0, 1.2 * ax.get_ylim()[1])) # add some more margin on top
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])

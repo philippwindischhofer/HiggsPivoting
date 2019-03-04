@@ -5,6 +5,24 @@ from analysis.Category import Category
 
 # fills the event categories used in the cut-based cross-check analysis for VHbb
 class CutBasedCategoryFiller:
+
+    # cuts applied to incoming events:
+    # nJ = nJ
+    @staticmethod
+    def create_nJ_category(process_events, process_aux_events, process_weights, process_names, nJ = 2):
+        retcat = Category("inclusive_{}J".format(nJ))
+
+        for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
+            # extract the branches that are needed for the cut
+            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+            cut = (cur_nJ == nJ)
+
+            passed_events = cur_events[cut]
+            passed_weights = cur_weights[cut]
+
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
+
+        return retcat
     
     # cuts applied to incoming events:
     # MET > 150 GeV && MET < 200 GeV

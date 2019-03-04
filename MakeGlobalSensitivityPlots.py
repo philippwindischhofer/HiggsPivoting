@@ -34,22 +34,50 @@ def MakeGlobalSensitivityPlots(model_dirs, plot_dir):
         "dist_mBB_class_tight_2J",
         "dist_mBB_class_loose_3J",
         "dist_mBB_class_tight_3J",
+        "dist_dRBB_class_loose_2J",
+        "dist_dRBB_class_tight_2J",
+        "dist_dRBB_class_loose_3J",
+        "dist_dRBB_class_tight_3J"
     ]
     overlays = [
-        ["dist_mBB_inclusive", "dist_mBB_low_MET_2J"],
-        ["dist_mBB_inclusive", "dist_mBB_high_MET_2J"],
-        ["dist_mBB_inclusive", "dist_mBB_low_MET_3J"],
-        ["dist_mBB_inclusive", "dist_mBB_high_MET_3J"]
+        ["dist_mBB_inclusive_2J", "dist_mBB_low_MET_2J"],
+        ["dist_mBB_inclusive_2J", "dist_mBB_high_MET_2J"],
+        ["dist_mBB_inclusive_3J", "dist_mBB_low_MET_3J"],
+        ["dist_mBB_inclusive_3J", "dist_mBB_high_MET_3J"],
+        ["dist_dRBB_inclusive_2J", "dist_dRBB_low_MET_2J"],
+        ["dist_dRBB_inclusive_2J", "dist_dRBB_high_MET_2J"],
+        ["dist_dRBB_inclusive_3J", "dist_dRBB_low_MET_3J"],
+        ["dist_dRBB_inclusive_3J", "dist_dRBB_high_MET_3J"]
+
     ]
-    overlay_labels = ["inclusive", "cut-based analysis"]
+    overlay_labels = [
+        ["inclusive (nJ = 2)", "cut-based analysis\n (150 GeV < MET < 200 GeV, dRBB < 1.8, nJ = 2)"],
+        ["inclusive (nJ = 2)", "cut-based analysis\n (MET > 200 GeV, dRBB < 1.2, nJ = 2)"],
+        ["inclusive (nJ = 3)", "cut-based analysis\n (150 GeV < MET < 200 GeV, dRBB < 1.8, nJ = 3)"],
+        ["inclusive (nJ = 3)", "cut-based analysis\n (MET > 200 GeV, dRBB < 1.2, nJ = 3)"],
+        ["inclusive (nJ = 2)", "cut-based analysis\n (150 GeV < MET < 200 GeV, dRBB < 1.8, nJ = 2)"],
+        ["inclusive (nJ = 2)", "cut-based analysis\n (MET > 200 GeV, dRBB < 1.2, nJ = 2)"],
+        ["inclusive (nJ = 3)", "cut-based analysis\n (150 GeV < MET < 200 GeV, dRBB < 1.8, nJ = 3)"],
+        ["inclusive (nJ = 3)", "cut-based analysis\n (MET > 200 GeV, dRBB < 1.2, nJ = 3)"]
+    ]
+    xlabels = [
+        r'$m_{bb}$ [GeV]',
+        r'$m_{bb}$ [GeV]',
+        r'$m_{bb}$ [GeV]',
+        r'$m_{bb}$ [GeV]',
+        r'dRBB',
+        r'dRBB',
+        r'dRBB',
+        r'dRBB'
+    ]
     overlay_colors = ["black", "tomato"]
 
-    for cur, cur_overlay in zip(to_combine, overlays):
+    for cur, cur_overlay, cur_labels, xlabel in zip(to_combine, overlays, overlay_labels, xlabels):
         # generate plots comparing the mBB shaping in the different signal regions
         MakeGlobalComparisonPlot(model_dirs, outpath = os.path.join(plot_dir + cur + ".pdf"),
                                  source_basename = cur + ".pkl", overlay_paths = [cur_path + ".pkl" for cur_path in cur_overlay],
-                                 overlay_labels = overlay_labels, overlay_colors = overlay_colors, mode = 'np',
-                                 xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', plot_labels = cur)
+                                 overlay_labels = cur_labels, overlay_colors = overlay_colors, mode = 'np',
+                                 xlabel = xlabel, ylabel = 'a.u.', plot_labels = cur)
 
 def main():
     parser = ArgumentParser(description = "create global sensitivity plots")

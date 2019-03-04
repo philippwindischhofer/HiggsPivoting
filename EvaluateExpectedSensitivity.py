@@ -75,7 +75,8 @@ def main():
     SR_low = 30
     SR_up = 210
     SR_binwidth = 10
-    SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+    SR_mBB_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+    dRBB_binning = np.linspace(0, 5, num = 25, endpoint = True)
 
     # prepare the inclusive binning
     inclusive_low = 30
@@ -93,11 +94,32 @@ def main():
     print("have {} signal events in total".format(inclusive_events))
 
     # export the inclusive background distribution
-    inclusive.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive.pkl"), clipping = False)    
+    inclusive.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive.pkl"), clipping = False)    
+    inclusive.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_inclusive.pkl"), clipping = False)
 
     # measure its binned significance
     significance_inclusive = inclusive.get_binned_significance(binning = inclusive_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
     sensdict["significance_inclusive"] = significance_inclusive
+
+    # also fill inclusive 2- and 3-jet categories to get a baseline for the shapes
+    inclusive_2J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
+                                                             process_aux_events = aux_test,
+                                                             process_weights = weights_test,
+                                                             process_names = samples,
+                                                             nJ = 2)
+
+    inclusive_3J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
+                                                             process_aux_events = aux_test,
+                                                             process_weights = weights_test,
+                                                             process_names = samples,
+                                                             nJ = 3)
+
+    # and export their combined background distribution
+    inclusive_2J.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive_2J.pkl"), clipping = False)    
+    inclusive_2J.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_inclusive_2J.pkl"), clipping = False)
+
+    inclusive_3J.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive_3J.pkl"), clipping = False)    
+    inclusive_3J.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_inclusive_3J.pkl"), clipping = False)
 
     # create the event categories for the simple cut-based analysis
     for cur_nJ in [2, 3]:
@@ -117,8 +139,8 @@ def main():
         sensdict["sigeff_high_MET_{}J".format(cur_nJ)] = high_MET_cat.get_number_events("Hbb") / inclusive_events
 
         # compute their expected sensitivities
-        significance_low_MET = low_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
-        significance_high_MET = high_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        significance_low_MET = low_MET_cat.get_binned_significance(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        significance_high_MET = high_MET_cat.get_binned_significance(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
 
         sensdict["significance_low_MET_{}J".format(cur_nJ)] = significance_low_MET
         sensdict["significance_high_MET_{}J".format(cur_nJ)] = significance_high_MET
@@ -159,14 +181,17 @@ def main():
         sensdict["KS_bkg_high_MET_{}J_red".format(cur_nJ)] = KS_high_MET_cat_red
 
         # also show the distributions in these two categories
-        CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+        CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
-        CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+        CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
         # save the distribution of the combined background
-        low_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
-        high_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+        low_MET_cat.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+        high_MET_cat.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+
+        low_MET_cat.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+        high_MET_cat.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
 
     # load the classifier model and also fill two classifier-based categories
     env = AdversarialEnvironment.from_file(model_dir)
@@ -197,8 +222,8 @@ def main():
         sensdict["sigeff_clf_loose_{}J".format(cur_nJ)] = class_cat_loose.get_number_events("Hbb") / inclusive_events
 
         # compute the expected sensitivities
-        significance_clf_loose = class_cat_loose.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
-        significance_clf_tight = class_cat_tight.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        significance_clf_loose = class_cat_loose.get_binned_significance(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        significance_clf_tight = class_cat_tight.get_binned_significance(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
 
         sensdict["significance_clf_loose_{}J".format(cur_nJ)] = significance_clf_loose
         sensdict["significance_clf_tight_{}J".format(cur_nJ)] = significance_clf_tight
@@ -237,14 +262,17 @@ def main():
         sensdict["KS_bkg_class_loose_{}J_red".format(cur_nJ)] = KS_class_cat_loose_red
 
         # plot their signal composition
-        CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+        CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
-        CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+        CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
 
         # save the distribution of the combined background
-        class_cat_tight.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
-        class_cat_loose.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
+        class_cat_tight.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
+        class_cat_loose.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
+
+        class_cat_tight.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
+        class_cat_loose.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
 
     # plot the summarized significance values and save them
     sensdict.update(env.create_paramdict())
