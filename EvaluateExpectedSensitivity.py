@@ -116,13 +116,15 @@ def main():
 
     # and export their combined background distribution
     inclusive_2J.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive_2J.pkl"), clipping = False)    
+    inclusive_2J.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_inclusive_2J.pkl"), clipping = False)    
     inclusive_2J.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_inclusive_2J.pkl"), clipping = False)
 
     inclusive_3J.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_inclusive_3J.pkl"), clipping = False)    
+    inclusive_3J.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_inclusive_3J.pkl"), clipping = False)    
     inclusive_3J.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_inclusive_3J.pkl"), clipping = False)
 
     # create the event categories for the simple cut-based analysis
-    for cur_nJ in [2, 3]:
+    for cur_nJ, cur_inclusive_cat in zip([2, 3], [inclusive_2J, inclusive_3J]):
         low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
                                                                      process_aux_events = aux_test,
                                                                      process_weights = weights_test,
@@ -148,7 +150,7 @@ def main():
         # ----------------------------------------------------------------------------------------
         # compute the distortions to m_BB in the combined background caused by these categories
         # ----------------------------------------------------------------------------------------
-        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_inclusive, mBB_inclusive_weights = cur_inclusive_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         mBB_cat, mBB_cat_weights = low_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         
         # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
@@ -164,7 +166,7 @@ def main():
         sensdict["KS_bkg_low_MET_{}J".format(cur_nJ)] = KS_low_MET_cat
         sensdict["KS_bkg_low_MET_{}J_red".format(cur_nJ)] = KS_low_MET_cat_red
 
-        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_inclusive, mBB_inclusive_weights = cur_inclusive_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         mBB_cat, mBB_cat_weights = high_MET_cat.get_event_variable(processes = bkg_samples, var = "mBB")
 
         # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
@@ -186,9 +188,13 @@ def main():
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
-        # save the distribution of the combined background
+        # save the distribution of the combined background ...
         low_MET_cat.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
         high_MET_cat.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+
+        # ... and the signal
+        low_MET_cat.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
+        high_MET_cat.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
 
         low_MET_cat.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_low_MET_{}J.pkl".format(cur_nJ)), clipping = False)
         high_MET_cat.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_high_MET_{}J.pkl".format(cur_nJ)), clipping = False)
@@ -196,7 +202,7 @@ def main():
     # load the classifier model and also fill two classifier-based categories
     env = AdversarialEnvironment.from_file(model_dir)
 
-    for cur_nJ in [2, 3]:
+    for cur_nJ, cur_inclusive_cat in zip([2, 3], [inclusive_2J, inclusive_3J]):
         class_cat_tight = ClassifierBasedCategoryFiller.create_classifier_category(env, 
                                                                                    process_events = data_test,
                                                                                    process_aux_events = aux_test,
@@ -229,7 +235,7 @@ def main():
         sensdict["significance_clf_tight_{}J".format(cur_nJ)] = significance_clf_tight
 
         # compute the distortions to m_BB caused by these categories
-        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_inclusive, mBB_inclusive_weights = cur_inclusive_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         mBB_cat, mBB_cat_weights = class_cat_tight.get_event_variable(processes = bkg_samples, var = "mBB")
 
         # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
@@ -245,7 +251,7 @@ def main():
         sensdict["KS_bkg_class_tight_{}J".format(cur_nJ)] = KS_class_cat_tight
         sensdict["KS_bkg_class_tight_{}J_red".format(cur_nJ)] = KS_class_cat_tight_red
 
-        mBB_inclusive, mBB_inclusive_weights = inclusive.get_event_variable(processes = bkg_samples, var = "mBB")
+        mBB_inclusive, mBB_inclusive_weights = cur_inclusive_cat.get_event_variable(processes = bkg_samples, var = "mBB")
         mBB_cat, mBB_cat_weights = class_cat_loose.get_event_variable(processes = bkg_samples, var = "mBB")
 
         # do it both for the inclusive mass range (i.e. get a "global" KS value) ...
@@ -267,9 +273,13 @@ def main():
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_mBB_binning, outpath = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
 
-        # save the distribution of the combined background
+        # save the distribution of the combined background ...
         class_cat_tight.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
         class_cat_loose.export_histogram(binning = SR_mBB_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
+
+        # ... and the signal
+        class_cat_tight.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
+        class_cat_loose.export_histogram(binning = SR_mBB_binning, processes = sig_samples, var_name = "mBB", outfile = os.path.join(plotdir, "dist_mBB_sig_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
 
         class_cat_tight.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_class_tight_{}J.pkl".format(cur_nJ)), clipping = False)
         class_cat_loose.export_histogram(binning = dRBB_binning, processes = bkg_samples, var_name = "dRBB", outfile = os.path.join(plotdir, "dist_dRBB_class_loose_{}J.pkl".format(cur_nJ)), clipping = False)
