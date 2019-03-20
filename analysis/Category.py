@@ -59,6 +59,15 @@ class Category:
         with open(outfile, "wb") as outfile:
             pickle.dump((n, bins), outfile)
 
+    # similar to 'export_histogram', but instead writes a *.root file
+    def export_ROOT_histogram(self, binning, processes, var_names, outfile, clipping = False, density = False):
+        if len(var_names) == 1:
+            # export a TH1F
+        elif len(var_names) == 2:
+            # export instead a TH2F
+
+        pass
+
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components
     def get_binned_significance(self, binning, signal_processes, background_processes, var_name):
