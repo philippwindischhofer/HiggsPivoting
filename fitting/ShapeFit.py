@@ -36,9 +36,6 @@ template_colors = [ROOT.kGreen - 9, ROOT.kPink]
 for region_name in region_names:
     configMgr.cutsDict[region_name] = "1."
 
-# configMgr.cutsDict["SR1"] = "1."
-# configMgr.cutsDict["SR2"] = "1."
-
 configMgr.weights = "1."
 
 samples = []
