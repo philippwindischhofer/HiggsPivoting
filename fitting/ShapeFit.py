@@ -1,10 +1,15 @@
-# run it with HistFitter.py -w -f -d -D allPlots -F excl TemplateAnalysisSimple.py
+# run it with HistFitter.py -w -f -d -D "after,corrMatrix" -F excl -a --userArg input_dir TemplateAnalysisSimple.py
 
+import ROOT, sys
+from argparse import ArgumentParser
+
+# HistFitter imports
 from configManager import configMgr
 from configWriter import fitConfig,Measurement,Channel,Sample
 from systematic import Systematic
 
-import ROOT, sys
+# read the path of the directory containing the input template histograms
+indir = configMgr.userArg
 
 configMgr.doExclusion = True
 configMgr.calculatorType = 2
@@ -13,6 +18,12 @@ configMgr.nPoints = 20
 
 configMgr.analysisName = "TemplateAnalysisSimple"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
+
+# signal regions that are to be used for this fit
+region_names = ["SR1", "SR2"]
+
+# names of the individual signal templates
+template_names = ["sig", "bkg"]
 
 configMgr.cutsDict["SR1"] = "1."
 configMgr.cutsDict["SR2"] = "1."
