@@ -1,7 +1,7 @@
 # run it with HistFitter.py -w -f -d -D "after,corrMatrix" -F excl -a --userArg input_dir TemplateAnalysisSimple.py
 
 import ROOT, sys
-from argparse import ArgumentParser
+from ROOT import TColor
 
 # HistFitter imports
 from configManager import configMgr
@@ -22,15 +22,19 @@ configMgr.analysisName = "TemplateAnalysisSimple"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
 
 # signal regions that are to be used for this fit
-region_names = ["SR1", "SR2"]
+region_names = ["twojettight", "twojetloose", "twojetdepleted",
+                "threjettight", "threejetloose", "threejetdepleted"]
 
 # names of the individual input files for the above regions
 # Note: these must exist in the directory 'indir' passed above
-region_infiles = ["templates_SR1.root", "templates_SR2.root"]
+region_infiles = ["2jet_tight.root", "2jet_loose.root", "2jet_depleted.root",
+                  "3jet_tight.root", "3jet_loose.root", "3jet_depleted.root"]
 
 # names of the individual signal templates available in each region
-template_names = ["sig", "bkg"]
-template_colors = [ROOT.kGreen - 9, ROOT.kPink]
+sample_names = ["Hbb", "ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+template_names = ["Hbb_mBB", "ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB"]
+template_colors = [TColor.GetColor(255, 0, 0), TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0),
+                   TColor.GetColor(0, 99, 0), TColor.GetColor(0, 99, 204), TColor.GetColor(204, 204, 204)]
 
 # turn off any additional selection cuts
 for region_name in region_names:
@@ -47,10 +51,10 @@ ana = configMgr.addFitConfig("shape_fit")
 meas = ana.addMeasurement(name = "shape_fit", lumi = 1.0, lumiErr = 0.01)
 
 # load all MC templates ...
-for template_name, template_color in zip(template_names, template_colors):
+for sample_name, template_name, template_color in zip(sample_names, template_names, template_colors):
 
-    cur_sample = Sample(template_name, template_color)
-    POI_name = "mu_" + template_name
+    cur_sample = Sample(sample_name, template_color)
+    POI_name = "mu_" + sample_name
     cur_sample.setNormFactor(POI_name, 1, 0, 100)
 
     # ... for all regions

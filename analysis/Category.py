@@ -2,6 +2,11 @@ from base.Configs import TrainingConfig
 
 import pickle
 import numpy as np
+from array import array
+
+# for exporting ROOT histograms
+import ROOT
+from ROOT import TH1F, TFile
 
 class Category:
 
@@ -32,6 +37,9 @@ class Category:
         return np.sum(self.weight_content[process])
 
     def get_event_variable(self, processes, var):
+        if not isinstance(processes, list):
+            processes = [processes]
+
         event_retval = []
         weight_retval = []
 
@@ -60,13 +68,43 @@ class Category:
             pickle.dump((n, bins), outfile)
 
     # similar to 'export_histogram', but instead writes a *.root file
-    def export_ROOT_histogram(self, binning, processes, var_names, outfile, clipping = False, density = False):
-        if len(var_names) == 1:
-            # export a TH1F
-        elif len(var_names) == 2:
-            # export instead a TH2F
+    def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False):
+        if isinstance(var_names, list):
+            if len(var_names) > 1:
+                raise NotImplementedError("Error: can only export TH1 up to now - please call for a single variable at a time!")
+            else:
+                var_name = var_names[0]
+        else:
+            var_name = var_names # just to get the semantics right :)
 
-        pass
+        outfile = TFile(outfile_path, 'RECREATE')
+        ROOT.SetOwnership(outfile, False)
+        outfile.cd()
+
+        for process in processes:
+            # obtain the data that is to be histogrammed
+            data, weights = self.get_event_variable(process, var_name)
+
+            # perform the histogramming
+            if clipping:
+                data = np.clip(data, binning[0], binning[-1])
+
+            bin_contents, bins = np.histogram(data, bins = binning, weights = weights.flatten(), density = density)
+
+            # now, just need to fill it into a ROOT histogram and dump it into a file
+            hist_name = process + "_" + var_name
+            hist = TH1F(hist_name, hist_name, len(bins) - 1, array('d', bins))
+            ROOT.SetOwnership(hist, False) # avoid problems with Python's garbage collector
+
+            for bin_number, bin_content in enumerate(bin_contents):
+                if bin_content == 0:
+                    bin_content = 1e-4
+
+                hist.SetBinContent(bin_number + 1, bin_content)
+
+            hist.Write()
+
+        outfile.Close()
 
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components

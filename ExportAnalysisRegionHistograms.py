@@ -1,29 +1,33 @@
 import os
 from argparse import ArgumentParser
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 from models.AdversarialEnvironment import AdversarialEnvironment
 from analysis.Category import Category
 from analysis.ClassifierBasedCategoryFiller import ClassifierBasedCategoryFiller
+from base.Configs import TrainingConfig
+from DatasetExtractor import TrainNuisAuxSplit
 
 def main():
     parser = ArgumentParser(description = "populate analysis signal regions and export them to be used with HistFitter")
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--model_dir", action = "store", dest = "model_dir")
-    parser.add_argument("--tt_split", action = "store", dest = "train_test_split")
+    parser.add_argument("--test_size", action = "store", dest = "test_size")
     parser.add_argument("--out_dir", action = "store", dest = "out_dir")
     args = vars(parser.parse_args())
 
     infile_path = args["infile_path"]
     model_dir = args["model_dir"]
     outdir = args["out_dir"]
-    train_test_split = float(args["train_test_split"]) # need this when reading datasets that haven't been used for training (but instead for assessing systematics)
+    test_size = float(args["test_size"]) # need this when reading datasets that haven't been used for training (but instead for assessing systematics)
 
     sig_samples = ["Hbb"]
     bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
-    data_sig = [pd.read_hdf(infile_path, key = sig_sample) for sample in sig_samples]
-    data_bkg = [pd.read_hdf(infile_path, key = sig_sample) for sample in bkg_samples]
+    data_sig = [pd.read_hdf(infile_path, key = sample) for sample in sig_samples]
+    data_bkg = [pd.read_hdf(infile_path, key = sample) for sample in bkg_samples]
 
     # load all signal processes
     sig_data_test = [] # this holds all the branches used as inputs to the classifier
@@ -57,6 +61,12 @@ def main():
     weights_test = sig_weights_test + bkg_weights_test
     samples = sig_samples + bkg_samples
 
+    # prepare the common binning for all signal regions
+    SR_low = 30
+    SR_up = 210
+    SR_binwidth = 10
+    SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+
     # load the AdversarialEnvironment
     env = AdversarialEnvironment.from_file(model_dir)
 
@@ -72,7 +82,8 @@ def main():
                                                                                    signal_weights = sig_weights_test,
                                                                                    classifier_sigeff_range = (0.30, 0.0),
                                                                                    nJ = cur_nJ)
-        class_cat_tight.export_ROOT_histogram(binning = binning, processes = processes, var_names = var_names, outfile = outfile, clipping = False, density = False)
+        class_cat_tight.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
+                                              outfile_path = os.path.join(outdir, "{}jet_tight.root".format(cur_nJ)), clipping = False, density = False)
 
         # ... a loose category with high event yield but low signal purity ...
         class_cat_loose = ClassifierBasedCategoryFiller.create_classifier_category(env, 
@@ -84,10 +95,11 @@ def main():
                                                                                    signal_weights = sig_weights_test,
                                                                                    classifier_sigeff_range = (0.80, 0.30),
                                                                                    nJ = cur_nJ)
-        class_cat_loose.export_ROOT_histogram(binning = binning, processes = processes, var_names = var_names, outfile = outfile, clipping = False, density = False)
+        class_cat_loose.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
+                                              outfile_path = os.path.join(outdir, "{}jet_loose.root".format(cur_nJ)), clipping = False, density = False)
 
         # ... and also a signal-depleted region that constrains the backgrounds
-        class_cat_CR = ClassifierBasedCategoryFiller.create_classifier_category(env, 
+        class_cat_depleted = ClassifierBasedCategoryFiller.create_classifier_category(env, 
                                                                                 process_events = data_test,
                                                                                 process_aux_events = aux_test,
                                                                                 process_weights = weights_test,
@@ -96,10 +108,8 @@ def main():
                                                                                 signal_weights = sig_weights_test,
                                                                                 classifier_sigeff_range = (1.00, 0.80),
                                                                                 nJ = cur_nJ)
-        class_cat_CR.export_ROOT_histogram(binning = binning, processes = processes, var_names = var_names, outfile = outfile, clipping = False, density = False)
-
-    
-    
+        class_cat_depleted.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
+                                                 outfile_path = os.path.join(outdir, "{}jet_depleted.root".format(cur_nJ)), clipping = False, density = False)
 
 if __name__ == "__main__":
     main()
