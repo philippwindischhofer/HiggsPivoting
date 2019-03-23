@@ -11,14 +11,16 @@ def create_job_script(model_dir, script_dir, training_data_path):
         outfile.write("#!/bin/bash\n")
         
         # then, prepare the HistFitter environment
-        outfile.write("PYTHONPATH=/home/windischhofer/HiggsPivoting/fitting" + "\n")
+        outfile.write("export PYTHONPATH=/home/windischhofer/HiggsPivoting/fitting:$PYTHONPATH" + "\n")
+        outfile.write("export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase" + "\n")
+        outfile.write("export ALRB_rootVersion=6.14.04-x86_64-slc6-gcc62-opt" + "\n")
         outfile.write("source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh" + "\n")
         outfile.write("lsetup root" + "\n")
         outfile.write("source /home/windischhofer/HistFitter/v0.61.0/setup.sh" + "\n")
 
         # and launch the Asimov fit
         outfile.write("cd " + model_dir + "\n")
-        outfile.write('HistFitter.py -w -f -d -D "after,corrMatrix" -F excl -a --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFit.py' + " >> " + os.path.join(model_dir, "fitjob.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F excl -a --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFit.py' + " >> " + os.path.join(model_dir, "fitjob.log") + "\n")
 
     return script_path
 
