@@ -31,10 +31,10 @@ region_infiles = ["2jet_tight.root", "2jet_loose.root", "2jet_depleted.root",
                   "3jet_tight.root", "3jet_loose.root", "3jet_depleted.root"]
 
 # names of the individual signal templates available in each region
-sample_names = ["Hbb", "ttbar", "Zjets", "Wjets", "diboson", "singletop"]
-template_names = ["Hbb_mBB", "ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB"]
-template_colors = [TColor.GetColor(255, 0, 0), TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0),
-                   TColor.GetColor(0, 99, 0), TColor.GetColor(0, 99, 204), TColor.GetColor(204, 204, 204)]
+sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]
+template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
+template_colors = [TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0), TColor.GetColor(0, 99, 0), 
+                   TColor.GetColor(0, 99, 204), TColor.GetColor(204, 204, 204), TColor.GetColor(255, 0, 0)]
 
 # turn off any additional selection cuts
 for region_name in region_names:
