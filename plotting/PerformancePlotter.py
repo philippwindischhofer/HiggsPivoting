@@ -8,6 +8,53 @@ import numpy as np
 class PerformancePlotter:
 
     @staticmethod
+    def plot_asimov_binned_significance(pardicts, sensdicts, outfile, xlabel = "Asimov significance", ylabel = "binned significance",
+                                        model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
+
+        assert len(pardicts) == len(sensdicts) # make sure are given corresponding information
+        
+        # make sure to ge the color normalization correct
+        colorquant = "lambda"
+        cmap = plt.cm.viridis
+        colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
+        #norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+        norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        # prepare the individual datasets to plot
+        for sensdict, pardict in zip(sensdicts, pardicts):
+            # compute the combined (binned) significance:
+            sigs = [sensdict[cur_sig] for cur_sig in model_SRs]
+            combined_sig = np.sqrt(np.sum(np.square(sigs)))
+
+            # also fetch the Asimov significance:
+            mu_Hbb, mu_Hbb_unc_down, mu_Hbb_unc_up = pardict["mu_Hbb"]
+            asimov_sig = 1.0 / abs(mu_Hbb_unc_down)
+
+            color = cmap(norm(float(sensdict[colorquant]))) if colorquant in sensdict else "black"
+            ax.scatter(asimov_sig, combined_sig, color = color)
+
+        # make colorbar for the range of encountered legended values
+        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
+        fig.subplots_adjust(right = 0.8)
+        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                       norm = norm,
+                                       orientation = 'vertical')
+        cb.set_label(r'$\lambda$')
+
+        # set limits
+        ax.set_xlim([1.5, 2.5])
+        ax.set_ylim([1.5, 2.5])
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        
+        fig.savefig(outfile)
+        plt.close()        
+
+    @staticmethod
     def plot_significance_KS(sensdicts, outfile, 
                              model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"],
                              model_KSs = ["KS_bkg_class_tight_2J", "KS_bkg_class_loose_2J", "KS_bkg_class_tight_3J", "KS_bkg_class_loose_3J"],
