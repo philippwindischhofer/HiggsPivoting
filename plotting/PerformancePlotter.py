@@ -9,16 +9,19 @@ class PerformancePlotter:
 
     @staticmethod
     def plot_asimov_binned_significance(pardicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'significance [$\sigma$]',
-                                        model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
+                                        model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"],
+                                        model_S_sqrt_SBs = ["S_sqrt_SB_clf_tight_2J", "S_sqrt_SB_clf_loose_2J", "S_sqrt_SB_clf_tight_3J", "S_sqrt_SB_clf_loose_3J"],
+                                        model_S_sqrt_Bs = ["S_sqrt_B_clf_tight_2J", "S_sqrt_B_clf_loose_2J", "S_sqrt_B_clf_tight_3J", "S_sqrt_B_clf_loose_3J"]):
 
         assert len(pardicts) == len(sensdicts) # make sure are given corresponding information
         
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        lambdas = []
-        asimov_sigs = []
-        binned_sigs = []
+        asimov_sigs = {}
+        binned_sigs = {}
+        S_sqrt_SBs = {}
+        S_sqrt_Bs = {}
 
         # prepare the individual datasets to plot
         for sensdict, pardict in zip(sensdicts, pardicts):
@@ -26,24 +29,55 @@ class PerformancePlotter:
             sigs = [sensdict[cur_sig] for cur_sig in model_SRs]
             combined_sig = np.sqrt(np.sum(np.square(sigs)))
 
+            S_sqrt_SB = [sensdict[cur_sig] for cur_sig in model_S_sqrt_SBs]
+            combined_S_sqrt_SB = np.sqrt(np.sum(np.square(S_sqrt_SB)))
+
+            S_sqrt_B = [sensdict[cur_sig] for cur_sig in model_S_sqrt_Bs]
+            combined_S_sqrt_B = np.sqrt(np.sum(np.square(S_sqrt_B)))
+
             # also fetch the Asimov significance:
             mu_Hbb, mu_Hbb_unc_down, mu_Hbb_unc_up = pardict["mu_Hbb"]
             asimov_sig = 1.0 / abs(mu_Hbb_unc_down) # this is true only in the Gaussian approximation
 
             cur_lambda = float(sensdict["lambda"])
 
-            lambdas.append(cur_lambda)
-            asimov_sigs.append(asimov_sig)
-            binned_sigs.append(combined_sig)
+            if cur_lambda not in asimov_sigs:
+                asimov_sigs[cur_lambda] = []
+            asimov_sigs[cur_lambda].append(asimov_sig)
 
-        ax.scatter(lambdas, asimov_sigs, marker = 'o', label = "Asimov significance", color = "black")
-        ax.scatter(lambdas, binned_sigs, marker = 'o', label = "binned significance", facecolors = "none", edgecolors = "black")
+            if cur_lambda not in binned_sigs:
+                binned_sigs[cur_lambda] = []
+            binned_sigs[cur_lambda].append(combined_sig)
+
+            if cur_lambda not in S_sqrt_SBs:
+                S_sqrt_SBs[cur_lambda] = []
+            S_sqrt_SBs[cur_lambda].append(combined_S_sqrt_SB)
+
+            if cur_lambda not in S_sqrt_Bs:
+                S_sqrt_Bs[cur_lambda] = []
+            S_sqrt_Bs[cur_lambda].append(combined_S_sqrt_B)
+
+        # compute the size of the error bars
+        lambdas = asimov_sigs.keys()
+
+        asimov_sigs_mean = [np.mean(cur) for cur in asimov_sigs.values()]
+        asimov_sigs_std = [np.std(cur) for cur in asimov_sigs.values()]
+
+        binned_sigs_mean = [np.mean(cur) for cur in binned_sigs.values()]
+        binned_sigs_std = [np.std(cur) for cur in binned_sigs.values()]
+
+        S_sqrt_SBs_mean = [np.mean(cur) for cur in S_sqrt_SBs.values()]
+        S_sqrt_SBs_std = [np.std(cur) for cur in S_sqrt_SBs.values()]
+
+        S_sqrt_Bs_mean = [np.mean(cur) for cur in S_sqrt_Bs.values()]
+        S_sqrt_Bs_std = [np.std(cur) for cur in S_sqrt_Bs.values()]
+
+        ax.errorbar(lambdas, asimov_sigs_mean, yerr = asimov_sigs_std, marker = 'o', label = "Asimov significance", fmt = 'o')
+        ax.errorbar(lambdas, binned_sigs_mean, yerr = binned_sigs_std, marker = 'o', label = "binned significance", fmt = 'o')
+        ax.errorbar(lambdas, S_sqrt_SBs_mean, yerr = S_sqrt_SBs_std, marker = 's', label = r'$s / \sqrt{s + b}$', fmt = 'o')
+        ax.errorbar(lambdas, S_sqrt_Bs_mean, yerr = S_sqrt_Bs_std, marker = 'p', label = r'$s / \sqrt{b}$', fmt = 'o')
 
         ax.legend()
-
-        # # set limits
-        # ax.set_xlim([0.0, 1.4])
-        # ax.set_ylim([2.0, 3.0])
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

@@ -106,14 +106,7 @@ class Category:
 
         outfile.Close()
 
-    # compute the binned significance of the 'var' distribution of this category to the separation of the 
-    # given signal- and background components
-    def get_binned_significance(self, binning, signal_processes, background_processes, var_name):
-        eps = 1e-5
-        
-        if not isinstance(binning, (list, np.ndarray)):
-            raise Exception("Error: expect a list of explicit bin edges for this function!")
-
+    def _get_SB_binning(self, binning, signal_processes, background_processes, var_name):
         # first, bin all participating processes
         binned_signal = []
         binned_background = []
@@ -133,6 +126,18 @@ class Category:
         total_binned_signal = np.sum(binned_signal, axis = 0)
         total_binned_background = np.sum(binned_background, axis = 0)
 
+        return total_binned_signal, total_binned_background
+
+    # compute the binned significance of the 'var' distribution of this category to the separation of the 
+    # given signal- and background components
+    def get_binned_significance(self, binning, signal_processes, background_processes, var_name):
+        eps = 1e-5
+        
+        if not isinstance(binning, (list, np.ndarray)):
+            raise Exception("Error: expect a list of explicit bin edges for this function!")
+
+        total_binned_signal, total_binned_background = self._get_SB_binning(binning, signal_processes, background_processes, var_name)
+
         # exclude almost-empty bins
         invalid_mask = np.logical_or(total_binned_signal <= 0, total_binned_background <= 0)
 
@@ -147,3 +152,52 @@ class Category:
         binned_sig = np.sqrt(2 * np.sum(binwise_significance, axis = 0))
 
         return binned_sig
+
+    # return s / sqrt(s + b) summed in quadrature for all bins
+    def get_S_sqrt_SB(self, binning, signal_processes, background_processes, var_name):
+        eps = 1e-5
+        
+        if not isinstance(binning, (list, np.ndarray)):
+            raise Exception("Error: expect a list of explicit bin edges for this function!")
+
+        total_binned_signal, total_binned_background = self._get_SB_binning(binning, signal_processes, background_processes, var_name)
+
+        # exclude almost-empty bins
+        invalid_mask = np.logical_or(total_binned_signal <= 0, total_binned_background <= 0)
+
+        print("sig vs bkg")
+        for bin_sig, bin_bkg in zip(total_binned_signal, total_binned_background):
+            print("{} - {}".format(bin_sig, bin_bkg))
+        
+        # compute the binned significance
+        S_sqrt_SB = total_binned_signal / np.sqrt(total_binned_signal + total_binned_background)
+        S_sqrt_SB[invalid_mask] = 0
+
+        retval = np.sqrt(np.sum(np.square(S_sqrt_SB), axis = 0))
+
+        return retval
+
+    # return s / sqrt(b) summed in quadrature for all bins
+    def get_S_sqrt_B(self, binning, signal_processes, background_processes, var_name):
+        eps = 1e-5
+        
+        if not isinstance(binning, (list, np.ndarray)):
+            raise Exception("Error: expect a list of explicit bin edges for this function!")
+
+        total_binned_signal, total_binned_background = self._get_SB_binning(binning, signal_processes, background_processes, var_name)
+
+        # exclude almost-empty bins
+        invalid_mask = np.logical_or(total_binned_signal <= 0, total_binned_background <= 0)
+
+        print("sig vs bkg")
+        for bin_sig, bin_bkg in zip(total_binned_signal, total_binned_background):
+            print("{} - {}".format(bin_sig, bin_bkg))
+        
+        # compute the binned significance
+        S_sqrt_B = total_binned_signal / np.sqrt(total_binned_background)
+        S_sqrt_B[invalid_mask] = 0
+
+        retval = np.sqrt(np.sum(np.square(S_sqrt_B), axis = 0))
+
+        return retval
+        

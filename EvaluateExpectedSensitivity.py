@@ -101,6 +101,9 @@ def main():
     significance_inclusive = inclusive.get_binned_significance(binning = inclusive_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
     sensdict["significance_inclusive"] = significance_inclusive
 
+    S_sqrt_SB_inclusive = inclusive.get_S_sqrt_SB(binning = inclusive_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+    sensdict["S_sqrt_SB_inclusive"] = S_sqrt_SB_inclusive
+
     # also fill inclusive 2- and 3-jet categories to get a baseline for the shapes
     inclusive_2J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
                                                              process_aux_events = aux_test,
@@ -146,6 +149,18 @@ def main():
 
         sensdict["significance_low_MET_{}J".format(cur_nJ)] = significance_low_MET
         sensdict["significance_high_MET_{}J".format(cur_nJ)] = significance_high_MET
+
+        S_sqrt_SB_low_MET = low_MET_cat.get_S_sqrt_SB(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        S_sqrt_SB_high_MET = high_MET_cat.get_S_sqrt_SB(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+
+        sensdict["S_sqrt_SB_low_MET_{}J".format(cur_nJ)] = S_sqrt_SB_low_MET
+        sensdict["S_sqrt_SB_high_MET_{}J".format(cur_nJ)] = S_sqrt_SB_high_MET
+
+        S_sqrt_B_low_MET = low_MET_cat.get_S_sqrt_B(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        S_sqrt_B_high_MET = high_MET_cat.get_S_sqrt_B(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+
+        sensdict["S_sqrt_B_low_MET_{}J".format(cur_nJ)] = S_sqrt_B_low_MET
+        sensdict["S_sqrt_B_high_MET_{}J".format(cur_nJ)] = S_sqrt_B_high_MET
 
         # ----------------------------------------------------------------------------------------
         # compute the distortions to m_BB in the combined background caused by these categories
@@ -233,6 +248,18 @@ def main():
 
         sensdict["significance_clf_loose_{}J".format(cur_nJ)] = significance_clf_loose
         sensdict["significance_clf_tight_{}J".format(cur_nJ)] = significance_clf_tight
+
+        S_sqrt_SB_clf_loose = class_cat_loose.get_S_sqrt_SB(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        S_sqrt_SB_clf_tight = class_cat_tight.get_S_sqrt_SB(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+
+        sensdict["S_sqrt_SB_clf_loose_{}J".format(cur_nJ)] = S_sqrt_SB_clf_loose
+        sensdict["S_sqrt_SB_clf_tight_{}J".format(cur_nJ)] = S_sqrt_SB_clf_tight
+
+        S_sqrt_B_clf_loose = class_cat_loose.get_S_sqrt_B(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+        S_sqrt_B_clf_tight = class_cat_tight.get_S_sqrt_B(binning = SR_mBB_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+
+        sensdict["S_sqrt_B_clf_loose_{}J".format(cur_nJ)] = S_sqrt_B_clf_loose
+        sensdict["S_sqrt_B_clf_tight_{}J".format(cur_nJ)] = S_sqrt_B_clf_tight
 
         # compute the distortions to m_BB caused by these categories
         mBB_inclusive, mBB_inclusive_weights = cur_inclusive_cat.get_event_variable(processes = bkg_samples, var = "mBB")
