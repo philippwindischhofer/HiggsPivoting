@@ -1,6 +1,7 @@
 import sys, os, glob, uuid
 
 from utils.CondorJobSubmitter import CondorJobSubmitter
+from utils.LocalJobSubmitter import LocalJobSubmitter
 
 def create_job_script(model_dir, script_dir, training_data_path):
     script_name = str(uuid.uuid4()) + ".sh"
@@ -37,6 +38,7 @@ def RunHistFitterCampaign(model_dirs):
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path)
         CondorJobSubmitter.submit_job(job_script)
+        #LocalJobSubmitter.submit_job(job_script)
         
 if __name__ == "__main__":
     model_dirs = sys.argv[1:]

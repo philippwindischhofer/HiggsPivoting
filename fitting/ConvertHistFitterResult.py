@@ -49,11 +49,11 @@ def ConvertHypothesisTestResult(infile_path, outfile_path):
         sig = res.Significance()
         hypodict["discovery_sig"] = sig
 
+        infile.Close()
+
     # pickle the parameter dictionary into a file
     with open(outfile_path, "wb") as outfile:
         pickle.dump(hypodict, outfile)
-
-    infile.Close()
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "converts HistFitter output")

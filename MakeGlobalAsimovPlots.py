@@ -13,7 +13,7 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
             with open(os.path.join(model_dir, "hypodict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "sensdict.pkl"), "rb") as sens_infile:
                 hypodict = pickle.load(fit_infile)
                 sensdict = pickle.load(sens_infile)
-                pardicts.append(pardict)
+                hypodicts.append(hypodict)
                 sensdicts.append(sensdict)
         except:
             print("either sensdict.pkl or hypodict.pkl not found for model '{}'".format(model_dir))
