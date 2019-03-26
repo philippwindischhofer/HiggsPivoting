@@ -5,21 +5,21 @@ from plotting.PerformancePlotter import PerformancePlotter
 
 def MakeGlobalAsimovPlots(model_dirs, plot_dir):
     # first, load the HistFitter output and also the corresponding sensdicts
-    pardicts = []
+    hypodicts = []
     sensdicts = []
 
     for model_dir in model_dirs:
         try:
-            with open(os.path.join(model_dir, "pardict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "sensdict.pkl"), "rb") as sens_infile:
-                pardict = pickle.load(fit_infile)
+            with open(os.path.join(model_dir, "hypodict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "sensdict.pkl"), "rb") as sens_infile:
+                hypodict = pickle.load(fit_infile)
                 sensdict = pickle.load(sens_infile)
                 pardicts.append(pardict)
                 sensdicts.append(sensdict)
         except:
-            print("either sensdict.pkl or pardict.pkl not found for model '{}'".format(model_dir))
+            print("either sensdict.pkl or hypodict.pkl not found for model '{}'".format(model_dir))
 
     # now have all the data, just need to plot it
-    PerformancePlotter.plot_asimov_binned_significance(pardicts, sensdicts, outfile = os.path.join(plot_dir, "asimov_binned_significance_comparison.pdf"))
+    PerformancePlotter.plot_asimov_binned_significance(hypodicts, sensdicts, outfile = os.path.join(plot_dir, "asimov_binned_significance_comparison.pdf"))
 
 def main():
     parser = ArgumentParser(description = "create global summary plots for Asimov sensitivities")

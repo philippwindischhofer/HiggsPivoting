@@ -18,7 +18,11 @@ class HistogramImporter:
         
         # exclude over- and underflow bins
         for cur_bin in range(1, hist.GetSize() - 1):
-            binvals.append(hist.GetBinContent(cur_bin))
+            cur_binval = hist.GetBinContent(cur_bin)
+            if cur_binval <= 0:
+                cur_binval = 1e-4
+
+            binvals.append(cur_binval)
             edges.append(hist.GetBinLowEdge(cur_bin))
         edges.append(hist.GetBinLowEdge(cur_bin + 1))
 
