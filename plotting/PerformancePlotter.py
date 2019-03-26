@@ -8,20 +8,17 @@ import numpy as np
 class PerformancePlotter:
 
     @staticmethod
-    def plot_asimov_binned_significance(pardicts, sensdicts, outfile, xlabel = "Asimov significance", ylabel = "binned significance",
+    def plot_asimov_binned_significance(pardicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'significance [$\sigma$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
         assert len(pardicts) == len(sensdicts) # make sure are given corresponding information
         
-        # make sure to ge the color normalization correct
-        colorquant = "lambda"
-        cmap = plt.cm.viridis
-        colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
-        #norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
-        norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
-
         fig = plt.figure()
         ax = fig.add_subplot(111)
+
+        lambdas = []
+        asimov_sigs = []
+        binned_sigs = []
 
         # prepare the individual datasets to plot
         for sensdict, pardict in zip(sensdicts, pardicts):
@@ -31,22 +28,22 @@ class PerformancePlotter:
 
             # also fetch the Asimov significance:
             mu_Hbb, mu_Hbb_unc_down, mu_Hbb_unc_up = pardict["mu_Hbb"]
-            asimov_sig = 1.0 / abs(mu_Hbb_unc_down)
+            asimov_sig = 1.0 / abs(mu_Hbb_unc_down) # this is true only in the Gaussian approximation
 
-            color = cmap(norm(float(sensdict[colorquant]))) if colorquant in sensdict else "black"
-            ax.scatter(asimov_sig, combined_sig, color = color)
+            cur_lambda = float(sensdict["lambda"])
 
-        # make colorbar for the range of encountered legended values
-        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
-        fig.subplots_adjust(right = 0.8)
-        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
-                                       norm = norm,
-                                       orientation = 'vertical')
-        cb.set_label(r'$\lambda$')
+            lambdas.append(cur_lambda)
+            asimov_sigs.append(asimov_sig)
+            binned_sigs.append(combined_sig)
 
-        # set limits
-        ax.set_xlim([1.5, 2.5])
-        ax.set_ylim([1.5, 2.5])
+        ax.scatter(lambdas, asimov_sigs, marker = 'o', label = "Asimov significance", color = "black")
+        ax.scatter(lambdas, binned_sigs, marker = 'o', label = "binned significance", facecolors = "none", edgecolors = "black")
+
+        ax.legend()
+
+        # # set limits
+        # ax.set_xlim([0.0, 1.4])
+        # ax.set_ylim([2.0, 3.0])
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

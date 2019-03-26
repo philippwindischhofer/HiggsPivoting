@@ -20,7 +20,7 @@ def create_job_script(model_dir, script_dir, training_data_path):
 
         # and launch the Asimov fit
         outfile.write("cd " + model_dir + "\n")
-        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F excl -a --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFit.py' + " >> " + os.path.join(model_dir, "fitjob.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F excl -m ALL -a --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFit.py' + " >> " + os.path.join(model_dir, "fitjob.log") + "\n")
 
         # then, convert the HistFitter output into a pickled file
         outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --infile " + os.path.join(model_dir, "results", "TemplateAnalysisSimple", 
