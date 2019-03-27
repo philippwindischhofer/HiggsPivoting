@@ -19,27 +19,21 @@ configMgr.calculatorType = 2
 configMgr.testStatType = 2
 configMgr.nPoints = 20
 
-configMgr.analysisName = "TemplateAnalysisSimple"
+configMgr.analysisName = "ShapeFitTightLooseDepletedBackgroundFloating"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
 
 # signal regions that are to be used for this fit
-# region_names = ["twojettight", "twojetloose", "twojetdepleted",
-#                 "threjettight", "threejetloose", "threejetdepleted"]
-
-region_names = ["twojettight", "twojetloose",
-                "threjettight", "threejetloose"]
+region_names = ["twojettight", "twojetloose", "twojetdepleted",
+                "threjettight", "threejetloose", "threejetdepleted"]
 
 # names of the individual input files for the above regions
 # Note: these must exist in the directory 'indir' passed above
-# region_infiles = ["2jet_tight.root", "2jet_loose.root", "2jet_depleted.root",
-#                   "3jet_tight.root", "3jet_loose.root", "3jet_depleted.root"]
-
-region_infiles = ["2jet_tight.root", "2jet_loose.root",
-                  "3jet_tight.root", "3jet_loose.root"]
+region_infiles = ["2jet_tight.root", "2jet_loose.root", "2jet_depleted.root",
+                  "3jet_tight.root", "3jet_loose.root", "3jet_depleted.root"]
 
 # names of the individual signal templates available in each region
 sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]
-normalization_floating = [False, False, False, False, False, True]
+normalization_floating = [True, True, True, True, True, True]
 signal_samples = [False, False, False, False, False, True]
 template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
 template_colors = [TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0), TColor.GetColor(0, 99, 0), 

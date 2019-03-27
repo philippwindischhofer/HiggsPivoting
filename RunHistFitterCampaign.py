@@ -19,16 +19,21 @@ def create_job_script(model_dir, script_dir, training_data_path):
         outfile.write("lsetup root" + "\n")
         outfile.write("source /home/windischhofer/HistFitter/v0.61.0/setup.sh" + "\n")
 
-        # and launch the Asimov fit
+        # and launch the Asimov fits
         outfile.write("cd " + model_dir + "\n")
-        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFit.py' + " >> " + os.path.join(model_dir, "fitjob.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFitTightLooseBackgroundFixed.py' + " >> " + os.path.join(model_dir, "fitjob_tight_loose_background_fixed.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFitTightLooseBackgroundFloating.py' + " >> " + os.path.join(model_dir, "fitjob_tight_loose_background_floating.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFitTightLooseDepletedBackgroundFloating.py' + " >> " + os.path.join(model_dir, "fitjob_tight_loose_depleted_background_floating.log") + "\n")
 
-        # then, convert the HistFitter output into a pickled file
-        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode fit --infile " + os.path.join(model_dir, "results", "TemplateAnalysisSimple", 
-                                                                                                                                        "shape_fit_combined_shape_fit_model_afterFit_asimovData.root") + 
-                      " --outfile " + os.path.join(model_dir, "pardict.pkl") + "\n")
+        # # then, convert the HistFitter output into a pickled file
+        # outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode fit --infile " + os.path.join(model_dir, "results", "TemplateAnalysisSimple", 
+        #                                                                                                                                 "shape_fit_combined_shape_fit_model_afterFit_asimovData.root") + 
+        #               " --outfile " + os.path.join(model_dir, "pardict.pkl") + "\n")
 
-        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "TemplateAnalysisSimple_hypotest.root") + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
+        # the Asimov significances that have been determined above
+        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitTightLooseBackgroundFixed_hypotest.root") + " --outkey asimov_sig_tight_loose_background_fixed" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
+        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitTightLooseBackgroundFloating_hypotest.root") + " --outkey asimov_sig_tight_loose_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
+        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitTightLooseDepletedBackgroundFloating_hypotest.root") + " --outkey asimov_sig_tight_loose_depleted_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
 
     return script_path
 

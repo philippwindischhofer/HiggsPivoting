@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from models.AdversarialEnvironment import AdversarialEnvironment
 from analysis.Category import Category
 from analysis.ClassifierBasedCategoryFiller import ClassifierBasedCategoryFiller
+from analysis.CutBasedCategoryFiller import CutBasedCategoryFiller
 from base.Configs import TrainingConfig
 from DatasetExtractor import TrainNuisAuxSplit
 
@@ -71,6 +72,23 @@ def main():
     env = AdversarialEnvironment.from_file(model_dir)
 
     for cur_nJ in [2, 3]:
+        # first, export the categories of the cut-based analysis: high / low MET
+        low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
+                                                                     process_aux_events = aux_test,
+                                                                     process_weights = weights_test,
+                                                                     process_names = samples,
+                                                                     nJ = cur_nJ)
+        low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
+                                          outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = False, density = False)
+
+        high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
+                                                                       process_aux_events = aux_test,
+                                                                       process_weights = weights_test,
+                                                                       process_names = samples,
+                                                                       nJ = cur_nJ)
+        high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
+                                          outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = False, density = False)
+
         # prepare and export three SR/CRs per jet category:
         # a very tight analysis category, highly enriched in signal ...
         class_cat_tight = ClassifierBasedCategoryFiller.create_classifier_category(env, 

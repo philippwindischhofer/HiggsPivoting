@@ -8,7 +8,7 @@ import numpy as np
 class PerformancePlotter:
 
     @staticmethod
-    def plot_asimov_binned_significance(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'significance [$\sigma$]',
+    def plot_asimov_binned_significance(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
@@ -16,38 +16,46 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        asimov_sigs = {}
-        binned_sigs = {}
+        asimov_sigs_tight_loose_background_fixed = {}
+        asimov_sigs_tight_loose_background_floating = {}
+        asimov_sigs_tight_loose_depleted_background_floating = {}
 
         # prepare the individual datasets to plot
         for sensdict, hypodict in zip(sensdicts, hypodicts):
-            # compute the combined (binned) significance:
-            sigs = [sensdict[cur_sig] for cur_sig in model_SRs]
-            combined_sig = np.sqrt(np.sum(np.square(sigs)))
 
-            # also fetch the Asimov significance:
-            asimov_sig = hypodict["discovery_sig"]
+            # fetch the Asimov significances:
+            asimov_sig_tight_loose_background_fixed = hypodict["asimov_sig_tight_loose_background_fixed"]
+            asimov_sig_tight_loose_background_floating = hypodict["asimov_sig_tight_loose_background_floating"]
+            asimov_sig_tight_loose_depleted_background_floating = hypodict["asimov_sig_tight_loose_depleted_background_floating"]
             cur_lambda = float(sensdict["lambda"])
 
-            if cur_lambda not in asimov_sigs:
-                asimov_sigs[cur_lambda] = []
-            asimov_sigs[cur_lambda].append(asimov_sig)
+            if cur_lambda not in asimov_sigs_tight_loose_background_fixed:
+                asimov_sigs_tight_loose_background_fixed[cur_lambda] = []
+            asimov_sigs_tight_loose_background_fixed[cur_lambda].append(asimov_sig_tight_loose_background_fixed)
 
-            if cur_lambda not in binned_sigs:
-                binned_sigs[cur_lambda] = []
-            binned_sigs[cur_lambda].append(combined_sig)
+            if cur_lambda not in asimov_sigs_tight_loose_background_floating:
+                asimov_sigs_tight_loose_background_floating[cur_lambda] = []
+            asimov_sigs_tight_loose_background_floating[cur_lambda].append(asimov_sig_tight_loose_background_floating)
+
+            if cur_lambda not in asimov_sigs_tight_loose_depleted_background_floating:
+                asimov_sigs_tight_loose_depleted_background_floating[cur_lambda] = []
+            asimov_sigs_tight_loose_depleted_background_floating[cur_lambda].append(asimov_sig_tight_loose_depleted_background_floating)
 
         # compute the size of the error bars
-        lambdas = asimov_sigs.keys()
+        lambdas = asimov_sigs_tight_loose_background_fixed.keys()
 
-        asimov_sigs_mean = [np.mean(cur) for cur in asimov_sigs.values()]
-        asimov_sigs_std = [np.std(cur) for cur in asimov_sigs.values()]
+        asimov_sigs_tight_loose_background_fixed_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_background_fixed.values()]
+        asimov_sigs_tight_loose_background_fixed_std = [np.std(cur) for cur in asimov_sigs_tight_loose_background_fixed.values()]
 
-        binned_sigs_mean = [np.mean(cur) for cur in binned_sigs.values()]
-        binned_sigs_std = [np.std(cur) for cur in binned_sigs.values()]
+        asimov_sigs_tight_loose_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_background_floating.values()]
+        asimov_sigs_tight_loose_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_background_floating.values()]
 
-        ax.errorbar(lambdas, asimov_sigs_mean, yerr = asimov_sigs_std, marker = 'o', label = "Asimov significance", fmt = 'o')
-        ax.errorbar(lambdas, binned_sigs_mean, yerr = binned_sigs_std, marker = 'o', label = "binned significance", fmt = 'o')
+        asimov_sigs_tight_loose_depleted_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
+        asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
+
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o')
 
         ax.legend()
 
