@@ -53,18 +53,19 @@ class PerformancePlotter:
         asimov_sigs_tight_loose_depleted_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
         asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
 
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', linecolor = 'royalblue')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', linecolor = 'darkorange')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', linecolor = 'forestgreen')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', color = 'royalblue')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', color = 'darkorange')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', color = 'forestgreen')
 
         # now, add horizontal lines corresponding to the significance achieved by the cut-based analysis
-        ax.axhline(y = hypo)
+        ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "high MET + low MET (background fixed)")
+        ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = 'darkorange', linestyle = "--", label = "high MET + low MET (background floating)")
 
-        ax.legend(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, linecolor = 'royalblue', label = "high MET + low MET (background fixed)")
-        ax.legend(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, linecolor = 'darkorange', label = "high MET + low MET (background floating)")
+        ax.legend()
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        ax.set_ylim([1.3, 2.8])
         
         fig.savefig(outfile)
         plt.close()        
