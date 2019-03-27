@@ -29,6 +29,10 @@ def create_job_script(model_dir, script_dir, training_data_path):
         outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFitHighLowMETBackgroundFixed.py' + " >> " + os.path.join(model_dir, "fitjob_high_low_MET_background_fixed.log") + "\n")
         outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/ShapeFitHighLowMETBackgroundFloating.py' + " >> " + os.path.join(model_dir, "fitjob_high_low_MET_background_floating.log") + "\n")
 
+        # perform the fits to the MVA output directly
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/MVAFitBackgroundFixed.py' + " >> " + os.path.join(model_dir, "fitjob_MVA_background_fixed.log") + "\n")
+        outfile.write('/home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -d -D allPlots -F disc -m ALL -a -z --userArg ' + model_dir + ' /home/windischhofer/HiggsPivoting/fitting/MVAFitBackgroundFloating.py' + " >> " + os.path.join(model_dir, "fitjob_MVA_background_floating.log") + "\n")        
+
         # # then, convert the HistFitter output into a pickled file
         # outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode fit --infile " + os.path.join(model_dir, "results", "TemplateAnalysisSimple", 
         #                                                                                                                                 "shape_fit_combined_shape_fit_model_afterFit_asimovData.root") + 
@@ -39,8 +43,13 @@ def create_job_script(model_dir, script_dir, training_data_path):
         outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitTightLooseBackgroundFloating_hypotest.root") + " --outkey asimov_sig_tight_loose_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
         outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitTightLooseDepletedBackgroundFloating_hypotest.root") + " --outkey asimov_sig_tight_loose_depleted_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
 
+        # the equivalent results for the cut-based setup
         outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitHighLowMETBackgroundFixed_hypotest.root") + " --outkey asimov_sig_high_low_MET_background_fixed" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
         outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "ShapeFitHighLowMETBackgroundFloating_hypotest.root") + " --outkey asimov_sig_high_low_MET_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
+
+        # and the ones for the fit to the MVA output
+        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "MVAFitBackgroundFixed_hypotest.root") + " --outkey asimov_sig_MVA_background_fixed" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")
+        outfile.write("python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile " + os.path.join(model_dir, "results", "MVAFitBackgroundFloating_hypotest.root") + " --outkey asimov_sig_MVA_background_floating" + " --outfile " + os.path.join(model_dir, "hypodict.pkl") + "\n")        
 
     return script_path
 

@@ -34,6 +34,11 @@ class ClassifierBasedCategoryFiller:
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
+            # also store some auxiliary information in this category
+            aux_content = np.expand_dims(cur_pred[cut], axis = 1)
+            aux_variables = ["clf"]
+
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches,
+                              aux_content = aux_content, aux_variables = aux_variables)
 
         return retcat

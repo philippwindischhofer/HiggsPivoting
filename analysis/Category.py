@@ -17,7 +17,11 @@ class Category:
         self.weight_content = {}
         self.event_variables = {}
 
-    def add_events(self, events, weights, process, event_variables):
+        # holds some auxiliary information that is not part of the event per se
+        self.aux_content = {}
+        self.aux_variables = {}
+
+    def add_events(self, events, weights, process, event_variables, aux_content = None, aux_variables = None):
         if len(events) != len(weights):
             raise Exception("Need to have exactly one weight per event!")
 
@@ -29,6 +33,12 @@ class Category:
             self.event_content[process] = np.append(self.event_content[process], events, axis = 0)
             self.weight_content[process] = np.append(self.weight_content[process], weights, axis = 0)
 
+        if not process in self.aux_content:
+            self.aux_content[process] = aux_content
+            self.aux_variables[process] = aux_variables
+        else:
+            self.aux_content[process] = np.append(self.aux_content[process], aux_content, axis = 0)
+            
     # return the number of events coming from a certain process
     def get_number_events(self, process):
         if not process in self.weight_content:
@@ -44,8 +54,17 @@ class Category:
         weight_retval = []
 
         for process in processes:
+            # check if this variable is part of the event- or the auxiliary information:
             event_vars = self.event_variables[process]
-            event_retval.append(self.event_content[process][:, event_vars.index(var)])
+            aux_vars = self.aux_variables[process]
+
+            if var in event_vars:
+                event_retval.append(self.event_content[process][:, event_vars.index(var)])
+            elif var in aux_vars:
+                event_retval.append(self.aux_content[process][:, aux_vars.index(var)])
+            else:
+                raise KeyError("Error: unknown variable '{}'".format(var))                                    
+
             weight_retval.append(self.weight_content[process])
 
         event_retval = np.concatenate(event_retval)

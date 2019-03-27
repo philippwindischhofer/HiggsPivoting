@@ -20,6 +20,9 @@ class PerformancePlotter:
         asimov_sigs_tight_loose_background_floating = {}
         asimov_sigs_tight_loose_depleted_background_floating = {}
 
+        asimov_sigs_mva_background_fixed = {}
+        asimov_sigs_mva_background_floating = {}
+
         # prepare the individual datasets to plot
         for sensdict, hypodict in zip(sensdicts, hypodicts):
 
@@ -27,6 +30,10 @@ class PerformancePlotter:
             asimov_sig_tight_loose_background_fixed = hypodict["asimov_sig_tight_loose_background_fixed"]
             asimov_sig_tight_loose_background_floating = hypodict["asimov_sig_tight_loose_background_floating"]
             asimov_sig_tight_loose_depleted_background_floating = hypodict["asimov_sig_tight_loose_depleted_background_floating"]
+            
+            asimov_sig_mva_background_fixed = hypodict["asimov_sig_MVA_background_fixed"]
+            asimov_sig_mva_background_floating = hypodict["asimov_sig_MVA_background_floating"]
+
             cur_lambda = float(sensdict["lambda"])
 
             if cur_lambda not in asimov_sigs_tight_loose_background_fixed:
@@ -41,6 +48,14 @@ class PerformancePlotter:
                 asimov_sigs_tight_loose_depleted_background_floating[cur_lambda] = []
             asimov_sigs_tight_loose_depleted_background_floating[cur_lambda].append(asimov_sig_tight_loose_depleted_background_floating)
 
+            if cur_lambda not in asimov_sigs_mva_background_fixed:
+                asimov_sigs_mva_background_fixed[cur_lambda] = []
+            asimov_sigs_mva_background_fixed[cur_lambda].append(asimov_sig_mva_background_fixed)
+
+            if cur_lambda not in asimov_sigs_mva_background_floating:
+                asimov_sigs_mva_background_floating[cur_lambda] = []
+            asimov_sigs_mva_background_floating[cur_lambda].append(asimov_sig_mva_background_floating)
+
         # compute the size of the error bars
         lambdas = asimov_sigs_tight_loose_background_fixed.keys()
 
@@ -53,9 +68,19 @@ class PerformancePlotter:
         asimov_sigs_tight_loose_depleted_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
         asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
 
+        asimov_sigs_mva_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_floating.values()]
+        asimov_sigs_mva_background_floating_std = [np.std(cur) for cur in asimov_sigs_mvabackground_floating.values()]
+
+        asimov_sigs_mva_background_fixed_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_fixed.values()]
+        asimov_sigs_mva_background_fixed_std = [np.std(cur) for cur in asimov_sigs_mvabackground_fixed.values()]
+
         ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', color = 'royalblue')
         ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', color = 'darkorange')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', color = 'forestgreen')
+
+        ax.errorbar(lambdas, asimov_sigs_mva_background_fixed_mean, yerr = asimov_sigs_mva_background_fixed_std, marker = 'o', label = "MVA (background fixed)", fmt = 'o', color = 'royalblue', fillstyle = "none")
+        ax.errorbar(lambdas, asimov_sigs_mva_background_floating_mean, yerr = asimov_sigs_mva_background_floating_std, marker = 'o', label = "MVA (background floating)", fmt = 'o', color = 'darkorange', fillstyle = "none")
+
+        # ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', color = 'forestgreen')
 
         # now, add horizontal lines corresponding to the significance achieved by the cut-based analysis
         ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "high MET + low MET (background fixed)")

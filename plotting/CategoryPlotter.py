@@ -32,12 +32,15 @@ class CategoryPlotter:
 
         # go through the signal components that feed into this category and plot them as a stacked histogram
         for process_name in process_order:
-            process_events = category.event_content[process_name]
-            process_weights = category.weight_content[process_name]
+            # process_events = category.event_content[process_name]
+            # process_weights = category.weight_content[process_name]
+            process_values, process_weights = category.get_event_variable(process_name, var)
+
             color = CategoryPlotter.process_colors[process_name]
 
             colors.append(color)
-            clipped_values = np.clip(process_events[:, TrainingConfig.training_branches.index(var)], binning[0], binning[-1])
+            #clipped_values = np.clip(process_events[:, TrainingConfig.training_branches.index(var)], binning[0], binning[-1])
+            clipped_values = np.clip(process_values, binning[0], binning[-1])
             data.append(clipped_values)
             weights.append(process_weights)
             labels.append(process_name)
