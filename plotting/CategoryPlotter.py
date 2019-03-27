@@ -17,7 +17,7 @@ class CategoryPlotter:
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
-    def plot_category_composition(category, binning, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}):
+    def plot_category_composition(category, binning, outpath, process_order = ["Zjets", "Wjets", "singletop", "ttbar", "diboson", "Hbb"], var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}, logscale = False, ignore_binning = False):
         if not isinstance(binning, (list, np.ndarray)):
             raise Exception("Error: expect a list of explicit bin edges for this function!")
         
@@ -32,14 +32,11 @@ class CategoryPlotter:
 
         # go through the signal components that feed into this category and plot them as a stacked histogram
         for process_name in process_order:
-            # process_events = category.event_content[process_name]
-            # process_weights = category.weight_content[process_name]
             process_values, process_weights = category.get_event_variable(process_name, var)
 
             color = CategoryPlotter.process_colors[process_name]
 
             colors.append(color)
-            #clipped_values = np.clip(process_events[:, TrainingConfig.training_branches.index(var)], binning[0], binning[-1])
             clipped_values = np.clip(process_values, binning[0], binning[-1])
             data.append(clipped_values)
             weights.append(process_weights)
@@ -53,6 +50,9 @@ class CategoryPlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.margins(0.0)
+
+        if logscale:
+            plt.yscale('log')
 
         # add the labels, if provided
         if plotlabel:

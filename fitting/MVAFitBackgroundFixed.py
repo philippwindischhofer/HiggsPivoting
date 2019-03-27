@@ -33,7 +33,7 @@ region_infiles = ["2jet_MVA.root", "3jet_MVA.root"]
 sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]
 normalization_floating = [False, False, False, False, False, True]
 signal_samples = [False, False, False, False, False, True]
-template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
+template_names = ["ttbar_clf", "Zjets_clf", "Wjets_clf", "diboson_clf", "singletop_clf", "Hbb_clf"]
 template_colors = [TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0), TColor.GetColor(0, 99, 0), 
                    TColor.GetColor(0, 99, 204), TColor.GetColor(204, 204, 204), TColor.GetColor(255, 0, 0)]
 

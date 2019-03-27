@@ -63,6 +63,9 @@ def main():
     weights_test = sig_weights_test + bkg_weights_test
     samples = sig_samples + bkg_samples
 
+    # load the AdversarialEnvironment
+    env = AdversarialEnvironment.from_file(model_dir)
+
     # prepare the common mBB binning for all signal regions
     SR_low = 30
     SR_up = 210
@@ -70,13 +73,17 @@ def main():
     SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
     # also prepare the binning along the MVA dimension
-    MVA_low = 0
-    MVA_up = 1
-    MVA_binwidth = 0.02
-    MVA_binning = np.linspace(MVA_low, MVA_up, num = int((MVA_up - MVA_low) / MVA_binwidth), endpoint = True)
+    sigeff_low = 0
+    sigeff_up = 1
+    sigeff_binwidth = 0.05 # make bins, each of which has a signal efficiency of 5%
+    sigeff_binning = np.linspace(sigeff_low, sigeff_up, num = int((sigeff_up - sigeff_low) / sigeff_binwidth), endpoint = True)
 
-    # load the AdversarialEnvironment
-    env = AdversarialEnvironment.from_file(model_dir)
+    # now convert the binning in terms of signal efficiency into the actual binning
+    # in terms of the classifier output value
+    MVA_binning = [ClassifierBasedCategoryFiller._sigeff_to_score(env = env, signal_events = sig_data_test, signal_weights = sig_weights_test, sigeff = sigeff) for sigeff in sigeff_binning[::-1]]
+
+    print("signal efficiency binning: {}".format(sigeff_binning))
+    print("classifier output binning: {}".format(MVA_binning))
 
     for cur_nJ in [2, 3]:
         # first, export the categories of the cut-based analysis: high / low MET
@@ -168,10 +175,10 @@ def main():
                                                                                        nJ = cur_nJ)
 
         class_cat_inclusive.export_ROOT_histogram(binning = MVA_binning, processes = sig_samples + bkg_samples, var_names = "clf", 
-                                                  outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = False, density = False)
+                                                  outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = False, density = False, ignore_binning = True)
 
         CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', 
-                                                  plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)])
+                                                  plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True)
         
 if __name__ == "__main__":
     main()

@@ -87,7 +87,7 @@ class Category:
             pickle.dump((n, bins), outfile)
 
     # similar to 'export_histogram', but instead writes a *.root file
-    def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False):
+    def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False, ignore_binning = False):
         if isinstance(var_names, list):
             if len(var_names) > 1:
                 raise NotImplementedError("Error: can only export TH1 up to now - please call for a single variable at a time!")
@@ -112,7 +112,10 @@ class Category:
 
             # now, just need to fill it into a ROOT histogram and dump it into a file
             hist_name = process + "_" + var_name
-            hist = TH1F(hist_name, hist_name, len(bins) - 1, array('d', bins))
+            if ignore_binning:
+                hist = TH1F(hist_name, hist_name, len(bins) - 1, bins[0], bins[-1])
+            else:
+                hist = TH1F(hist_name, hist_name, len(bins) - 1, array('d', bins))
             ROOT.SetOwnership(hist, False) # avoid problems with Python's garbage collector
 
             for bin_number, bin_content in enumerate(bin_contents):

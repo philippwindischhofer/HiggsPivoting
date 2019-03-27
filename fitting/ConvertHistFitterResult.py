@@ -58,7 +58,9 @@ def ConvertHypothesisTestResult(infile_path, outfile_path, outkey):
         with open(outfile_path, "rb") as outfile:
             hypodict_old = pickle.load(outfile)
 
-        hypodict.update(hypodict_old) # merge the two dictionaries
+        for key, val in hypodict_old.items():
+            if key not in hypodict:
+                hypodict[key] = val
         print("output file already exists, will append data")
     except IOError:
         print("output file does not yet exist")
