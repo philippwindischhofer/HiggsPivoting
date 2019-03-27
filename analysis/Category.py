@@ -119,7 +119,7 @@ class Category:
             ROOT.SetOwnership(hist, False) # avoid problems with Python's garbage collector
 
             for bin_number, bin_content in enumerate(bin_contents):
-                if bin_content == 0:
+                if bin_content <= 0:
                     bin_content = 1e-4
 
                 hist.SetBinContent(bin_number + 1, bin_content)

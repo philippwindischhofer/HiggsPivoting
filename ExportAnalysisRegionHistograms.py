@@ -73,10 +73,7 @@ def main():
     SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
     # also prepare the binning along the MVA dimension
-    sigeff_low = 0
-    sigeff_up = 1
-    sigeff_binwidth = 0.05 # make bins, each of which has a signal efficiency of 5%
-    sigeff_binning = np.linspace(sigeff_low, sigeff_up, num = int((sigeff_up - sigeff_low) / sigeff_binwidth), endpoint = True)
+    sigeff_binning = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.70, 0.75, 0.80, 0.85, 0.9, 0.92, 0.94, 0.96, 0.98, 1.0]
 
     # now convert the binning in terms of signal efficiency into the actual binning
     # in terms of the classifier output value
@@ -178,7 +175,7 @@ def main():
                                                   outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = False, density = False, ignore_binning = True)
 
         CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', 
-                                                  plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True)
+                                                  plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True, ignore_binning = True)
         
 if __name__ == "__main__":
     main()

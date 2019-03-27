@@ -45,7 +45,26 @@ class CategoryPlotter:
         # then plot the histogram
         fig = plt.figure(figsize = (6, 5))
         ax = fig.add_subplot(111)
-        n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
+
+        centers = []
+        bin_contents = []
+        for cur_data, cur_weights in zip(data, weights):
+
+            cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten())
+
+            if ignore_binning:
+                cur_bin_edges = np.linspace(cur_bin_edges[0], cur_bin_edges[-1], num = len(cur_bin_edges), endpoint = True)
+
+            lower_edges = cur_bin_edges[:-1]
+            upper_edges = cur_bin_edges[1:]
+
+            cur_centers = np.array(0.5 * (lower_edges + upper_edges))
+
+            centers.append(cur_centers)
+            bin_contents.append(cur_bin_contents)
+
+        #n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
+        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = cur_bin_edges, **args)
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
