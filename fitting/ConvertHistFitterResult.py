@@ -60,7 +60,7 @@ def ConvertHypothesisTestResult(infile_path, outfile_path, outkey):
 
         hypodict.update(hypodict_old) # merge the two dictionaries
         print("output file already exists, will append data")
-    except FileNotFoundError:
+    except IOError:
         print("output file does not yet exist")
 
     # the output file does not exist, create it

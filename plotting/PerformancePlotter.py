@@ -8,7 +8,7 @@ import numpy as np
 class PerformancePlotter:
 
     @staticmethod
-    def plot_asimov_binned_significance(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
+    def plot_asimov_significance_comparison(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
@@ -53,11 +53,15 @@ class PerformancePlotter:
         asimov_sigs_tight_loose_depleted_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
         asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
 
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', linecolor = 'royalblue')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', linecolor = 'darkorange')
+        ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', linecolor = 'forestgreen')
 
-        ax.legend()
+        # now, add horizontal lines corresponding to the significance achieved by the cut-based analysis
+        ax.axhline(y = hypo)
+
+        ax.legend(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, linecolor = 'royalblue', label = "high MET + low MET (background fixed)")
+        ax.legend(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, linecolor = 'darkorange', label = "high MET + low MET (background floating)")
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
