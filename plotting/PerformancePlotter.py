@@ -8,6 +8,51 @@ import numpy as np
 class PerformancePlotter:
 
     @staticmethod
+    def plot_asimov_significance_category_sweep_comparison(hypodicts, catdicts, outfile, xlabel = "# categories", ylabel = r'Asimov significance [$\sigma_A$]',
+                                                           asimov_sig_name = "asimov_sig_background_fixed", lambdas_to_plot = [0.0, 0.25, 0.75]):
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        # load all the fit results
+        asimov_sigs = {}
+        category_numbers = []
+        lambda_values = []
+        for hypodict, catdict in zip(hypodicts, catdicts):
+            
+            cur_asimov_sig = hypodict[asimov_sig_name]
+            cur_number_categories = catdict["num_categories"]
+            cur_lambda = float(catdict["lambda"])
+
+            category_numbers.append(cur_number_categories)
+            lambda_values.append(cur_lambda)
+
+            if not (cur_lambda, cur_number_categories) in asimov_sigs:
+                asimov_sigs[(cur_lambda, cur_number_categories)] = []
+            asimov_sigs[(cur_lambda, cur_number_categories)].append(cur_asimov_sig)
+        
+        category_numbers = sorted(list(set(category_numbers)))
+        lambda_values = sorted(list(set(lambda_values)))
+
+        # compute the mean values and standard deviations over trainings and plot them
+        for cur_lambda_value in lambda_values:
+            if min([abs(cur_lambda_value - test_lambda) for test_lambda in lambdas_to_plot]) < 1e-4:
+                asimov_sigs_means = [np.mean(asimov_sigs[(cur_lambda_value, cur_category_number)]) for cur_category_number in category_numbers]
+                asimov_sigs_errors = [np.std(asimov_sigs[(cur_lambda_value, cur_category_number)]) for cur_category_number in category_numbers]
+
+                ax.errorbar(category_numbers, asimov_sigs_means, yerr = asimov_sigs_errors, marker = 'o', label = r'$\lambda = {}$'.format(cur_lambda_value), fmt = 'o')
+
+        ax.legend()
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(asimov_sig_name)
+        #ax.set_ylim([1.3, 2.8])
+        
+        fig.savefig(outfile)
+        plt.close()                
+
+    @staticmethod
     def plot_asimov_significance_comparison(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
