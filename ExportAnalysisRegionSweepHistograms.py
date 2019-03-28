@@ -27,6 +27,10 @@ def main():
     test_size = float(args["test_size"]) # need this when reading datasets that haven't been used for training (but instead for assessing systematics)
     num_categories = int(args["num_categories"])
 
+    # create the output directoy
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     sig_samples = ["Hbb"]
     bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
@@ -75,7 +79,7 @@ def main():
     SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
     # prepare the signal efficiency slices that are going to be used for the various regions
-    category_sigeffs = np.linspace(0.0, 0.8, num = num_categories, endpoint = True)
+    category_sigeffs = np.linspace(0.0, 0.8, num = num_categories + 1, endpoint = True)
 
     # also prepare the binning along the MVA dimension
     sigeff_low = 0
@@ -133,7 +137,7 @@ def main():
                                                   outfile_path = os.path.join(outdir, "region_{}_{}jet.root".format(category_number, cur_nJ)), clipping = False, density = False)
 
             CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}_{}J.pdf".format(category_number, cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                      plotlabel = ["MC16d", "clf tight", "nJ = {}, region = {}".format(cur_nJ, category_number)])
+                                                      plotlabel = ["MC16d", "sig. eff. range = ({:.2f}, {:.2f})".format(sigeff_slice_end, sigeff_slice_start), "nJ = {}, region = {}".format(cur_nJ, category_number)])
 
         # now, also export the classifier categories for each jet split
         class_cat_inclusive = ClassifierBasedCategoryFiller.create_classifier_category(env, 
@@ -154,8 +158,9 @@ def main():
 
     # finally, store some meta information about the categorization
     catdict = {"num_categories": num_categories}
+    catdict.update(env.create_paramdict())
     with open(os.path.join(outdir, "catdict.pkl"), "wb") as outfile:
-        pickle.dump(catdict, outfile)
+        pickle.dump(catdict, outfile, protocol = 2)
         
 if __name__ == "__main__":
     main()

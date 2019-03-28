@@ -33,7 +33,12 @@ class ClassifierBasedCategoryFiller:
 
             cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
 
-            cut = np.logical_and.reduce((cur_pred > classifier_range[0], cur_pred < classifier_range[1], cur_nJ == nJ))
+            if nJ:
+                # a cut on the number of jets was requested
+                cut = np.logical_and.reduce((cur_pred > classifier_range[0], cur_pred < classifier_range[1], cur_nJ == nJ))
+            else:
+                # fill this category inclusively in the number of jets
+                cut = np.logical_and.reduce((cur_pred > classifier_range[0], cur_pred < classifier_range[1]))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]

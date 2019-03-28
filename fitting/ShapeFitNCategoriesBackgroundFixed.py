@@ -19,7 +19,7 @@ configMgr.calculatorType = 2
 configMgr.testStatType = 2
 configMgr.nPoints = 20
 
-configMgr.analysisName = "ShapeFitTightLooseDepletedBackgroundFloating"
+configMgr.analysisName = "ShapeFitNCategoriesBackgroundFixed"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
 
 # names of the individual input files for the above regions

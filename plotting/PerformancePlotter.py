@@ -69,10 +69,10 @@ class PerformancePlotter:
         asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
 
         asimov_sigs_mva_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_floating.values()]
-        asimov_sigs_mva_background_floating_std = [np.std(cur) for cur in asimov_sigs_mvabackground_floating.values()]
+        asimov_sigs_mva_background_floating_std = [np.std(cur) for cur in asimov_sigs_mva_background_floating.values()]
 
         asimov_sigs_mva_background_fixed_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_fixed.values()]
-        asimov_sigs_mva_background_fixed_std = [np.std(cur) for cur in asimov_sigs_mvabackground_fixed.values()]
+        asimov_sigs_mva_background_fixed_std = [np.std(cur) for cur in asimov_sigs_mva_background_fixed.values()]
 
         ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', color = 'royalblue')
         ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', color = 'darkorange')
@@ -90,7 +90,7 @@ class PerformancePlotter:
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        ax.set_ylim([1.3, 2.8])
+        #ax.set_ylim([1.3, 2.8])
         
         fig.savefig(outfile)
         plt.close()        
