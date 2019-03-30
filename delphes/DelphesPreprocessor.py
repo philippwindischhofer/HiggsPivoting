@@ -25,7 +25,7 @@ class DelphesPreprocessor:
         self.df.drop(columns = to_drop)
 
     def _select(self, selection_lambda):
-        self.df = self.df[df.apply(selection_lambda, axis = 1)]
+        self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
 
     def _extract_column(self, column_name):
         return self.df[column_name]
