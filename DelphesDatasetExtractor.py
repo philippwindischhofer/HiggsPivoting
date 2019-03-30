@@ -39,7 +39,7 @@ def PrepareDelphesDataset(input_dir, lumi):
         print("currently processing {}".format(event_file_candidate))
         
         pre.load(event_file_candidate)
-        processed_events.append(pre.process())
+        processed_events.append(pre.process(lumi = lumi, xsec = xsec))
 
     # this will return a Pandas dataframe
     retval = pd.concat(processed_events).reset_index(drop = True)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     outfile_path = args["outfile"]
     config_file = args["config"]
-    lumi = args["lumi"]
+    lumi = float(args["lumi"])
     
     # parse the configuration file
     config = ConfigParser()
@@ -85,6 +85,8 @@ if __name__ == "__main__":
 
         # merge all events together and dump them
         merged_events = pd.concat(processed_events).reset_index(drop = True)
+        print("finished processing, here is a sample:")
+        print(merged_events.head())
         
         if os.path.exists(outfile_path):
             mode = 'a'
