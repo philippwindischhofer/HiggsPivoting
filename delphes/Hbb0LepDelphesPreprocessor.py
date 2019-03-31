@@ -8,7 +8,7 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
         self.input_branches = ["Event.Weight", "Electron.PT", "Muon.PT", "Jet.PT", "Jet.Mass", "Jet.Flavor", "Jet.Phi", "Jet.Eta", "MissingET.MET", "MissingET.Phi"]
 
         # the branches that will finally be exported
-        self.permanent_output_branches = ["weight", "MET", "pTB1", "pTB2", "mBB", "dRBB", "dEtaBB", "dPhiMETdijet", "SumPtJet"]
+        self.permanent_output_branches = ["EventWeight", "MET", "pTB1", "pTB2", "mBB", "dRBB", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
         #self.debugging_output_branches = ["Electron.PT", "Muon.PT", "number_hard_leptons", "MissingET.MET", "number_b_jets_truth_tagging", "Jet.Flavor", "H_T", "Jet.PT", "b_jet_pt"]
         self.output_branches = self.permanent_output_branches# + self.debugging_output_branches
 
@@ -26,7 +26,7 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
         weight_modifier = lumi * xsec * 1000 / sow # the factor of 1000 converts between fb and pb
 
         # ensure the correct normalization of these events
-        self._add_column("weight", lambda row: row["Event.Weight"][0] * weight_modifier)
+        self._add_column("EventWeight", lambda row: row["Event.Weight"][0] * weight_modifier)
 
         # count the number of electrons and muons (== leptons) above 7 GeV
         self._add_column("number_hard_muons", lambda row: sum(row["Muon.PT"] > 7.0))
@@ -47,6 +47,7 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
 
         # also, use just events with either 2 or 3 jets
         self._add_column("number_jets", lambda row: len(row["Jet.Flavor"]))
+        self._add_column("nJ", lambda row: row["number_jets"])
         self._select(lambda row: row["number_jets"] == 2 or row["number_jets"] == 3)
 
         # cut on the scalar sum of jet p_T
