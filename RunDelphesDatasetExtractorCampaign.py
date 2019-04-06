@@ -5,9 +5,7 @@ from utils.CondorJobSubmitter import CondorJobSubmitter
 from delphes.CrossSectionReader import CrossSectionReader
 
 def createJobScript(outfile, xsec, lumi, sample_name, input_files, script_dir):
-    sceleton = """
-    #!/bin/bash
-    
+    sceleton = """#!/bin/bash
     source /home/windischhofer/HiggsPivoting/bin/activate
     source /home/windischhofer/HiggsPivoting/setup_env.sh
 
