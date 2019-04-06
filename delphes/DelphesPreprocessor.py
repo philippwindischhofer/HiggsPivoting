@@ -6,9 +6,9 @@ class DelphesPreprocessor:
         self.df = None
 
     def load(self, infile_path, branches):
-        print("loading the following branches:")
-        for branch in branches:
-            print(branch)
+        # print("loading the following branches:")
+        # for branch in branches:
+        #     print(branch)
 
         tree = ur.open(infile_path)["Delphes"]
         self.df = tree.pandas.df(branches, flatten = False)

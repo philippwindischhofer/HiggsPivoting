@@ -16,12 +16,12 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
         super(Hbb0LepDelphesPreprocessor, self).load(infile_path = infile_path, branches = self.input_branches)
 
     def process(self, lumi, xsec):
-        print("running with lumi = {} fb^-1".format(lumi))
-        print("running with xsec = {} pb".format(xsec))
+        #print("running with lumi = {} fb^-1".format(lumi))
+        #print("running with xsec = {} pb".format(xsec))
 
         # get the sum-of-weights of the loaded events
         sow = float(sum(self._extract_column("Event.Weight")))
-        print("found SOW = {}".format(sow))
+        #print("found SOW = {}".format(sow))
 
         weight_modifier = lumi * xsec * 1000 / sow # the factor of 1000 converts between fb and pb
 

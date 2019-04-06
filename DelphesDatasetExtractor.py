@@ -31,6 +31,7 @@ def PrepareDelphesDataset(input_dir, lumi):
     # look for the ROOT file(s) with the events and process it
     processed_events = []
 
+    print("looking for ROOT files in '{}'".format(input_dir))
     event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
     print("found {} ROOT files for this process".format(len(event_file_candidates)))
 
@@ -39,7 +40,9 @@ def PrepareDelphesDataset(input_dir, lumi):
         print("currently processing {}".format(event_file_candidate))
         
         pre.load(event_file_candidate)
-        processed_events.append(pre.process(lumi = lumi, xsec = xsec))
+        processed = pre.process(lumi = lumi, xsec = xsec)
+        print("got {} processed events".format(len(processed)))
+        processed_events.append(processed)
 
     # this will return a Pandas dataframe
     retval = pd.concat(processed_events).reset_index(drop = True)
@@ -87,6 +90,8 @@ if __name__ == "__main__":
         merged_events = pd.concat(processed_events).reset_index(drop = True)
         print("finished processing, here is a sample:")
         print(merged_events.head())
+
+        print("stored {} events".format(len(merged_events)))
         
         if os.path.exists(outfile_path):
             mode = 'a'
