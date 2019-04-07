@@ -19,7 +19,7 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
 
     # for MadGraph
     sig_samples = []
-    bkg_samples = ["Zjets"]
+    bkg_samples = ["Wjets"]
 
     samples = sig_samples + bkg_samples
 

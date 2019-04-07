@@ -15,7 +15,16 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
     def load(self, infile_path):
         super(Hbb0LepDelphesPreprocessor, self).load(infile_path = infile_path, branches = self.input_branches)
 
+    def get_SOW(self):
+        if len(self.df) > 0:
+            return float(sum(self._extract_column("Event.Weight")))
+        else:
+            return 0.0
+
     def process(self, lumi, xsec):
+        if len(self.df) <= 1:
+            return None
+
         #print("running with lumi = {} fb^-1".format(lumi))
         #print("running with xsec = {} pb".format(xsec))
 
@@ -127,5 +136,8 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
 
         # compute the invariant mass of the two b-jets
         self._add_column("mBB", lambda row: np.sqrt(row["EBB"] ** 2 - row["pxBB"] ** 2 - row["pyBB"] ** 2 - row["pzBB"] ** 2))
-                         
-        return self.df[self.output_branches]
+
+        if self.df is not None:
+            return self.df[self.output_branches]
+        else:
+            return None

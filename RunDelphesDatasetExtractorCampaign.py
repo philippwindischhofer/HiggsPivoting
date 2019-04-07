@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from utils.CondorJobSubmitter import CondorJobSubmitter
 from delphes.CrossSectionReader import CrossSectionReader
 
-def createJobScript(outfile, xsec, lumi, sample_name, input_files, script_dir):
+def createJobScript(outfile, lumifile, sample_name, input_files, script_dir):
     sceleton = """#!/bin/bash
     source /home/windischhofer/HiggsPivoting/bin/activate
     source /home/windischhofer/HiggsPivoting/setup_env.sh
@@ -12,7 +12,7 @@ def createJobScript(outfile, xsec, lumi, sample_name, input_files, script_dir):
     python3 /home/windischhofer/HiggsPivoting/DelphesDatasetExtractor.py --xsec {xsec_file_path} --outfile {outfile} --lumi {lumi} --sname {sample_name} {input_files}
     """
     
-    opts = {"xsec_file_path": xsec, "outfile": outfile, "lumi": lumi, "sample_name": sample_name, "input_files": " ".join(input_files)}
+    opts = {"lumi_file_path": lumifile, "outfile": outfile, "sample_name": sample_name, "input_files": " ".join(input_files)}
 
     script_path = os.path.join(script_dir, str(uuid.uuid4()) + ".sh")
     with open(script_path, "w") as outfile:
@@ -20,7 +20,7 @@ def createJobScript(outfile, xsec, lumi, sample_name, input_files, script_dir):
 
     return script_path
 
-def launchDelphesDatasetExtractorJobs(input_dir, output_dir, lumi, sample_name, nfilesperjob):
+def launchDelphesDatasetExtractorJobs(input_dir, output_dir, lumifile_path, sample_name, nfilesperjob):
     # first, look for the available root files
     print("looking for ROOT files in '{}'".format(input_dir))
     event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
@@ -42,20 +42,18 @@ def launchDelphesDatasetExtractorJobs(input_dir, output_dir, lumi, sample_name, 
     # generate the jobs acting on these chunked file inputs
     for job_input in chunked_inputs:
         cur_outname = str(uuid.uuid4())
-        script_path = createJobScript(outfile = os.path.join(output_dir, cur_outname + ".h5"), xsec = xsec_file_path, lumi = lumi, sample_name = sample_name, input_files = job_input, script_dir = output_dir)
+        script_path = createJobScript(outfile = os.path.join(output_dir, cur_outname + ".h5"), lumifile = lumifile_path, sample_name = sample_name, input_files = job_input, script_dir = output_dir)
         CondorJobSubmitter.submit_job(script_path)
 
 if __name__ == "__main__":
     parser = ArgumentParser("launch batch jobs to apply the event selection")
     parser.add_argument("--outdir", action = "store", dest = "outdir")
-    parser.add_argument("--lumi", action = "store", dest = "lumi")
     parser.add_argument("--sname", action = "store", dest = "sample_name")
     parser.add_argument("indir", nargs = "+", action = "store")
     parser.add_argument("--nfilesperjob", action = "store", dest = "nfilesperjob")
     args = vars(parser.parse_args())
     
     outdir = args["outdir"]
-    lumi = float(args["lumi"])
     sample_name = args["sample_name"]
     nfilesperjob = int(args["nfilesperjob"])
     indir = args["indir"][0]
@@ -63,4 +61,8 @@ if __name__ == "__main__":
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    launchDelphesDatasetExtractorJobs(indir, outdir, lumi, sample_name, nfilesperjob)
+    lumifile_path = os.path.join(indir, "lumi.conf")
+    if not os.path.exists(lumifile_path):
+        raise FileNotFoundError("Error: file '{}' not found!".format(lumifile_path))
+
+    launchDelphesDatasetExtractorJobs(indir, outdir, lumifile_path, sample_name, nfilesperjob)

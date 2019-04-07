@@ -30,8 +30,9 @@ def PrepareDelphesDataset(xsec_file_path, input_files, lumi):
         
         pre.load(event_file_candidate)
         processed = pre.process(lumi = lumi, xsec = xsec)
-        print("got {} processed events".format(len(processed)))
-        processed_events.append(processed)
+        if processed is not None:
+            print("got {} processed events".format(len(processed)))
+            processed_events.append(processed)
 
     # this will return a Pandas dataframe
     retval = pd.concat(processed_events).reset_index(drop = True)

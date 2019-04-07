@@ -19,13 +19,18 @@ class DelphesPreprocessor:
         return self.df
 
     def _add_column(self, column_name, fill_lambda):
-        self.df[column_name] = self.df.apply(fill_lambda, axis = 1)
+        if self.df is not None:
+            if len(self.df) >= 1:
+                self.df[column_name] = self.df.apply(fill_lambda, axis = 1)
+            else:
+                self.df = None
 
     def _drop_columns(self, to_drop):
         self.df.drop(columns = to_drop)
 
     def _select(self, selection_lambda):
-        self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
+        if self.df is not None:
+            self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
 
     def _extract_column(self, column_name):
         return self.df[column_name]
