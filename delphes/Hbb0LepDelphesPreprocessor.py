@@ -25,6 +25,9 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
             return 0.0
 
     def process(self, lumiweight):
+        if self.df is None:
+            return None
+
         if len(self.df) <= 1:
             return None
 

@@ -8,13 +8,15 @@ def create_job_script(indir, lumi):
     source /home/windischhofer/HiggsPivoting/bin/activate
     source /home/windischhofer/HiggsPivoting/setup_env.sh
     
-    python3 /home/windischhofer/HiggsPivoting/MakeLumiFile.py --lumi {lumi} {indir}
+    python3 /home/windischhofer/HiggsPivoting/MakeLumiFile.py --lumi {lumi} {indir} &> {logfile}
     """
     
     job_id = str(uuid.uuid4())
-    opts = {"lumi": lumi, "indir": indir}
 
     job_script_path = os.path.join(indir, job_id + ".sh")
+    logfile_path = os.path.join(indir, job_id + ".log")
+
+    opts = {"lumi": lumi, "indir": indir, "logfile": logfile_path}
 
     with open(job_script_path, 'w') as outfile:
         outfile.write(sceleton.format(**opts))
