@@ -84,7 +84,7 @@ class Category:
         n, bins = np.histogram(data, bins = binning, weights = weights.flatten(), density = density)
 
         with open(outfile, "wb") as outfile:
-            pickle.dump((n, bins), outfile)
+            pickle.dump((n, bins, var_name), outfile)
 
     # similar to 'export_histogram', but instead writes a *.root file
     def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False, ignore_binning = False):

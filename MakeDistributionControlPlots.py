@@ -76,12 +76,18 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
         for cur_process in samples:
             CategoryPlotter.plot_category_composition(inclusive, binning = binnings[cur_var], outpath = os.path.join(outdir, "dist_{}_{}_inclusive.pdf".format(cur_var, cur_process)), var = cur_var, 
                                                       process_order = [cur_process], xlabel = cur_var, plotlabel = ["inclusive"], args = {})
+            inclusive.export_histogram(binning = binnings[cur_var], processes = [cur_process], var_name = cur_var, 
+                                       outfile = os.path.join(outdir, "dist_{}_{}_inclusive.pkl".format(cur_var, cur_process)), clipping = True, density = True)
 
             CategoryPlotter.plot_category_composition(inclusive_2J, binning = binnings[cur_var], outpath = os.path.join(outdir, "dist_{}_{}_inclusive_2J.pdf".format(cur_var, cur_process)), var = cur_var, 
                                                       process_order = [cur_process], xlabel = cur_var, plotlabel = ["inclusive, nJ = 2"], args = {})
+            inclusive_2J.export_histogram(binning = binnings[cur_var], processes = [cur_process], var_name = cur_var, 
+                                       outfile = os.path.join(outdir, "dist_{}_{}_inclusive_2J.pkl".format(cur_var, cur_process)), clipping = True, density = True)
 
             CategoryPlotter.plot_category_composition(inclusive_3J, binning = binnings[cur_var], outpath = os.path.join(outdir, "dist_{}_{}_inclusive_3J.pdf".format(cur_var, cur_process)), var = cur_var, 
                                                       process_order = [cur_process], xlabel = cur_var, plotlabel = ["inclusive, nJ = 3"], args = {})
+            inclusive_3J.export_histogram(binning = binnings[cur_var], processes = [cur_process], var_name = cur_var, 
+                                          outfile = os.path.join(outdir, "dist_{}_{}_inclusive_3J.pkl".format(cur_var, cur_process)), clipping = True, density = True)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "generate distributions of event variables to check their integrity")
