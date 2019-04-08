@@ -17,7 +17,7 @@ def MakeDistributionRatioPlots(outdir, indir_a, indir_b):
         plot_name = os.path.splitext(cur_plot)[0]
         outfile = os.path.join(outdir, plot_name + ".pdf")
 
-        RatioPlotter.histogram_ratio_plot(infile_a, infile_b, outfile)
+        RatioPlotter.histogram_ratio_plot(infile_a, infile_b, outfile, name_a = "ATLAS", name_b = "MadGraph + Delphes", title = plot_name)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "compares two sets of plots")
