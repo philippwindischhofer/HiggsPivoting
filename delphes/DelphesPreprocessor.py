@@ -10,9 +10,14 @@ class DelphesPreprocessor:
         # for branch in branches:
         #     print(branch)
 
-        tree = ur.open(infile_path)["Delphes"]
-        self.df = tree.pandas.df(branches, flatten = False)
-        self.df.reset_index(drop = True)
+        try:
+            tree = ur.open(infile_path)["Delphes"]
+            self.df = tree.pandas.df(branches, flatten = False)
+            self.df.reset_index(drop = True)
+        except:
+            # the Delphes tree is not available for some reason, do nothing
+            print("file '{}' not found or problem reading it!".format(infile_path))
+            self.df = None
 
     def process(self):
         """ do nothing by default; all the action happens in the overriding methods """
@@ -26,11 +31,15 @@ class DelphesPreprocessor:
                 self.df = None
 
     def _drop_columns(self, to_drop):
-        self.df.drop(columns = to_drop)
+        if self.df is not None:
+            self.df.drop(columns = to_drop)
 
     def _select(self, selection_lambda):
         if self.df is not None:
             self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
 
     def _extract_column(self, column_name):
-        return self.df[column_name]
+        if self.df is not None:
+            return self.df[column_name]
+        else:
+            return None

@@ -2,15 +2,18 @@ class CrossSectionReader:
 
     @staticmethod
     def parse(infile_path):
-        with open(infile_path, 'r') as infile:
-            header_line = None
-            body_lines = []
+        try:
+            with open(infile_path, 'r') as infile:
+                header_line = None
+                body_lines = []
 
-            for line in infile:
-                if line.startswith('#'):
-                    header_line = line
-                else:
-                    body_lines.append(line)
+                for line in infile:
+                    if line.startswith('#'):
+                        header_line = line
+                    else:
+                        body_lines.append(line)
+        except:
+            print("file '{}' not found or problem reading it!".format(infile_path))
 
         # now extract the column names
         header_line = header_line.replace('#', '')

@@ -9,7 +9,7 @@ def createJobScript(outfile, lumifile, sample_name, input_files, script_dir):
     source /home/windischhofer/HiggsPivoting/bin/activate
     source /home/windischhofer/HiggsPivoting/setup_env.sh
 
-    python3 /home/windischhofer/HiggsPivoting/DelphesDatasetExtractor.py --xsec {xsec_file_path} --outfile {outfile} --lumi {lumi} --sname {sample_name} {input_files}
+    python3 /home/windischhofer/HiggsPivoting/DelphesDatasetExtractor.py --outfile {outfile} --lumifile {lumi_file_path} --sname {sample_name} {input_files}
     """
     
     opts = {"lumi_file_path": lumifile, "outfile": outfile, "sample_name": sample_name, "input_files": " ".join(input_files)}
@@ -25,14 +25,6 @@ def launchDelphesDatasetExtractorJobs(input_dir, output_dir, lumifile_path, samp
     print("looking for ROOT files in '{}'".format(input_dir))
     event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
     print("found {} ROOT files for this process".format(len(event_file_candidates)))
-
-    print("looking for xsec file in '{}'".format(input_dir))
-    # look for the file containing the cross section
-    xsec_file_candidates = glob.glob(os.path.join(input_dir, "cross_section.txt"))
-    if len(xsec_file_candidates) != 1:
-        raise Exception("Error: found more than one plausible cross-section file. Please check your files!")
-    else:
-        xsec_file_path = xsec_file_candidates[0]
 
     def generate_chunks(inlist, chunksize):
         return [inlist[cur:cur + chunksize] for cur in range(0, len(inlist), chunksize)]

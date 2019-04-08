@@ -8,12 +8,7 @@ from delphes.Hbb0LepDelphesPreprocessor import Hbb0LepDelphesPreprocessor
 def GenerateLumiFile(input_dir, lumi):
     # first, read the generator-level cross section
     print("looking for xsec file in '{}'".format(input_dir))
-    xsec_file_candidates = glob.glob(os.path.join(input_dir, "cross_section.txt"))
-    if len(xsec_file_candidates) != 1:
-        raise Exception("Error: found more than one plausible cross-section file. Please check your files!")
-    else:
-        xsec_file_path = xsec_file_candidates[0]
-
+    xsec_file_path = os.path.join(input_dir, "cross_section.txt")
     print("using the following cross-section file: '{}'".format(xsec_file_path))
     metadata = CrossSectionReader.parse(xsec_file_path)
     
@@ -44,7 +39,7 @@ def GenerateLumiFile(input_dir, lumi):
     lumiconfig = ConfigParser()
     lumiconfig["global"] = {"xsec": str(xsec), "lumi": str(lumi), "SOW": str(SOW), "evweight": str(evweight)}
 
-    lumiconfig_path = os.path.join(indir, "lumi.conf")
+    lumiconfig_path = os.path.join(input_dir, "lumi.conf")
     with open(lumiconfig_path, "w") as outfile:
         lumiconfig.write(outfile)
 
@@ -55,7 +50,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     dirs = args["dirs"]
-    lumi = args["lumi"]
+    lumi = float(args["lumi"])
 
     # generate a lumi file for each directory sequentially
     for cur_dir in dirs:

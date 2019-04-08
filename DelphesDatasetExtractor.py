@@ -9,17 +9,17 @@ from configparser import ConfigParser
 from delphes.CrossSectionReader import CrossSectionReader
 from delphes.Hbb0LepDelphesPreprocessor import Hbb0LepDelphesPreprocessor
 
-def PrepareDelphesDataset(xsec_file_path, input_files, lumi):
+def PrepareDelphesDataset(input_files, lumifile_path):
     """ Return a pandas table with the needed event variables, after applying selection. """
 
-    print("using the following cross-section file: '{}'".format(xsec_file_path))
-    metadata = CrossSectionReader.parse(xsec_file_path)
-    
-    print("found the following metadata:")
-    for key, val in metadata.items():
-        print("{} = {}".format(key, val))
+    print("using the following lumifile: '{}'".format(lumifile_path))
 
-    xsec = float(metadata["cross"])
+    # read in the lumi weight from the lumifile
+    lumiconfig = ConfigParser()
+    lumiconfig.read(lumifile_path)
+    lumiweight = float(lumiconfig["global"]["evweight"])
+
+    print("using the following lumi event weight: {}".format(lumiweight))
 
     # look for the ROOT file(s) with the events and process it
     processed_events = []
@@ -29,7 +29,7 @@ def PrepareDelphesDataset(xsec_file_path, input_files, lumi):
         print("currently processing {}".format(event_file_candidate))
         
         pre.load(event_file_candidate)
-        processed = pre.process(lumi = lumi, xsec = xsec)
+        processed = pre.process(lumiweight = lumiweight)
         if processed is not None:
             print("got {} processed events".format(len(processed)))
             processed_events.append(processed)
@@ -41,21 +41,19 @@ def PrepareDelphesDataset(xsec_file_path, input_files, lumi):
 if __name__ == "__main__":
     parser = ArgumentParser(description = "convert Delphes datasets into hdf5, applying some event selection")
     parser.add_argument("--outfile", action = "store", dest = "outfile")
-    parser.add_argument("--xsec", action = "store", dest = "xsec_file_path")
-    parser.add_argument("--lumi", action = "store", dest = "lumi")
+    parser.add_argument("--lumifile", action = "store", dest = "lumifile")
     parser.add_argument("--sname", action = "store", dest = "sample_name")
     parser.add_argument("files", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
     outfile_path = args["outfile"]
-    lumi = float(args["lumi"])
-    xsec_file_path = args["xsec_file_path"]
+    lumifile_path = args["lumifile"]
     files = args["files"]
     sample_name = args["sample_name"]
     
     processed_events = []
 
-    processed_events.append(PrepareDelphesDataset(xsec_file_path, files, lumi))
+    processed_events.append(PrepareDelphesDataset(files, lumifile_path))
 
     # merge all events together and dump them
     merged_events = pd.concat(processed_events).reset_index(drop = True)

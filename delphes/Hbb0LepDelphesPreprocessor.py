@@ -16,26 +16,23 @@ class Hbb0LepDelphesPreprocessor(DelphesPreprocessor):
         super(Hbb0LepDelphesPreprocessor, self).load(infile_path = infile_path, branches = self.input_branches)
 
     def get_SOW(self):
-        if len(self.df) > 0:
-            return float(sum(self._extract_column("Event.Weight")))
+        if self.df is not None:
+            if len(self.df) > 0:
+                return float(sum(self._extract_column("Event.Weight")))
+            else:
+                return 0.0
         else:
             return 0.0
 
-    def process(self, lumi, xsec):
+    def process(self, lumiweight):
         if len(self.df) <= 1:
             return None
 
         #print("running with lumi = {} fb^-1".format(lumi))
         #print("running with xsec = {} pb".format(xsec))
 
-        # get the sum-of-weights of the loaded events
-        sow = float(sum(self._extract_column("Event.Weight")))
-        #print("found SOW = {}".format(sow))
-
-        weight_modifier = lumi * xsec * 1000 / sow # the factor of 1000 converts between fb and pb
-
         # ensure the correct normalization of these events
-        self._add_column("EventWeight", lambda row: row["Event.Weight"][0] * weight_modifier)
+        self._add_column("EventWeight", lambda row: row["Event.Weight"][0] * lumiweight)
 
         # count the number of electrons and muons (== leptons) above 7 GeV
         self._add_column("number_hard_muons", lambda row: sum(row["Muon.PT"] > 7.0))
