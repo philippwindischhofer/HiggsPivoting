@@ -17,7 +17,13 @@ def PrepareDelphesDataset(input_files, lumifile_path):
     # read in the lumi weight from the lumifile
     lumiconfig = ConfigParser()
     lumiconfig.read(lumifile_path)
-    lumiweight = float(lumiconfig["global"]["evweight"])
+    
+    xsec = float(lumiconfig["global"]["xsec"])
+    lumi = float(lumiconfig["global"]["lumi"]) # stored in fb^-1
+    sow = float(lumiconfig["global"]["sow"]) # stored in pb
+
+    # compute the lumiweight
+    lumiweight = xsec * (lumi * 1000.0) / sow
 
     print("using the following lumi event weight: {}".format(lumiweight))
 

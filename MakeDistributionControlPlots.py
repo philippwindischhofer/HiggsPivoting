@@ -19,7 +19,7 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
 
     # for MadGraph
     sig_samples = []
-    bkg_samples = ["Wjets"]
+    bkg_samples = ["Zjets", "Wjets"]
 
     samples = sig_samples + bkg_samples
 
@@ -36,6 +36,9 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
 
     print("loading data ...")
     data = [pd.read_hdf(infile_path, key = sample) for sample in samples]
+
+    for cur_df, sample in zip(data, samples):
+        print("have {} events available for '{}'".format(len(cur_df), sample))
 
     data_test = []
     mBB_test = []
