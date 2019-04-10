@@ -28,7 +28,7 @@ class CutBasedCategoryFiller:
     # MET > 150 GeV && MET < 200 GeV
     # dRBB < 1.8
     @staticmethod
-    def create_low_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2):
+    def create_low_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}):
         retcat = Category("low_MET")
 
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
@@ -38,7 +38,7 @@ class CutBasedCategoryFiller:
 
             cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
 
-            cut = np.logical_and.reduce((cur_MET > 150, cur_MET < 200, cur_dRBB < 1.8, cur_nJ == nJ))
+            cut = np.logical_and.reduce((cur_MET > 150, cur_MET < cuts["MET_cut"], cur_dRBB < cuts["dRBB_lowMET_cut"], cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
@@ -51,7 +51,7 @@ class CutBasedCategoryFiller:
     # MET > 200 GeV
     # dRBB < 1.2
     @staticmethod
-    def create_high_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2):
+    def create_high_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}):
         retcat = Category("high_MET")
 
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
@@ -61,7 +61,7 @@ class CutBasedCategoryFiller:
 
             cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
 
-            cut = np.logical_and.reduce((cur_MET > 200, cur_dRBB < 1.2, cur_nJ == nJ))
+            cut = np.logical_and.reduce((cur_MET > cuts["MET_cut"], cur_dRBB < cuts["dRBB_highMET_cut"], cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]

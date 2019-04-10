@@ -152,7 +152,7 @@ class Category:
 
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components
-    def get_binned_significance(self, binning, signal_processes, background_processes, var_name):
+    def get_binned_significance(self, binning, signal_processes, background_processes, var_name, verbose = False):
         eps = 1e-5
         
         if not isinstance(binning, (list, np.ndarray)):
@@ -163,9 +163,10 @@ class Category:
         # exclude almost-empty bins
         invalid_mask = np.logical_or(total_binned_signal <= 0, total_binned_background <= 0)
 
-        print("sig vs bkg")
-        for bin_sig, bin_bkg in zip(total_binned_signal, total_binned_background):
-            print("{} - {}".format(bin_sig, bin_bkg))
+        if verbose:
+            print("sig vs bkg")
+            for bin_sig, bin_bkg in zip(total_binned_signal, total_binned_background):
+                print("{} - {}".format(bin_sig, bin_bkg))
         
         # compute the binned significance
         binwise_significance = (total_binned_signal + total_binned_background) * np.log(1 + total_binned_signal / total_binned_background) - total_binned_signal
