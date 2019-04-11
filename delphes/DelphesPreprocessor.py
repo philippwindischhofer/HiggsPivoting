@@ -6,10 +6,6 @@ class DelphesPreprocessor:
         self.df = None
 
     def load(self, infile_path, branches):
-        # print("loading the following branches:")
-        # for branch in branches:
-        #     print(branch)
-
         try:
             tree = ur.open(infile_path)["Delphes"]
             self.df = tree.pandas.df(branches, flatten = False)
@@ -36,10 +32,12 @@ class DelphesPreprocessor:
 
     def _select(self, selection_lambda):
         if self.df is not None:
-            self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
+            if len(self.df) > 0:
+                self.df = self.df[self.df.apply(selection_lambda, axis = 1)]
 
     def _extract_column(self, column_name):
         if self.df is not None:
-            return self.df[column_name]
+            if len(self.df) > 0:
+                return self.df[column_name]
         else:
             return None

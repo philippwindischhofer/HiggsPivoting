@@ -6,7 +6,15 @@ def CombineLumiFiles(indir):
     """ combines all lumi.conf files found in all subdirectories """
 
     # first, look for all existing lumi files
-    lumifiles = glob.glob(os.path.join(indir, "**/lumi.conf"), recursive = True)
+    # Note: this semi-automatic way of doing it is faster than simply
+    #     lumifiles = glob.glob(os.path.join(indir, "**/lumi.conf"), recursive = True)
+    sub_dirs = glob.glob(os.path.join(indir, '*/'))
+    lumifiles = []
+    for sub_dir in sub_dirs:
+        lumifile_path = os.path.join(sub_dir, "lumi.conf")
+        if os.path.isfile(lumifile_path):
+            lumifiles.append(lumifile_path)
+
     print("have found {} lumi files in this directory".format(len(lumifiles)))
 
     # now, combine all lumi files: just add their SOW together
@@ -20,9 +28,9 @@ def CombineLumiFiles(indir):
         cur_lumiconfig = ConfigParser()
         cur_lumiconfig.read(cur_lumifile)
 
-        cur_SOW = cur_lumiconfig["global"]["SOW"]
-        cur_xsec = cur_lumiconfig["global"]["xsec"]
-        cur_lumi = cur_lumiconfig["global"]["lumi"]
+        cur_SOW = float(cur_lumiconfig["global"]["SOW"])
+        cur_xsec = float(cur_lumiconfig["global"]["xsec"])
+        cur_lumi = float(cur_lumiconfig["global"]["lumi"])
 
         if xsec_combined < 0:
             xsec_combined = cur_xsec

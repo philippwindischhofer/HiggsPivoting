@@ -12,18 +12,21 @@ from delphes.Hbb0LepDelphesPreprocessor import Hbb0LepDelphesPreprocessor
 def PrepareDelphesDataset(input_files, lumifile_path):
     """ Return a pandas table with the needed event variables, after applying selection. """
 
-    print("using the following lumifile: '{}'".format(lumifile_path))
+    if lumifile_path:
+        print("using the following lumifile: '{}'".format(lumifile_path))
 
-    # read in the lumi weight from the lumifile
-    lumiconfig = ConfigParser()
-    lumiconfig.read(lumifile_path)
+        # read in the lumi weight from the lumifile
+        lumiconfig = ConfigParser()
+        lumiconfig.read(lumifile_path)
     
-    xsec = float(lumiconfig["global"]["xsec"])
-    lumi = float(lumiconfig["global"]["lumi"]) # stored in fb^-1
-    sow = float(lumiconfig["global"]["sow"]) # stored in pb
+        xsec = float(lumiconfig["global"]["xsec"])
+        lumi = float(lumiconfig["global"]["lumi"]) # stored in fb^-1
+        sow = float(lumiconfig["global"]["sow"]) # stored in pb
 
-    # compute the lumiweight
-    lumiweight = xsec * (lumi * 1000.0) / sow
+        # compute the lumiweight
+        lumiweight = xsec * (lumi * 1000.0) / sow
+    else:
+        lumiweight = 1.0 # if no lumifile given, retain the original event weights
 
     print("using the following lumi event weight: {}".format(lumiweight))
 
@@ -47,7 +50,7 @@ def PrepareDelphesDataset(input_files, lumifile_path):
 if __name__ == "__main__":
     parser = ArgumentParser(description = "convert Delphes datasets into hdf5, applying some event selection")
     parser.add_argument("--outfile", action = "store", dest = "outfile")
-    parser.add_argument("--lumifile", action = "store", dest = "lumifile")
+    parser.add_argument("--lumifile", action = "store", dest = "lumifile", default = None)
     parser.add_argument("--sname", action = "store", dest = "sample_name")
     parser.add_argument("files", nargs = '+', action = "store")
     args = vars(parser.parse_args())

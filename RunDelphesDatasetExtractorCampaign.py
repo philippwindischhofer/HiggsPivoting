@@ -23,7 +23,19 @@ def createJobScript(outfile, lumifile, sample_name, input_files, script_dir):
 def launchDelphesDatasetExtractorJobs(input_dir, output_dir, lumifile_path, sample_name, nfilesperjob):
     # first, look for the available root files
     print("looking for ROOT files in '{}'".format(input_dir))
-    event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
+
+    # Note: this semi-automatic way of doing it is faster than simply
+    #     event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
+    sub_dirs = glob.glob(os.path.join(indir, '*/'))
+    print("looking through {} subdirectories".format(len(sub_dirs)))
+    
+    event_file_candidates = []
+    for sub_dir in sub_dirs:
+        eventfile_paths = glob.glob(os.path.join(sub_dir, "*.root"))
+        for eventfile_path in eventfile_paths:
+            if os.path.isfile(eventfile_path):
+                event_file_candidates.append(eventfile_path)
+
     print("found {} ROOT files for this process".format(len(event_file_candidates)))
 
     def generate_chunks(inlist, chunksize):

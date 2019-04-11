@@ -18,8 +18,8 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
     # bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
     # for MadGraph
-    sig_samples = ["Hbb"]
-    bkg_samples = ["Zjets", "Wjets", "ttbar"]
+    sig_samples = []
+    bkg_samples = ["ttbar"]
 
     samples = sig_samples + bkg_samples
 
@@ -57,6 +57,15 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
     inclusive = Category("inclusive")
     for events, weights, process in zip(data_test, weights_test, samples):
         inclusive.add_events(events = events, weights = weights, process = process, event_variables = TrainingConfig.training_branches, aux_content = cur_aux_data, aux_variables = TrainingConfig.other_branches)
+
+    # print total event numbers for all processes
+    print("============================")
+    print(" inclusive expected event yield ")
+    print("============================")
+    for process in samples:
+        print("{}: {} events".format(process, inclusive.get_number_events(process)))
+    print("============================")
+        
 
     # also fill inclusive 2- and 3-jet categories to get a baseline for the shapes
     inclusive_2J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
