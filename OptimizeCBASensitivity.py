@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.gaussian_process.kernels import Matern
+from scipy.optimize import minimize
 from bayes_opt import BayesianOptimization
 from argparse import ArgumentParser
 
@@ -175,17 +177,25 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
 
     # the parameter ranges
     ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
-    #res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options={'gtol': 1e-6, 'disp': True})
+    res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
 
     # then, try a global search strategy
     ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
     optimizer = BayesianOptimization(
         f = costfunc_bayes,
         pbounds = ranges_bayes,
         random_state = 1
     )
-    optimizer.maximize(init_points = 2, n_iter = 30)
+    optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
+    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
+    for it in range(400):
+        cur_xi = xi_scheduler(it)
+        print("using xi = {}".format(cur_xi))
+        optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
+    
+    # print the results
     print("==============================================")
     print("initial cuts:")
     print("==============================================")
@@ -195,14 +205,14 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     print("significance = {} sigma".format(-costfunc_flat(x0)))
     print("==============================================")
 
-    # print("==============================================")
-    # print("optimized cuts (local optimization):")
-    # print("==============================================")
-    # print("MET_cut = {}".format(res_local.x[0]))
-    # print("dRBB_highMET_cut = {}".format(res_local.x[1]))
-    # print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
-    # print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
-    # print("==============================================")
+    print("==============================================")
+    print("optimized cuts (local optimization):")
+    print("==============================================")
+    print("MET_cut = {}".format(res_local.x[0]))
+    print("dRBB_highMET_cut = {}".format(res_local.x[1]))
+    print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
+    print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
+    print("==============================================")
 
     print("==============================================")
     print("optimized cuts (global optimization):")
