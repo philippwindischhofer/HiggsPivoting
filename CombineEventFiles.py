@@ -1,8 +1,11 @@
-import os
+import os, glob
 from argparse import ArgumentParser
 from h5add import h5add
 
 def CombineEventFiles(indir):
+    assert len(indir) == 1
+    indir = indir[0]
+
     # first, look for all existing lumi files
     # Note: this semi-automatic way of doing it is faster than simply
     #     lumifiles = glob.glob(os.path.join(indir, "**/lumi.conf"), recursive = True)
