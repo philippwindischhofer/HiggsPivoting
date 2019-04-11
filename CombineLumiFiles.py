@@ -49,7 +49,7 @@ def CombineLumiFiles(indir):
         lumiconfig_combined.write(combined_outfile)
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description = "generate lumifile on the batch system")
+    parser = ArgumentParser(description = "combine lumi files")
     parser.add_argument("dir", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
