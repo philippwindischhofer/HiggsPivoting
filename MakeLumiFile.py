@@ -5,18 +5,23 @@ from configparser import ConfigParser
 from delphes.CrossSectionReader import CrossSectionReader
 from delphes.Hbb0LepDelphesPreprocessor import Hbb0LepDelphesPreprocessor
 
-def GenerateLumiFile(input_dir, lumi):
-    # first, read the generator-level cross section
-    print("looking for xsec file in '{}'".format(input_dir))
-    xsec_file_path = os.path.join(input_dir, "cross_section.txt")
-    print("using the following cross-section file: '{}'".format(xsec_file_path))
-    metadata = CrossSectionReader.parse(xsec_file_path)
+def GenerateLumiFile(input_dir, lumi, xsec = None):
+    # if no explicit cross section given, try to read it from the generator output
+    if not xsec:
+        # first, read the generator-level cross section
+        print("looking for xsec file in '{}'".format(input_dir))
+        xsec_file_path = os.path.join(input_dir, "cross_section.txt")
+        print("using the following cross-section file: '{}'".format(xsec_file_path))
+        metadata = CrossSectionReader.parse(xsec_file_path)
     
-    print("found the following metadata:")
-    for key, val in metadata.items():
-        print("{} = {}".format(key, val))
+        print("found the following metadata:")
+        for key, val in metadata.items():
+            print("{} = {}".format(key, val))
 
-    xsec = float(metadata["cross"])
+        try:
+            xsec = float(metadata["cross"])
+        except KeyError:
+            print("Error: cross section information could not be found in generator output.")
     
     # then, compute the total generator-level SOW (= SOW at Delphes-level, since all events are propagated through the detector simulation):
     event_file_candidates = glob.glob(os.path.join(input_dir, "**/*.root"), recursive = True)
@@ -32,12 +37,9 @@ def GenerateLumiFile(input_dir, lumi):
 
         SOW += cur_sow
 
-    # this is the lumi * xsec event weight (lumi is expected to be provided in units of fb^-1, while the cross section from MadGraph is given in pb)
-    evweight = lumi * 1000 * xsec / SOW
-
     # finally, write the lumi file to disk
     lumiconfig = ConfigParser()
-    lumiconfig["global"] = {"xsec": str(xsec), "lumi": str(lumi), "SOW": str(SOW), "evweight": str(evweight)}
+    lumiconfig["global"] = {"xsec": str(xsec), "lumi": str(lumi), "SOW": str(SOW)}
 
     lumiconfig_path = os.path.join(input_dir, "lumi.conf")
     with open(lumiconfig_path, "w") as outfile:
@@ -47,11 +49,17 @@ if __name__ == "__main__":
     parser = ArgumentParser(description = "generate lumifile for an entire dataset")
     parser.add_argument("dirs", nargs = '+', action = "store")
     parser.add_argument("--lumi", action = "store", dest = "lumi")
+    parser.add_argument("--xsec", action = "store", dest = "xsec")
     args = vars(parser.parse_args())
 
     dirs = args["dirs"]
     lumi = float(args["lumi"])
+    xsec = args["xsec"]
+    if xsec:
+        xsec = float(xsec)
+
+    print("generate lumi files for {} directories".format(len(dirs)))
 
     # generate a lumi file for each directory sequentially
     for cur_dir in dirs:
-        GenerateLumiFile(cur_dir, lumi)
+        GenerateLumiFile(cur_dir, lumi, xsec)
