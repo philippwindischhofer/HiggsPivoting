@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--lumifile", action = "store", dest = "lumifile")
     parser.add_argument("--infile", action = "store", dest = "infile")
     parser.add_argument("--outfile", action = "store", dest = "outfile")
-    parser.add_argument("--name_in", action = "store", dest = "name_in")
+    parser.add_argument("--name_in", action = "store", dest = "name_in", default = "generic_process")
     parser.add_argument("--name_out", action = "store", dest = "name_out")
     args = vars(parser.parse_args())
 
