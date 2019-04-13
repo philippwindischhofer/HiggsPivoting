@@ -6,8 +6,9 @@ def ApplyLumiWeight(lumifile, infile, outfile, name_in, name_out):
     # first, read in the lumifile and compute the event weight
     lumiconfig = ConfigParser()
     lumiconfig.read(lumifile)
+    lumisection = lumiconfig["global"]
 
-    lumiweight = lumiconfig["xsec"] * lumiconfig["lumi"] / lumiconfig["SOW"]
+    lumiweight = float(lumisection["xsec"]) * float(lumisection["lumi"]) / float(lumisection["SOW"])
 
     data = pd.read_hdf(infile, key = name_in)
     data["EventWeight"] *= lumiweight

@@ -19,16 +19,16 @@ def h5add(output_file, input_files):
                 tables[cur_table_name] = []
             tables[cur_table_name].append(cur_table)
 
-        # now, concatenate all the read tables and dump them into the output file
-        for cur_table_name in tables.keys():
-            merged_table = pd.concat(tables[cur_table_name]).reset_index(drop = True)
+    # now, concatenate all the read tables and dump them into the output file
+    for cur_table_name in tables.keys():
+        merged_table = pd.concat(tables[cur_table_name]).reset_index(drop = True)
             
-            if os.path.exists(output_file):
-                mode = 'a'
-            else:
-                mode = 'w'
-
-            merged_table.to_hdf(output_file, key = cur_table_name, mode = mode)
+        if os.path.exists(output_file):
+            mode = 'a'
+        else:
+            mode = 'w'
+            
+        merged_table.to_hdf(output_file, key = cur_table_name, mode = mode)
 
 if __name__ == "__main__":
     parser = ArgumentParser("behaves like hadd, but for h5 files")

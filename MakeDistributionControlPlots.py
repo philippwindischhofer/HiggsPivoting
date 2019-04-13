@@ -18,7 +18,7 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
     # bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
     # for MadGraph
-    sig_samples = []
+    sig_samples = ["Hbb"]
     bkg_samples = ["ttbar"]
 
     samples = sig_samples + bkg_samples
@@ -74,11 +74,25 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
                                                              process_names = samples,
                                                              nJ = 2)
 
+    print("============================")
+    print(" inclusive 2j expected event yield ")
+    print("============================")
+    for process in samples:
+        print("{}: {} events".format(process, inclusive_2J.get_number_events(process)))
+    print("============================")
+
     inclusive_3J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
                                                              process_aux_events = aux_data_test,
                                                              process_weights = weights_test,
                                                              process_names = samples,
                                                              nJ = 3)
+
+    print("============================")
+    print(" inclusive 3j expected event yield ")
+    print("============================")
+    for process in samples:
+        print("{}: {} events".format(process, inclusive_3J.get_number_events(process)))
+    print("============================")
     
     # now, create separate histograms for each process and each event variable
     for cur_var in TrainingConfig.training_branches:

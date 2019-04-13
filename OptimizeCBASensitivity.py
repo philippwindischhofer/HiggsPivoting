@@ -33,7 +33,7 @@ def GenerateHeatMapSensitivityPlot(res, outfile, x_ticks, y_ticks, title = "", x
 
     # prepare the colormap for the sensitivity
     cmap = plt.cm.coolwarm
-    norm = mpl.colors.Normalize(vmin = 0.0, vmax = 3.5)
+    norm = mpl.colors.Normalize(vmin = 2.4, vmax = 2.8)
 
     im = ax.pcolor(x_edges, y_edges, res.T, cmap = cmap, norm = norm)
     cb = plt.colorbar(im)
@@ -152,16 +152,16 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
 
     if do_plots:
         # make some illustrative plots of the sensitivity
-        for MET_cut in np.linspace(180, 300, 5):
+        for MET_cut in np.linspace(210.5, 220.5, 11):
             
-            dRBB_cut_range = np.linspace(0.5, 2.5, 10)
+            dRBB_cut_range = np.linspace(1.0, 1.7, 71)
             res = np.zeros((len(dRBB_cut_range), len(dRBB_cut_range)))
             
             for x, dRBB_highMET_cut in enumerate(dRBB_cut_range):
                 for y, dRBB_lowMET_cut in enumerate(dRBB_cut_range):
                     cuts = {"MET_cut": MET_cut, "dRBB_highMET_cut": dRBB_highMET_cut, "dRBB_lowMET_cut": dRBB_lowMET_cut}
                     print("query with {}".format(cuts))
-                    res[x,y] = costfunc(cuts)
+                    res[x,y] = -costfunc(cuts)
                     print(res)
 
             # generate the plot and store it:
@@ -169,59 +169,59 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
                                            xlabel = "dRBB_highMET_cut", ylabel = "dRBB_lowMET_cut", outfile = os.path.join(outdir, "dRBB_MET_{}.pdf".format(MET_cut)))
 
 
-    # perform the optimization:
+    # # perform the optimization:
 
-    # first, try a local optimizer
-    # start at the current cut values:
-    x0 = [200, 1.2, 1.8]
+    # # first, try a local optimizer
+    # # start at the current cut values:
+    # x0 = [200, 1.2, 1.8]
 
-    # the parameter ranges
-    ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
-    res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
+    # # the parameter ranges
+    # ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
+    # res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
 
-    # then, try a global search strategy
-    ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
-    gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
-    optimizer = BayesianOptimization(
-        f = costfunc_bayes,
-        pbounds = ranges_bayes,
-        random_state = 1
-    )
-    optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
+    # # then, try a global search strategy
+    # ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    # gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
+    # optimizer = BayesianOptimization(
+    #     f = costfunc_bayes,
+    #     pbounds = ranges_bayes,
+    #     random_state = 1
+    # )
+    # optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
-    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
-    for it in range(400):
-        cur_xi = xi_scheduler(it)
-        print("using xi = {}".format(cur_xi))
-        optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
+    # xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
+    # for it in range(400):
+    #     cur_xi = xi_scheduler(it)
+    #     print("using xi = {}".format(cur_xi))
+    #     optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
     
-    # print the results
-    print("==============================================")
-    print("initial cuts:")
-    print("==============================================")
-    print("MET_cut = {}".format(x0[0]))
-    print("dRBB_highMET_cut = {}".format(x0[1]))
-    print("dRBB_lowMET_cut = {}".format(x0[2]))
-    print("significance = {} sigma".format(-costfunc_flat(x0)))
-    print("==============================================")
+    # # print the results
+    # print("==============================================")
+    # print("initial cuts:")
+    # print("==============================================")
+    # print("MET_cut = {}".format(x0[0]))
+    # print("dRBB_highMET_cut = {}".format(x0[1]))
+    # print("dRBB_lowMET_cut = {}".format(x0[2]))
+    # print("significance = {} sigma".format(-costfunc_flat(x0)))
+    # print("==============================================")
 
-    print("==============================================")
-    print("optimized cuts (local optimization):")
-    print("==============================================")
-    print("MET_cut = {}".format(res_local.x[0]))
-    print("dRBB_highMET_cut = {}".format(res_local.x[1]))
-    print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
-    print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
-    print("==============================================")
+    # print("==============================================")
+    # print("optimized cuts (local optimization):")
+    # print("==============================================")
+    # print("MET_cut = {}".format(res_local.x[0]))
+    # print("dRBB_highMET_cut = {}".format(res_local.x[1]))
+    # print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
+    # print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
+    # print("==============================================")
 
-    print("==============================================")
-    print("optimized cuts (global optimization):")
-    print("==============================================")
-    print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
-    print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
-    print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
-    print("significance = {} sigma".format(optimizer.max["target"]))
-    print("==============================================")
+    # print("==============================================")
+    # print("optimized cuts (global optimization):")
+    # print("==============================================")
+    # print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
+    # print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
+    # print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
+    # print("significance = {} sigma".format(optimizer.max["target"]))
+    # print("==============================================")
         
 if __name__ == "__main__":
     parser = ArgumentParser(description = "optimize the cuts in the CBA for maximum binned significance")

@@ -1,8 +1,19 @@
 import os, glob
 from argparse import ArgumentParser
+
 from h5add import h5add
 
+def IsGoodEventFile(eventfile):
+    try:
+        import pandas as pd
+        pd.read_hdf(eventfile)
+        return True
+    except:
+        return False
+
 def CombineEventFiles(indir):
+    from CombineLumiFiles import IsGoodLumiFile
+
     assert len(indir) == 1
     indir = indir[0]
 
@@ -12,15 +23,13 @@ def CombineEventFiles(indir):
     sub_dirs = glob.glob(os.path.join(indir, '*/'))
     event_file_candidates = []
     for sub_dir in sub_dirs:
+        eventfile_path = os.path.join(sub_dir, "events.h5")
 
         # ignore any subdirectory that does not have a lumi file in it
-        if not os.path.isfile(os.path.join(sub_dir, "lumi.conf")):
-            continue
-
-        eventfile_paths = glob.glob(os.path.join(sub_dir, "*.h5"))
-        for eventfile_path in eventfile_paths:
-            if os.path.isfile(eventfile_path):
-                event_file_candidates.append(eventfile_path)
+        if IsGoodLumiFile(os.path.join(sub_dir, "lumi.conf")) and IsGoodEventFile(eventfile_path):
+            event_file_candidates.append(eventfile_path)
+        else:
+            print("Warning: '{}' does not have a good lumi file or a corrupted event file, ignoring its events!".format(sub_dir))
 
     print("have found {} event files in this directory".format(len(event_file_candidates)))
 

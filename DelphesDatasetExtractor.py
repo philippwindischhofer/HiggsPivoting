@@ -44,7 +44,11 @@ def PrepareDelphesDataset(input_files, lumifile_path):
             processed_events.append(processed)
 
     # this will return a Pandas dataframe
-    retval = pd.concat(processed_events).reset_index(drop = True)
+    if len(processed_events) > 0:
+        retval = pd.concat(processed_events).reset_index(drop = True)
+    else:
+        retval = None
+
     return retval
 
 if __name__ == "__main__":
@@ -59,21 +63,20 @@ if __name__ == "__main__":
     lumifile_path = args["lumifile"]
     files = args["files"]
     sample_name = args["sample_name"]
-    
-    processed_events = []
 
-    processed_events.append(PrepareDelphesDataset(files, lumifile_path))
+    processed_events = PrepareDelphesDataset(files, lumifile_path)
 
     # merge all events together and dump them
-    merged_events = pd.concat(processed_events).reset_index(drop = True)
-    print("finished processing, here is a sample:")
-    print(merged_events.head())
+    # Note: if no events survived the selection, NO output will be written!
+    if processed_events is not None:
+        print("finished processing, here is a sample:")
+        print(processed_events.head())
 
-    print("stored {} events".format(len(merged_events)))
+        print("stored {} events".format(len(processed_events)))
         
-    if os.path.exists(outfile_path):
-        mode = 'a'
-    else:
-        mode = 'w'
+        if os.path.exists(outfile_path):
+            mode = 'a'
+        else:
+            mode = 'w'
             
-    merged_events.to_hdf(outfile_path, key = sample_name, mode = mode)
+        processed_events.to_hdf(outfile_path, key = sample_name, mode = mode)

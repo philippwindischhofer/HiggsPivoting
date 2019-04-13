@@ -13,7 +13,8 @@ class CategoryPlotter:
                       "singletop": "#cc9700ff", 
                       "Wjets": "#006300ff", 
                       "Zjets": "#0063ccff", 
-                      "diboson": "#ccccccff"}
+                      "diboson": "#ccccccff",
+                      "generic_process": "#726c6aff"}
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
