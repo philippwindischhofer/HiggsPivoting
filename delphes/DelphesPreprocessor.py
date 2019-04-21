@@ -19,6 +19,15 @@ class DelphesPreprocessor:
         """ do nothing by default; all the action happens in the overriding methods """
         return self.df
 
+    def get_SOW(self):
+        if self.df is not None:
+            if len(self.df) > 0:
+                return float(sum(self._extract_column("Event.Weight")))
+            else:
+                return 0.0
+        else:
+            return 0.0
+
     def _add_column(self, column_name, fill_lambda):
         if self.df is not None:
             if len(self.df) >= 1:

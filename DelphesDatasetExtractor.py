@@ -8,8 +8,9 @@ from configparser import ConfigParser
 
 from delphes.CrossSectionReader import CrossSectionReader
 from delphes.Hbb0LepDelphesPreprocessor import Hbb0LepDelphesPreprocessor
+from delphes.Hbb1LepDelphesPreprocessor import Hbb1LepDelphesPreprocessor
 
-def PrepareDelphesDataset(input_files, lumifile_path):
+def PrepareDelphesDataset(input_files, lumifile_path, channel):
     """ Return a pandas table with the needed event variables, after applying selection. """
 
     if lumifile_path:
@@ -33,7 +34,13 @@ def PrepareDelphesDataset(input_files, lumifile_path):
     # look for the ROOT file(s) with the events and process it
     processed_events = []
 
-    pre = Hbb0LepDelphesPreprocessor()
+    if channel == "0lep":
+        pre = Hbb0LepDelphesPreprocessor()
+    elif channel == "1lep":
+        pre = Hbb1LepDelphesPreprocessor()
+    else:
+        raise Exception("The requested channel is not supported!")
+
     for event_file_candidate in input_files:
         print("currently processing {}".format(event_file_candidate))
         
@@ -56,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--outfile", action = "store", dest = "outfile")
     parser.add_argument("--lumifile", action = "store", dest = "lumifile", default = None)
     parser.add_argument("--sname", action = "store", dest = "sample_name")
+    parser.add_argument("--channel", action = "store", dest = "channel", default = "0lep")
     parser.add_argument("files", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
@@ -63,8 +71,9 @@ if __name__ == "__main__":
     lumifile_path = args["lumifile"]
     files = args["files"]
     sample_name = args["sample_name"]
+    channel = args["channel"]
 
-    processed_events = PrepareDelphesDataset(files, lumifile_path)
+    processed_events = PrepareDelphesDataset(files, lumifile_path, channel)
 
     # merge all events together and dump them
     # Note: if no events survived the selection, NO output will be written!
