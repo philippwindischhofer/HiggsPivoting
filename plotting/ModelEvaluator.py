@@ -112,7 +112,7 @@ class ModelEvaluator:
 
             # compute the KS test statistic separately for each signal and background component, as well as for each given signal efficiency
             for cur_pred, cur_nuis, cur_weights, cur_label in zip(pred_sig + pred_bkg, nuis_sig + nuis_bkg, sig_weights + bkg_weights, labels_sig + labels_bkg):
-                cut_passed = np.where(cur_pred > cutval)
+                cut_passed = np.where(cur_pred >= cutval)
                 cur_nuis_passed = cur_nuis[cut_passed]
                 cur_weights_passed = cur_weights[cut_passed]
 
@@ -125,7 +125,7 @@ class ModelEvaluator:
             perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
 
             # also compute KS for the combined background (all components merged)
-            cut_passed = np.where(pred_bkg_merged > cutval)
+            cut_passed = np.where(pred_bkg_merged >= cutval)
             cur_nuis_passed = nuis_bkg_merged[cut_passed]
             cur_weights_passed = weights_bkg_merged[cut_passed]
             cur_KS = ModelEvaluator._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
@@ -369,7 +369,7 @@ class ModelEvaluator:
 
             # apply the classifier cuts
             for cutval, sigeff in zip(cutvals, sigeffs):
-                cut_passed = np.where(cur_pred > cutval)
+                cut_passed = np.where(cur_pred >= cutval)
                 plot_data.append(cur_nuis[cut_passed])
                 plot_weights.append(cur_weights[cut_passed])
                 plot_labels.append(cur_label + " ({}% signal eff.)".format(sigeff * 100))
