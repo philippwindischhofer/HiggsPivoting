@@ -212,11 +212,13 @@ class AdversarialEnvironment(TFEnvironment):
         self.pre_nuisance.save(os.path.join(outdir, 'pre_nuis.pkl'))
 
         # save some meta-information about the graph, such that it can be fully reconstructed
+        config_path = os.path.join(outdir, "meta.conf")
         gconfig = ConfigParser()
+        gconfig.read(config_path) # start from the current version of the config file and add changes on top
         gconfig["AdversarialEnvironment"] = self.global_pars
         gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
         gconfig[self.adversary_model.__class__.__name__] = self.adversary_model.hyperpars
-        with open(os.path.join(outdir, "meta.conf"), 'w') as metafile:
+        with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
 
     # return a dictionary with the list of all parameters that characterize this adversarial model
