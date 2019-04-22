@@ -15,10 +15,14 @@ def IsGoodLumiFile(lumifile):
     except (IOError, KeyError):
         return False
 
-def CombineLumiFiles(indir):
+def CombineLumiFiles(indir, channel):
     from CombineEventFiles import IsGoodEventFile
 
     """ combines all lumi.conf files found in all subdirectories """
+
+    # the assumed event file names
+    eventfile = {"0lep": "events_0lep.h5",
+                 "1lep": "events_1lep.h5"}
 
     # first, look for all existing lumi files
     # Note: this semi-automatic way of doing it is faster than simply
@@ -27,7 +31,7 @@ def CombineLumiFiles(indir):
     lumifiles = []
     for sub_dir in sub_dirs:
         lumifile_path = os.path.join(sub_dir, "lumi.conf")
-        eventfile_path = os.path.join(sub_dir, "events.h5")
+        eventfile_path = os.path.join(sub_dir, eventfile[channel])
         if IsGoodLumiFile(lumifile_path) and IsGoodEventFile(eventfile_path):
             lumifiles.append(lumifile_path)
 
@@ -69,11 +73,12 @@ def CombineLumiFiles(indir):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "combine lumi files")
-    parser.add_argument("dir", nargs = '+', action = "store")
+    parser.add_argument("--channel", action = "store", default = "0lep")
+    parser.add_argument("indir", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
-    indir = args["dir"]
+    indir = args["indir"]
     assert len(indir) == 1 # works only with a single directory at a time
-    indir = indir[0]
+    args["indir"] = indir[0]
 
-    CombineLumiFiles(indir)
+    CombineLumiFiles(**args)

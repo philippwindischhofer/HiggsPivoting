@@ -11,8 +11,12 @@ def IsGoodEventFile(eventfile):
     except:
         return False
 
-def CombineEventFiles(indir):
+def CombineEventFiles(indir, channel):
     from CombineLumiFiles import IsGoodLumiFile
+
+    # the assumed event file names
+    eventfile = {"0lep": "events_0lep.h5",
+                 "1lep": "events_1lep.h5"}
 
     assert len(indir) == 1
     indir = indir[0]
@@ -23,7 +27,7 @@ def CombineEventFiles(indir):
     sub_dirs = glob.glob(os.path.join(indir, '*/'))
     event_file_candidates = []
     for sub_dir in sub_dirs:
-        eventfile_path = os.path.join(sub_dir, "events.h5")
+        eventfile_path = os.path.join(sub_dir, eventfile[channel])
 
         # ignore any subdirectory that does not have a lumi file in it
         if IsGoodLumiFile(os.path.join(sub_dir, "lumi.conf")) and IsGoodEventFile(eventfile_path):
@@ -40,6 +44,7 @@ def CombineEventFiles(indir):
 if __name__ == "__main__":
     parser = ArgumentParser(description = "combine event files")
     parser.add_argument("indir", nargs = '+', action = "store")
+    parser.add_argument("--channel", action = "store", default = "0lep")
     args = vars(parser.parse_args())
 
     CombineEventFiles(**args)
