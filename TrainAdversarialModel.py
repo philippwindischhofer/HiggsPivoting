@@ -52,8 +52,8 @@ def main():
     sig_data_train = sig_data_train.sample(frac = 1, random_state = 12345).reset_index(drop = True)
     bkg_data_train = bkg_data_train.sample(frac = 1, random_state = 12345).reset_index(drop = True)
 
-    print("got " + str(len(sig_data)) + " signal datasets")
-    print("got " + str(len(bkg_data)) + " background datasets")
+    print("got " + str(len(sig_data)) + " signal datasets with {} events".format(len(sig_data_train)))
+    print("got " + str(len(bkg_data)) + " background datasets with {} events".format(len(bkg_data_train)))
 
     # split the dataset into training branches, nuisances and event weights
     traindat_sig, nuisdat_sig, weightdat_sig = TrainNuisAuxSplit(sig_data_train)
