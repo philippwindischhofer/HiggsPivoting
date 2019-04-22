@@ -26,8 +26,8 @@ def main():
     print("using data_branches = " + ", ".join(data_branches))
 
     # read the training data
-    sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+    sig_samples = TrainingConfig.sig_samples
+    bkg_samples = TrainingConfig.bkg_samples
 
     print("loading data ...")
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]

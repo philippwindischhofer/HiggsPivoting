@@ -1,10 +1,11 @@
 import sys, os, glob, uuid
-sys.path.append("/home/windischhofer/ConfigFileSweeper/")
+sys.path.append("/home/windischhofer/ConfigFileSweeper/ConfigFileSweeper/")
 from argparse import ArgumentParser
 from shutil import copyfile
 
 from ConfigFileSweeper import ConfigFileSweeper
 from utils.CondorJobSubmitter import CondorJobSubmitter
+from base.Configs import TrainingConfig
 
 def create_job_script(training_data_path, run_dir, script_dir):
     script_name = str(uuid.uuid4()) + ".sh"
@@ -23,7 +24,7 @@ def create_job_script(training_data_path, run_dir, script_dir):
     
 def RunTrainingCampaign(master_confpath, nrep = 1):
     # some global settings
-    training_data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
+    training_data_path = TrainingConfig.data_path
     
     # first, generate the actual configuration files, starting from the master file
     campaign_dir = os.path.dirname(master_confpath)

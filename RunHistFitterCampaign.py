@@ -2,6 +2,7 @@ import sys, os, glob, uuid
 
 from utils.CondorJobSubmitter import CondorJobSubmitter
 from utils.LocalJobSubmitter import LocalJobSubmitter
+from base.Configs import TrainingConfig
 
 def create_job_script(model_dir, script_dir, training_data_path):
     script_name = str(uuid.uuid4()) + ".sh"
@@ -54,7 +55,7 @@ def create_job_script(model_dir, script_dir, training_data_path):
     return script_path
 
 def RunHistFitterCampaign(model_dirs):
-    training_data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
+    training_data_path = TrainingConfig.data_path
     
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path)

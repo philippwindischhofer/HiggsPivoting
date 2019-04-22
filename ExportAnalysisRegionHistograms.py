@@ -25,8 +25,8 @@ def main():
     outdir = args["out_dir"]
     test_size = float(args["test_size"]) # need this when reading datasets that haven't been used for training (but instead for assessing systematics)
 
-    sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+    sig_samples = TrainingConfig.sig_samples
+    bkg_samples = TrainingConfig.bkg_samples
 
     data_sig = [pd.read_hdf(infile_path, key = sample) for sample in sig_samples]
     data_bkg = [pd.read_hdf(infile_path, key = sample) for sample in bkg_samples]

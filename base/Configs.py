@@ -11,6 +11,12 @@ class TrainingConfig:
     training_pars = {"sow_target": 0.3, "pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
     test_size = 0.5
+    data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8.h5"
+    #data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
+
+    sig_samples = ["Hbb"]
+    #bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson", "singletop"]
+    bkg_samples = ["Zjets", "Wjets", "ttbar"]
 
     @classmethod
     def from_file(cls, config_dir):

@@ -27,8 +27,8 @@ def main():
     test_size = TrainingConfig.test_size # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
-    sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+    sig_samples = TrainingConfig.sig_samples
+    bkg_samples = TrainingConfig.bkg_samples
 
     print("loading data ...")
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
