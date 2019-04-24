@@ -15,6 +15,8 @@ def MakeGlobalSensitivityPlots(model_dirs, plot_dir):
         except:
             print("no information found for model '{}'".format(model_dir))
 
+    print("loaded information for {} models".format(len(sensdicts)))
+
     # generate combined sensitivity plots that show all models
     PerformancePlotter.plot_significance_KS(sensdicts, outfile = os.path.join(plot_dir, "sensitivity_KS.pdf"),
                              model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"],
