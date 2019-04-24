@@ -89,3 +89,5 @@ if __name__ == "__main__":
             mode = 'w'
             
         processed_events.to_hdf(outfile_path, key = sample_name, mode = mode)
+    else:
+        print("no events passed the selection, no output written")
