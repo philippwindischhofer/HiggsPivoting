@@ -11,11 +11,13 @@ def TrainNuisAuxSplit(indat):
     return indat[TrainingConfig.training_branches].values, indat[TrainingConfig.nuisance_branches].values, indat[TrainingConfig.auxiliary_branches].values
 
 def PrepareDataset():
-    infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16d.root"
-    outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
+    infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16a.root"
+    outfile_path = "/home/windischhofer/datasmall/Hbb/training-mc16a.h5"
 
+    # these are the branches needed for the training itself later on
     data_branches = TrainingConfig.training_branches + TrainingConfig.auxiliary_branches + TrainingConfig.other_branches
     truth_branches = ["Sample"]
+    other_branches = []
     read_branches = data_branches + other_branches + truth_branches
 
     sample_defs = {"Hbb": ["ggZvvH125", "qqZvvH125", "qqWlvH125", "qqZllH125", "qqWlvH125cc", "ggZvvH125cc", "ggZllH125"], 
