@@ -56,19 +56,17 @@ class AdversarialTrainer(Trainer):
 
         # ... and also the SOW for each
         SOWs = [np.sum(cur) for cur in weights]
-        total_SOW = np.sum(SOW)
+        total_SOW = np.sum(SOWs)
         SOWs /= total_SOW # normalize total SOW to 1
 
         # now, compute the number of events that should be sampled from each signal / background component:
         # sample them in the same proportions with which they appear in the training dataset ...
         sampled_data = []
         sampled_weights = []
-        for cur_source, cur_weights, cur_nevents in sources, weights, nevents:
+        for cur_source, cur_weights, cur_nevents in zip(sources, weights, nevents):
             cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size * cur_nevents / total_nevents))
             sampled_data.append(cur_sampled_data)
             sampled_weights.append(cur_sampled_weights)
-        
-        total_sampled_SOW = np.sum(sampled_SOW)
 
         # ... and normalize them such that their SOWs are in the correct relation to each other
         for cur, cur_SOW in enumerate(SOWs):
@@ -79,6 +77,7 @@ class AdversarialTrainer(Trainer):
 
         # perform the concatenation ...
         sampled = [np.concatenate(cur, axis = 0) for cur in sampled_sources]
+        sampled_weights = np.concatenate(sampled_weights, axis = 0)
 
         # ... and return
         return sampled, sampled_weights
@@ -87,16 +86,16 @@ class AdversarialTrainer(Trainer):
         # sample a halfbatch size full of events from signal, and from background, individually normalized to unit SOW
         # and keeping their relative proportions fixed
         sig_sampled, sig_weights = self.sample_from_components(sources_sig, weights_sig, batch_size = batch_size // 2)
-        print("sampled {} events from signal components with total SOW = {}".format(batch_size // 2, np.sum(sig_weights)))
+        print("sampled {} events from signal components with total SOW = {}".format(len(sig_weights), np.sum(sig_weights)))
 
         bkg_sampled, bkg_weights = self.sample_from_components(sources_bkg, weights_bkg, batch_size = batch_size // 2)
-        print("sampled {} events from background components with total SOW = {}".format(batch_size // 2, np.sum(bkg_weights)))
+        print("sampled {} events from background components with total SOW = {}".format(len(bkg_weights), np.sum(bkg_weights)))
 
         # concatenate the individual components
-        sig_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
+        data_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
         weights_combined = np.concatenate([sig_weights, bkg_weights], axis = 0)
 
-        return weights_combined, sig_combined
+        return data_combined, weights_combined
 
     # def sample_from(self, sources_sig, weights_sig, sources_bkg, weights_bkg, initial_req, sow_target = 1.0, target_tol = 0.1, batch_limit = 10000):
     #     # Note: the length of the individual consituents of sources_sig and sources_bkg must have the
@@ -181,7 +180,7 @@ class AdversarialTrainer(Trainer):
         for batch in range(int(self.training_pars["pretrain_batches"])):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_batch([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
-                                                                                           batch_size = 1000)#self.training_pars["sow_target"])
+                                                                                           batch_size = self.training_pars["batchsize"])
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)
@@ -192,7 +191,7 @@ class AdversarialTrainer(Trainer):
         for batch in range(int(self.training_pars["classifier_pretrain_batches"])):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_batch([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
-                                                                                           batch_size = 1000)# = self.training_pars["sow_target"])
+                                                                                           batch_size = self.training_pars["batchsize"])
 
             env.train_classifier(data_step = data_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch)            
@@ -203,7 +202,7 @@ class AdversarialTrainer(Trainer):
         for batch in range(int(number_batches)):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch, nuisances_batch, labels_batch), weights_batch = self.sample_batch([data_sig, nuisances_sig, labels_sig], weights_sig, [data_bkg, nuisances_bkg, labels_bkg], weights_bkg, 
-                                                                                           batch_size = 1000)#self.training_pars["sow_target"])
+                                                                                           batch_size = self.training_pars["batchsize"])
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch)
