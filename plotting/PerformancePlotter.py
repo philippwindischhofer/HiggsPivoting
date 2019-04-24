@@ -151,8 +151,8 @@ class PerformancePlotter:
         colorquant = "lambda"
         cmap = plt.cm.viridis
         colorrange = [float(sensdict[colorquant]) for sensdict in sensdicts if colorquant in sensdict]
-        #norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
-        norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
+        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+        #norm = mpl.colors.Normalize(vmin = 0.0, vmax = 1.4)
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -192,8 +192,8 @@ class PerformancePlotter:
         ax.legend(loc = 'upper left')
 
         # use fixed plot ranges for the time being
-        ax.set_xlim([2.4, 2.7])
-        ax.set_ylim([0.0, 0.35])
+        # ax.set_xlim([2.4, 2.7])
+        # ax.set_ylim([0.0, 0.35])
 
         fig.savefig(outfile)
         plt.close()                
