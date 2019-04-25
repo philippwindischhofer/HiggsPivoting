@@ -16,12 +16,14 @@ def main():
     parser = ArgumentParser(description = "evaluate adversarial networks")
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--plot_dir", action = "store", dest = "plot_dir")
+    parser.add_argument("--plot_clf_distribs", action = "store_const", const = True, default = False)
     parser.add_argument("model_dirs", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
     infile_path = args["infile_path"]
     model_dirs = args["model_dirs"]
     plot_dir = args["plot_dir"]
+    plot_clf_distribs = args["plot_clf_distribs"]
 
     # read the training data
     sig_samples = TrainingConfig.sig_samples
@@ -80,12 +82,14 @@ def main():
         # generate performance plots for each model individually
         ev = ModelEvaluator(mce)
 
-        # plot the output distribution of the classifier for a few events from each sample
-        for sample, sample_name in zip(sig_data_test + bkg_data_test, sig_samples + bkg_samples):
-            for event_num in range(10):
-                event = sample[[event_num]]
-                ev.plot_clf_pdf(event = event, varlabels = TrainingConfig.training_branches, plotlabel = sample_name, outpath = os.path.join(plots_outdir, "clf_pdf_" + sample_name + "_" + str(event_num) + ".pdf"))
+        if plot_clf_distribs:
+            # plot the output distribution of the classifier for a few events from each sample
+            for sample, sample_name in zip(sig_data_test + bkg_data_test, sig_samples + bkg_samples):
+                for event_num in range(10):
+                    event = sample[[event_num]]
+                    ev.plot_clf_pdf(event = event, varlabels = TrainingConfig.training_branches, plotlabel = sample_name, outpath = os.path.join(plots_outdir, "clf_pdf_" + sample_name + "_" + str(event_num) + ".pdf"))
 
+        # plot the ROC curve as performance measure
         ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
 
         # generate distortion plots
