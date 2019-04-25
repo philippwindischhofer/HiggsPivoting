@@ -19,9 +19,9 @@ class AdversarialTrainer(Trainer):
 
         return sampled_data, sampled_weights        
 
-    # draw samples from 'signal_components' and 'background_components' such that both are equally represented
-    # in the resulting sample (i.e. appear with equal SOW of 'sow_target')
-    def sample_from_components(self, components, weights, batch_size = 1000):        
+    # draw a certain number of events from 'components'. If 'equalize_fraction' is set to 'False', the
+    # original proportions of the individual components are kept.
+    def sample_from_components(self, components, weights, batch_size = 1000, equalize_fractions = False):        
         # Note: this effectively transposes the nested lists such that the iterations become easier
         sources = list(map(list, zip(*components)))        
 
@@ -30,9 +30,14 @@ class AdversarialTrainer(Trainer):
         total_nevents = np.sum(nevents)
 
         # ... and also the SOW for each
-        SOWs = [np.sum(cur) for cur in weights]
-        total_SOW = np.sum(SOWs)
-        SOWs /= total_SOW # normalize total SOW to 1
+        if equalize_fractions:
+            # pretend that each component came with an equal SOW to start with
+            SOWs = [1 / len(weights) for cur in weights]
+        else:
+            # keep the original proportions
+            SOWs = [np.sum(cur) for cur in weights]
+            total_SOW = np.sum(SOWs)
+            SOWs /= total_SOW # normalize total SOW to 1
 
         # now, compute the number of events that should be sampled from each signal / background component:
         # sample them in the same proportions with which they appear in the training dataset ...
@@ -45,7 +50,7 @@ class AdversarialTrainer(Trainer):
 
         # ... and normalize them such that their SOWs are in the correct relation to each other
         for cur, cur_SOW in enumerate(SOWs):
-            sampled_weights[cur] *= cur_SOW / np.sum(sampled_weights[cur]) # each batch will have a SOW of 1
+            sampled_weights[cur] *= cur_SOW / np.sum(sampled_weights[cur]) # each batch will have a total SOW of 1
 
         # transpose them back for easy concatenation
         sampled_sources = list(map(list, zip(*sampled_data)))
