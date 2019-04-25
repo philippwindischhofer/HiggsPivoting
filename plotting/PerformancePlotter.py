@@ -270,9 +270,9 @@ class PerformancePlotter:
         ax.set_ylabel(ylabel)
 
         if xlog:
-            plt.xscale("log")
+            ax.set_xscale("log")
         if ylog:
-            plt.yscale("log")
+            ax.set_yscale("log")
         
         fig.savefig(outfile)
         plt.close()        
