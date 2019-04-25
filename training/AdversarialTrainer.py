@@ -10,31 +10,6 @@ class AdversarialTrainer(Trainer):
         super(AdversarialTrainer, self).__init__(training_pars)
         self.statistics_dict = {}
 
-    # coherently draw samples from 'sources' (a list of datasets, e.g. the training features, the nuisances and the weights)
-    # such that the final sample comes as close as possible to 'sow_target'
-    def sample_from_by_sow(self, sources, weights, initial_req = 100, sow_target = 1.0, target_tol = 0.1, batch_limit = 10000):
-        inds = np.random.choice(len(weights), initial_req)
-        
-        while True:
-            sampled_weights = weights[inds]
-            sow = np.sum(sampled_weights)
-
-            # check if have already reached the SOW target
-            if sow > sow_target - target_tol or len(inds_sig) > batch_limit:
-                break
-
-            # estimate how many more samples should be requested
-            sample_request = int(min(0.1 * max(sow_target - sow, 0.0) / abs(sow) * len(inds), batch_limit / 4))
-
-            # get new samples and append them to the old ones
-            inds_sampled = np.random.choice(len(weights), sample_request)
-            inds = np.concatenate([inds, inds_sampled], axis = 0)
-
-        sampled_weights = weights[inds]
-        sampled_data = [cur_source[inds] for cur_source in sources]
-
-        return sampled_data, sampled_weights
-
     # sample a fixed number of events from 'sources'
     def sample_from(self, sources, weights, req = 100):
         inds = np.random.choice(len(weights), req)
@@ -97,70 +72,12 @@ class AdversarialTrainer(Trainer):
 
         return data_combined, weights_combined
 
-    # def sample_from(self, sources_sig, weights_sig, sources_bkg, weights_bkg, initial_req, sow_target = 1.0, target_tol = 0.1, batch_limit = 10000):
-    #     # Note: the length of the individual consituents of sources_sig and sources_bkg must have the
-    #     # same length! (will usually be the case since they correspond to the same events anyways)
-
-    #     # need to sample from signal and background in such a way that the sum of weights
-    #     # of either source is very similar (or ideally, identical)
-    #     inds_sig = np.random.choice(len(weights_sig), initial_req)
-    #     inds_bkg = np.random.choice(len(weights_bkg), initial_req)
-
-    #     # resample as long as the sums-of-weights of signal and background events are equal
-    #     # to each other within some tolerance
-    #     while True:
-    #         sampled_weights_sig = weights_sig[inds_sig]
-    #         sampled_weights_bkg = weights_bkg[inds_bkg]
-
-    #         sow_sig = np.sum(sampled_weights_sig)
-    #         sow_bkg = np.sum(sampled_weights_bkg)
-
-    #         # have reached the SOW target for both signal and background, stop
-    #         if (sow_sig > sow_target - target_tol and sow_bkg > sow_target - target_tol) or (len(inds_sig) + len(inds_bkg) > batch_limit):
-    #             break
-
-    #         # get a good guess for how many more samples will be needed separately for signal and background
-    #         sample_request_bkg = int(min(0.1 * max(sow_target - sow_bkg, 0.0) / abs(sow_bkg) * len(inds_bkg), batch_limit / 4))
-    #         sample_request_sig = int(min(0.1 * max(sow_target - sow_sig, 0.0) / abs(sow_sig) * len(inds_sig), batch_limit / 4))
-            
-    #         # get the new samples and append them
-    #         inds_sampled_bkg = np.random.choice(len(weights_bkg), sample_request_bkg)
-    #         inds_sampled_sig = np.random.choice(len(weights_sig), sample_request_sig)
-
-    #         inds_sig = np.concatenate([inds_sig, inds_sampled_sig], axis = 0)
-    #         inds_bkg = np.concatenate([inds_bkg, inds_sampled_bkg], axis = 0)
-
-    #     sampled_weights_sig = weights_sig[inds_sig]
-    #     sampled_weights_bkg = weights_bkg[inds_bkg]
-
-    #     sampled_sig = [cur_source[inds_sig] for cur_source in sources_sig]
-    #     sampled_bkg = [cur_source[inds_bkg] for cur_source in sources_bkg]
-
-    #     sampled = [np.concatenate([sample_sig, sample_bkg], axis = 0) for sample_sig, sample_bkg in zip(sampled_sig, sampled_bkg)]
-    #     sampled_weights = np.concatenate([sampled_weights_sig, sampled_weights_bkg], axis = 0)
-
-    #     return sampled, sampled_weights
-
     # overload the 'train' method here
     def train(self, env, number_batches, traindat_sig, traindat_bkg, nuisances_sig, nuisances_bkg, weights_sig, weights_bkg):
         data_sig = traindat_sig
         data_bkg = traindat_bkg
 
-        # first, compute the SOW of the individual signal / background components as well as the total SOW for the combined
-        # signal and the combined background
-        print("got training dataset with {} signal components".format(len(data_sig)))
-        print("got training dataset with {} background components".format(len(data_bkg)))
-
-        sig_SOWs = [np.sum(cur_weights) for cur_weights in weights_sig]
-        bkg_SOWs = [np.sum(cur_weights) for cur_weights in weights_bkg]
-        total_sig_SOW = np.sum(sig_SOWs)
-        total_bkg_SOW = np.sum(bkg_SOWs)
-
-        print("signal SOWs = {}".format(sig_SOWs))
-        print("total signal SOW = {}".format(total_sig_SOW))
-        print("background SOWs = {}".format(bkg_SOWs))
-        print("total background SOW = {}".format(total_bkg_SOW))
-
+        # prepare the labels for each signal / background component
         labels_sig = [np.ones(len(cur_data_sig)) for cur_data_sig in data_sig]
         labels_bkg = [np.zeros(len(cur_data_bkg)) for cur_data_bkg in data_bkg]
 
