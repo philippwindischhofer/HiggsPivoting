@@ -47,7 +47,8 @@ class RatioPlotter:
             ax[1].set_ylim([0.5, 1.5])
             ax[1].axhline(1.0, color = "black", linestyle = "--")
                 
-            fig.tight_layout()
+            #fig.tight_layout()
+            fig.subplots_adjust(left = 0.15, right = 0.95, top = 0.9, bottom = 0.1)
             ax[0].set_title(title)
             plt.savefig(outfile)
             plt.close(fig)
