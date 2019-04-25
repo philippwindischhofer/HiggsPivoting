@@ -85,7 +85,8 @@ def main():
     train = AdversarialTrainer(training_pars = training_pars)
 
     # give the full list of signal / background components to the trainer
-    train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
+    train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, 
+                nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
 
     # save all the necessary information
     if not os.path.exists(outdir):
