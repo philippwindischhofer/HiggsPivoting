@@ -199,7 +199,7 @@ class PerformancePlotter:
         plt.close()                
 
     @staticmethod
-    def _perf_fairness_plot(perfdicts, xquant, KS_regex, colorquant, outpath):
+    def _perf_fairness_plot(perfdicts, xquant, KS_regex, colorquant, outpath, **kwargs):
         typ_perfdict = perfdicts[0]
         available_fields = typ_perfdict.keys()
 
@@ -211,7 +211,7 @@ class PerformancePlotter:
         for KS_field in KS_fields:
             PerformancePlotter._perfdict_plot(perfdicts, xquant = xquant, yquant = KS_field, xlabel = xquant, ylabel = KS_field, 
                                               colorquant = colorquant, markerquant = "adversary_model", markerstyle = get_marker,
-                                              markerlabel = get_label, outfile = os.path.join(outpath, xquant + "_" + KS_field + ".pdf"))
+                                              markerlabel = get_label, outfile = os.path.join(outpath, xquant + "_" + KS_field + ".pdf"), **kwargs)
 
     # worker method for flexible plotting: takes as inputs the list of perfdicts created by the ModelEvaluator
     # x/yquant ... quantity that should be printed along x/y
@@ -221,7 +221,7 @@ class PerformancePlotter:
     # markerstyle ... lambda of the form marker_style = lambda markerquant: return "marker_style"
     # markerlabel ... lambda of the form legend_entry = lambda markerquant: return "legend_entry"
     @staticmethod
-    def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, colorquant, markerquant, markerstyle, markerlabel, outfile):
+    def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, colorquant, markerquant, markerstyle, markerlabel, outfile, xlog = False, ylog = False, xaxis_range = [0.5, 1.0], yaxis_range = [0.0, 1.0]):
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -263,11 +263,16 @@ class PerformancePlotter:
         cb.set_label(r'$\lambda$')
 
         # set limits
-        ax.set_xlim([0.5, 1.0])
-        ax.set_ylim([0.0, 1.0])
+        ax.set_xlim(xaxis_range)
+        ax.set_ylim(yaxis_range)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+
+        if xlog:
+            plt.xscale("log")
+        if ylog:
+            plt.yscale("log")
         
         fig.savefig(outfile)
         plt.close()        
@@ -281,12 +286,12 @@ class PerformancePlotter:
         PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_25_.*"), colorquant, outpath)
 
     @staticmethod
-    def plot_background_rejection_JD(perfdicts, outpath, colorquant = "lambda"):
+    def plot_background_rejection_JS(perfdicts, outpath, colorquant = "lambda"):
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_50", re.compile("JD_50_.*"), colorquant, outpath)
-        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_25", re.compile("JD_25_.*"), colorquant, outpath)   
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_50", re.compile("invJS_50_.*"), colorquant, outpath, xaxis_range = [1, 100], yaxis_range = [1, 1000], xlog = True, ylog = True)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_25", re.compile("invJS_25_.*"), colorquant, outpath)   
 
     # combine the passed plots and save them
     @staticmethod

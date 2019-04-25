@@ -24,7 +24,7 @@ def RunEvaluationCampaign(model_dirs):
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path)
         CondorJobSubmitter.submit_job(job_script)
-
+        
 if __name__ == "__main__":
     model_dirs = sys.argv[1:]
     RunEvaluationCampaign(model_dirs)

@@ -8,7 +8,7 @@ from matplotlib.ticker import NullFormatter
 from matplotlib.colors import LogNorm
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_regression
-from scipy.spatial import distance
+from scipy.special import rel_entr
 
 from base.Configs import TrainingConfig
 
@@ -22,7 +22,7 @@ class ModelEvaluator:
     # that the JS divergence is manifestly between 0 and 1
     # Note: expect an array of bin edges in 'binning'
     @staticmethod
-    def _get_JS(p, p_weights, q, q_weights, binning):
+    def _get_JS(p, p_weights, q, q_weights, binning, base = 2):
         if isinstance(binning, int):
             # in case have only specified the number of bins to use, generate an actual binning here
             binning = np.linspace(np.min([p, q]), np.max([p, q]), num = binning, endpoint = True)
@@ -31,8 +31,17 @@ class ModelEvaluator:
         p_binned, _ = np.histogram(np.clip(p, binning[0], binning[-1]), bins = binning, weights = p_weights, density = True)
         q_binned, _ = np.histogram(np.clip(q, binning[0], binning[-1]), bins = binning, weights = q_weights, density = True)
 
-        # return the JS *divergence*, which is the square of the JS *distance*
-        return distance.jensenshannon(p_binned, q_binned, base = 2) ** 2
+        # this code is taken (almost) verbatim from https://github.com/scipy/scipy/blob/c42462a/scipy/spatial/distance.py#L1239-L1296
+        m_binned = (p_binned + q_binned) / 2.0
+        left = rel_entr(p_binned, m_binned)
+        right = rel_entr(q_binned, m_binned)
+
+        js = np.sum(left, axis = 0) + np.sum(right, axis = 0)
+
+        if base is not None:
+            js /= np.log(base)
+
+        return js
 
     # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
     @staticmethod
@@ -51,6 +60,9 @@ class ModelEvaluator:
 
         p = p.flatten()
         q = q.flatten()
+
+        p_weights = p_weights.flatten()
+        q_weights = q_weights.flatten()
 
         # first, need to compute the cumulative distributions
         p_inds_sorted = np.argsort(p)
@@ -124,7 +136,8 @@ class ModelEvaluator:
         perfdict[prefix + "AUROC"] = auroc
 
         # get the ROC curve
-        fpr, tpr, _ = self.get_roc(data_sig, data_bkg, sig_weights, bkg_weights)
+        fpr, tpr, _ = self.get_roc(np.concatenate(data_sig, axis = 0), np.concatenate(data_bkg, axis = 0), 
+                                   np.concatenate(sig_weights, axis = 0), np.concatenate(bkg_weights, axis = 0))
 
         # to get the fairness metrics, need to compute the cut values for the given signal efficiencies
         pred_sig_merged = np.concatenate(pred_sig, axis = 0)
@@ -150,13 +163,13 @@ class ModelEvaluator:
                 cur_weights_failed = cur_weights[cut_failed]
 
                 cur_KS = ModelEvaluator._get_KS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed)
-                cur_JD = ModelEvaluator._get_JD(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
+                cur_JS = ModelEvaluator._get_JS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
                 KS_vals.append(cur_KS)
 
                 cur_dictlabel = prefix + "KS_" + str(int(sigeff * 100)) + "_" + cur_label
                 perfdict[cur_dictlabel] = cur_KS
-                cur_dictlabel = prefix + "JD_" + str(int(sigeff * 100)) + "_" + cur_label
-                perfdict[cur_dictlabel] = cur_JD
+                cur_dictlabel = prefix + "invJS_" + str(int(sigeff * 100)) + "_" + cur_label
+                perfdict[cur_dictlabel] = 1.0 / cur_JS
                 
             perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
 
@@ -169,9 +182,9 @@ class ModelEvaluator:
             cur_weights_failed = weights_bkg_merged[cut_failed]
 
             cur_KS = ModelEvaluator._get_KS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed)
-            cur_JD = ModelEvaluator._get_JD(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
+            cur_JS = ModelEvaluator._get_JS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
             perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
-            perfdict[prefix + "JD_" + str(int(sigeff * 100)) + "_bkg"] = cur_JD
+            perfdict[prefix + "invJS_" + str(int(sigeff * 100)) + "_bkg"] = 1.0 / cur_JS
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
         paramdict = self.env.create_paramdict()
