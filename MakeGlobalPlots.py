@@ -17,6 +17,7 @@ def MakeGlobalAUROC_KSPlots(model_dirs, plot_dir):
 
     # generate combined performance plots that compare all the models
     PerformancePlotter.plot_AUROC_KS(perfdicts, outpath = plot_dir, colorquant = "lambda")
+    PerformancePlotter.plot_background_rejection_JD(perfdicts, outpath = plot_dir, colorquant = "lambda")
 
 def MakeGlobalComparisonPlot(model_dirs, outpath, source_basename, overlay_paths = None, overlay_labels = None, overlay_colors = None, mode = 'plt', xlabel = "", ylabel = "", plot_labels = ""):
     perfdicts = []

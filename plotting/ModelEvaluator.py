@@ -8,6 +8,7 @@ from matplotlib.ticker import NullFormatter
 from matplotlib.colors import LogNorm
 from sklearn import metrics
 from sklearn.feature_selection import mutual_info_regression
+from scipy.spatial import distance
 
 from base.Configs import TrainingConfig
 
@@ -15,6 +16,23 @@ class ModelEvaluator:
 
     def __init__(self, env):
         self.env = env
+
+    # computes the Jenson-Shannon divergence (using logarithms in base 2!!) between 
+    # sets of weighted samples drawn from distributions p and q. Using log_2 ensures
+    # that the JS divergence is manifestly between 0 and 1
+    # Note: expect an array of bin edges in 'binning'
+    @staticmethod
+    def _get_JS(p, p_weights, q, q_weights, binning):
+        if isinstance(binning, int):
+            # in case have only specified the number of bins to use, generate an actual binning here
+            binning = np.linspace(np.min([p, q]), np.max([p, q]), num = binning, endpoint = True)
+
+        # first, need to bin p and q to get two "probability vectors" that can be easily compared
+        p_binned, _ = np.histogram(np.clip(p, binning[0], binning[-1]), bins = binning, weights = p_weights, density = True)
+        q_binned, _ = np.histogram(np.clip(q, binning[0], binning[-1]), bins = binning, weights = q_weights, density = True)
+
+        # return the JS *divergence*, which is the square of the JS *distance*
+        return distance.jensenshannon(p_binned, q_binned, base = 2) ** 2
 
     # computes the Kolmogorov-Smirnov test statistic from samples p and q, drawn from some distributions, given some event weights
     @staticmethod
@@ -82,6 +100,12 @@ class ModelEvaluator:
     def get_performance_metrics(self, data_sig, data_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25], prefix = ""):
         perfdict = {}
 
+        # for performance evaluations that require a binning of the nuisance
+        binning_high = 300
+        binning_low = 30
+        binwidth = 10
+        nuis_binning = np.linspace(binning_low, binning_high, num = int((binning_high - binning_low) / binwidth), endpoint = True)
+
         pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
         pred_sig = [self.env.predict(data = sample)[:,1] for sample in data_sig]
 
@@ -99,7 +123,10 @@ class ModelEvaluator:
         auroc = metrics.roc_auc_score(labels, pred, sample_weight = weights)
         perfdict[prefix + "AUROC"] = auroc
 
-        # to get the KS fairness metrics, need to compute the cut values for the given signal efficiencies
+        # get the ROC curve
+        fpr, tpr, _ = self.get_roc(data_sig, data_bkg, sig_weights, bkg_weights)
+
+        # to get the fairness metrics, need to compute the cut values for the given signal efficiencies
         pred_sig_merged = np.concatenate(pred_sig, axis = 0)
         weights_sig_merged = np.concatenate(sig_weights, axis = 0)
 
@@ -110,26 +137,41 @@ class ModelEvaluator:
 
             KS_vals = [] # holds the KS values
 
+            # compute the background rejection at a certain signal efficiency
+            perfdict[prefix + "bkg_rejection_at_sigeff_" + str(int(sigeff * 100))] = 1.0 / fpr[np.argmin(np.abs(tpr - sigeff))]
+
             # compute the KS test statistic separately for each signal and background component, as well as for each given signal efficiency
             for cur_pred, cur_nuis, cur_weights, cur_label in zip(pred_sig + pred_bkg, nuis_sig + nuis_bkg, sig_weights + bkg_weights, labels_sig + labels_bkg):
                 cut_passed = np.where(cur_pred >= cutval)
+                cut_failed = np.invert(cut_passed)
                 cur_nuis_passed = cur_nuis[cut_passed]
                 cur_weights_passed = cur_weights[cut_passed]
+                cur_nuis_failed = cur_nuis[cut_failed]
+                cur_weights_failed = cur_weights[cut_failed]
 
-                cur_KS = ModelEvaluator._get_KS(cur_nuis, cur_weights, cur_nuis_passed, cur_weights_passed)
+                cur_KS = ModelEvaluator._get_KS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed)
+                cur_JD = ModelEvaluator._get_JD(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
                 KS_vals.append(cur_KS)
 
                 cur_dictlabel = prefix + "KS_" + str(int(sigeff * 100)) + "_" + cur_label
                 perfdict[cur_dictlabel] = cur_KS
+                cur_dictlabel = prefix + "JD_" + str(int(sigeff * 100)) + "_" + cur_label
+                perfdict[cur_dictlabel] = cur_JD
                 
             perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_avg"] = sum(KS_vals) / len(KS_vals)
 
             # also compute KS for the combined background (all components merged)
             cut_passed = np.where(pred_bkg_merged >= cutval)
+            cut_failed = np.invert(cut_passed)
             cur_nuis_passed = nuis_bkg_merged[cut_passed]
             cur_weights_passed = weights_bkg_merged[cut_passed]
-            cur_KS = ModelEvaluator._get_KS(nuis_bkg_merged, weights_bkg_merged, cur_nuis_passed, cur_weights_passed)
+            cur_nuis_failed = nuis_bkg_merged[cut_failed]
+            cur_weights_failed = weights_bkg_merged[cut_failed]
+
+            cur_KS = ModelEvaluator._get_KS(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed)
+            cur_JD = ModelEvaluator._get_JD(cur_nuis_failed, cur_weights_failed, cur_nuis_passed, cur_weights_passed, binning = nuis_binning)
             perfdict[prefix + "KS_" + str(int(sigeff * 100)) + "_bkg"] = cur_KS
+            perfdict[prefix + "JD_" + str(int(sigeff * 100)) + "_bkg"] = cur_JD
 
         # also add some information on the evaluated model itself, which could be useful for the combined plotting later on
         paramdict = self.env.create_paramdict()

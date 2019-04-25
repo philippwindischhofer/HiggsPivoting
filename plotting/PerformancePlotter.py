@@ -199,7 +199,7 @@ class PerformancePlotter:
         plt.close()                
 
     @staticmethod
-    def _AUROC_KS_plot(perfdicts, KS_regex, colorquant, outpath):
+    def _perf_fairness_plot(perfdicts, xquant, KS_regex, colorquant, outpath):
         typ_perfdict = perfdicts[0]
         available_fields = typ_perfdict.keys()
 
@@ -209,9 +209,9 @@ class PerformancePlotter:
         get_label = lambda typestring: typestring
 
         for KS_field in KS_fields:
-            PerformancePlotter._perfdict_plot(perfdicts, xquant = "AUROC", yquant = KS_field, xlabel = "AUROC", ylabel = KS_field, 
+            PerformancePlotter._perfdict_plot(perfdicts, xquant = xquant, yquant = KS_field, xlabel = xquant, ylabel = KS_field, 
                                               colorquant = colorquant, markerquant = "adversary_model", markerstyle = get_marker,
-                                              markerlabel = get_label, outfile = os.path.join(outpath, "AUROC_" + KS_field + ".pdf"))
+                                              markerlabel = get_label, outfile = os.path.join(outpath, xquant + "_" + KS_field + ".pdf"))
 
     # worker method for flexible plotting: takes as inputs the list of perfdicts created by the ModelEvaluator
     # x/yquant ... quantity that should be printed along x/y
@@ -277,8 +277,16 @@ class PerformancePlotter:
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_50_.*"), colorquant, outpath)
-        PerformancePlotter._AUROC_KS_plot(perfdicts, re.compile("KS_25_.*"), colorquant, outpath)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_50_.*"), colorquant, outpath)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_25_.*"), colorquant, outpath)
+
+    @staticmethod
+    def plot_background_rejection_JD(perfdicts, outpath, colorquant = "lambda"):
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
+
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_50", re.compile("JD_50_.*"), colorquant, outpath)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_25", re.compile("JD_25_.*"), colorquant, outpath)   
 
     # combine the passed plots and save them
     @staticmethod
