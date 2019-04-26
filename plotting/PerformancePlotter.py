@@ -209,7 +209,7 @@ class PerformancePlotter:
         get_label = lambda typestring: typestring
 
         for KS_field in KS_fields:
-            PerformancePlotter._perfdict_plot(perfdicts, xquant = xquant, yquant = KS_field, xlabel = xquant, ylabel = KS_field, 
+            PerformancePlotter._perfdict_plot(perfdicts, xquant = xquant, yquant = KS_field, 
                                               colorquant = colorquant, markerquant = "adversary_model", markerstyle = get_marker,
                                               markerlabel = get_label, outfile = os.path.join(outpath, xquant + "_" + KS_field + ".pdf"), **kwargs)
 
@@ -221,7 +221,7 @@ class PerformancePlotter:
     # markerstyle ... lambda of the form marker_style = lambda markerquant: return "marker_style"
     # markerlabel ... lambda of the form legend_entry = lambda markerquant: return "legend_entry"
     @staticmethod
-    def _perfdict_plot(perfdicts, xquant, yquant, xlabel, ylabel, colorquant, markerquant, markerstyle, markerlabel, outfile, xlog = False, ylog = False, xaxis_range = [0.5, 1.0], yaxis_range = [0.0, 1.0]):
+    def _perfdict_plot(perfdicts, xquant, yquant, colorquant, markerquant, markerstyle, markerlabel, outfile, xlabel = "", ylabel = "", xlog = False, ylog = False, xaxis_range = [0.5, 1.0], yaxis_range = [0.0, 1.0], epilog = None, grid = True):
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -235,8 +235,10 @@ class PerformancePlotter:
 
         ax.set_axisbelow(True)
         ax.minorticks_on()
-        ax.grid(which = 'major', color = 'gray', linestyle = '-')
-        ax.grid(which = 'minor', color = 'lightgray', linestyle = '--')
+        
+        if grid:
+            ax.grid(which = 'major', color = 'gray', linestyle = '-')
+            ax.grid(which = 'minor', color = 'lightgray', linestyle = '--')
 
         for ind, perfdict in enumerate(perfdicts):
             cur_type = perfdict[markerquant]
@@ -273,6 +275,8 @@ class PerformancePlotter:
             ax.set_xscale("log")
         if ylog:
             ax.set_yscale("log")
+        if epilog:
+            epilog(ax)
         
         fig.savefig(outfile)
         plt.close()        
@@ -282,16 +286,35 @@ class PerformancePlotter:
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_50_.*"), colorquant, outpath)
-        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_25_.*"), colorquant, outpath)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_50_.*"), colorquant, outpath,
+                                               xlabel = "AUROC", ylabel = "KS_50")
+        PerformancePlotter._perf_fairness_plot(perfdicts, "AUROC", re.compile("KS_25_.*"), colorquant, outpath,
+                                               xlabel = "AUROC", ylabel = "KS_50")
 
     @staticmethod
     def plot_background_rejection_JS(perfdicts, outpath, colorquant = "lambda"):
         if not os.path.exists(outpath):
             os.makedirs(outpath)
 
-        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_50", re.compile("invJS_50_.*"), colorquant, outpath, xaxis_range = [1, 100], yaxis_range = [1, 1000], xlog = True, ylog = True)
-        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_25", re.compile("invJS_25_.*"), colorquant, outpath)   
+        # instruct it to draw shaded regions
+        def shade_epilog_50(ax):
+            ax.fill_between(x = [1, 100], y1 = [1, 1], y2 = [0.1, 0.1], facecolor = 'gray', alpha = 0.4)
+            ax.fill_between(x = [0.1, 2], y1 = [1e4, 1e4], y2 = [1, 1], facecolor = 'gray', alpha = 0.4)
+            ax.text(x = 3.0, y = 1.1, s = "maximal sculpting", rotation = 0, color = 'gray', size = 8)
+            ax.text(x = 2.1, y = 15.0, s = "no separation", rotation = 90, color = 'gray', size = 8)
+
+        def shade_epilog_25(ax):
+            ax.fill_between(x = [1, 100], y1 = [1, 1], y2 = [0.1, 0.1], facecolor = 'gray', alpha = 0.4)
+            ax.fill_between(x = [0.1, 4], y1 = [1e4, 1e4], y2 = [1, 1], facecolor = 'gray', alpha = 0.4)
+            ax.text(x = 5.0, y = 1.1, s = "maximal sculpting", rotation = 0, color = 'gray', size = 8)
+            ax.text(x = 4.1, y = 15.0, s = "no separation", rotation = 90, color = 'gray', size = 8)
+
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_50", re.compile("invJS_50_.*"), colorquant, outpath, 
+                                               xlabel = r'$1/\epsilon_{\mathrm{bkg}}$ @ $\epsilon_{\mathrm{sig}} = 0.5$', ylabel = r'1/JSD @ $\epsilon_{\mathrm{sig}} = 0.5$',  
+                                               xaxis_range = [1, 50], yaxis_range = [0.5, 1e4], xlog = True, ylog = True, epilog = shade_epilog_50, grid = False)
+        PerformancePlotter._perf_fairness_plot(perfdicts, "bkg_rejection_at_sigeff_25", re.compile("invJS_25_.*"), colorquant, outpath, 
+                                               xlabel = r'$1/\epsilon_{\mathrm{bkg}}$ @ $\epsilon_{\mathrm{sig}} = 0.25$', ylabel = r'1/JSD @ $\epsilon_{\mathrm{sig}} = 0.25$',
+                                               xaxis_range = [1, 100], yaxis_range = [0.5, 1e4], xlog = True, ylog = True, epilog = shade_epilog_25, grid = False)   
 
     # combine the passed plots and save them
     @staticmethod
