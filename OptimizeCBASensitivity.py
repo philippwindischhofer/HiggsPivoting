@@ -94,7 +94,8 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
     sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+    bkg_samples = ["ttbar", "Zjets", "Wjets"]
+    #bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
 
     print("loading data ...")
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
@@ -171,13 +172,13 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
 
     # # perform the optimization:
 
-    # # first, try a local optimizer
-    # # start at the current cut values:
-    # x0 = [200, 1.2, 1.8]
+    # first, try a local optimizer
+    # start at the current cut values:
+    x0 = [200, 1.2, 1.8]
 
-    # # the parameter ranges
-    # ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
-    # res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
+    # the parameter ranges
+    ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
+    res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
 
     # # then, try a global search strategy
     # ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
@@ -195,24 +196,24 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     #     print("using xi = {}".format(cur_xi))
     #     optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
     
-    # # print the results
-    # print("==============================================")
-    # print("initial cuts:")
-    # print("==============================================")
-    # print("MET_cut = {}".format(x0[0]))
-    # print("dRBB_highMET_cut = {}".format(x0[1]))
-    # print("dRBB_lowMET_cut = {}".format(x0[2]))
-    # print("significance = {} sigma".format(-costfunc_flat(x0)))
-    # print("==============================================")
+    # print the results
+    print("==============================================")
+    print("initial cuts:")
+    print("==============================================")
+    print("MET_cut = {}".format(x0[0]))
+    print("dRBB_highMET_cut = {}".format(x0[1]))
+    print("dRBB_lowMET_cut = {}".format(x0[2]))
+    print("significance = {} sigma".format(-costfunc_flat(x0)))
+    print("==============================================")
 
-    # print("==============================================")
-    # print("optimized cuts (local optimization):")
-    # print("==============================================")
-    # print("MET_cut = {}".format(res_local.x[0]))
-    # print("dRBB_highMET_cut = {}".format(res_local.x[1]))
-    # print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
-    # print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
-    # print("==============================================")
+    print("==============================================")
+    print("optimized cuts (local optimization):")
+    print("==============================================")
+    print("MET_cut = {}".format(res_local.x[0]))
+    print("dRBB_highMET_cut = {}".format(res_local.x[1]))
+    print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
+    print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
+    print("==============================================")
 
     # print("==============================================")
     # print("optimized cuts (global optimization):")

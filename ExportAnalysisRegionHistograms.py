@@ -117,7 +117,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.30, 0.0),
+                                                                                   classifier_sigeff_range = (0.20, 0.0),
                                                                                    nJ = cur_nJ)
 
         class_cat_tight.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
@@ -134,7 +134,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.80, 0.30),
+                                                                                   classifier_sigeff_range = (0.50, 0.20),
                                                                                    nJ = cur_nJ)
 
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
@@ -151,7 +151,7 @@ def main():
                                                                                 process_names = samples,
                                                                                 signal_events = sig_data_test,
                                                                                 signal_weights = sig_weights_test,
-                                                                                classifier_sigeff_range = (1.00, 0.80),
+                                                                                classifier_sigeff_range = (1.00, 0.50),
                                                                                 nJ = cur_nJ)
 
         class_cat_depleted.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
