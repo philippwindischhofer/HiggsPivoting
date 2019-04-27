@@ -82,6 +82,19 @@ def main():
     print("signal efficiency binning: {}".format(sigeff_binning))
     print("classifier output binning: {}".format(MVA_binning))
 
+    # check if have a cutfile available, if so, use the values stored there
+    cuts = {"tight": 0.3, "loose": 0.8}
+
+    try:
+        with open(os.path.join(model_dir, "cutdict.pkl"), "rb") as infile:
+            cuts = pickle.load(infile)
+    except:
+        print("no cutdict.pkl found, continuing with default cuts")
+        
+    print("using the following cuts:")
+    print("tight = {}".format(cuts["tight"]))
+    print("loose = {}".format(cuts["loose"]))
+
     for cur_nJ in [2, 3]:
         # first, export the categories of the cut-based analysis: high / low MET
         low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,

@@ -156,7 +156,7 @@ def OptimizeClassifierCuts(infile_path, model_dir, out_dir):
     print("==============================================")
     print("loose cut = {}".format(x0[0]))
     print("tight cut = {}".format(x0[1] * x0[0]))
-    print("significance = {} sigma".format(-costfunc_flat(c0)))
+    print("significance = {} sigma".format(-costfunc_flat(x0)))
     print("==============================================")
 
     print("==============================================")
@@ -168,7 +168,7 @@ def OptimizeClassifierCuts(infile_path, model_dir, out_dir):
     print("==============================================")
 
     # save the resulting cuts
-    with open(os.path.join(out_dir, "classcats.pkl"), "wb") as outfile:
+    with open(os.path.join(out_dir, "cutdict.pkl"), "wb") as outfile:
         cutdict = {"tight": res_local.x[1] * res_local.x[0], "loose": res_local.x[0]}
         pickle.dump(cutdict, outfile)
 
