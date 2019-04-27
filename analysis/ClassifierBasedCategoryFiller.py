@@ -14,22 +14,30 @@ class ClassifierBasedCategoryFiller:
         return ModelEvaluator._weighted_percentile(signal_pred, 1 - sigeff, weights = signal_weights)        
 
     @staticmethod
-    def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2):
-        if(classifier_sigeff_range[0] < classifier_sigeff_range[1]):
-            raise Exception("Warning: are you sure you understand what these cuts are doing? Lower signal efficiencies correspond to _harsher_ cuts, so expect (higher number, lower number)!")
+    def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2, interpret_as_sigeff = True, process_preds = None):
+
+        if not process_preds:
+            process_preds = [None for cur_events in process_events]
+
+        if interpret_as_sigeff:
+            if(classifier_sigeff_range[0] < classifier_sigeff_range[1]):
+                raise Exception("Warning: are you sure you understand what these cuts are doing? Lower signal efficiencies correspond to _harsher_ cuts, so expect (higher number, lower number)!")
+            
+            # first, compute the cut values that correspond to the given signal efficiency values
+            classifier_range = (ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[0]),
+                                ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[1]))
+
+            print("translated signal efficiency range ({}, {}) to classifier output range ({}, {})".format(classifier_sigeff_range[0], classifier_sigeff_range[1], 
+                                                                                                           classifier_range[0], classifier_range[1]))
+        else:
+            classifier_range = classifier_sigeff_range
 
         retcat = Category("clf_{:.2f}_{:.2f}".format(classifier_sigeff_range[0], classifier_sigeff_range[1]))
-
-        # first, compute the cut values that correspond to the given signal efficiency values
-        classifier_range = (ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[0]),
-                            ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[1]))
-
-        print("translated signal efficiency range ({}, {}) to classifier output range ({}, {})".format(classifier_sigeff_range[0], classifier_sigeff_range[1], 
-                                                                                                       classifier_range[0], classifier_range[1]))
         
-        for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
+        for cur_events, cur_aux_events, cur_weights, process_name, cur_pred in zip(process_events, process_aux_events, process_weights, process_names, process_preds):
             # get the classifier predictions
-            cur_pred = env.predict(data = cur_events)[:,1]
+            if cur_pred is None:
+                cur_pred = env.predict(data = cur_events)[:,1]
 
             cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
 
