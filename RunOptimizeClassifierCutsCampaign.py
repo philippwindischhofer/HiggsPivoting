@@ -14,7 +14,7 @@ def create_job_script(model_dir, script_dir, training_data_path):
         outfile.write("source /home/windischhofer/HiggsPivoting/setup_env.sh\n")
 
         # first, generate the MC templates
-        outfile.write("python /home/windischhofer/HiggsPivoting/OptimizeClassifierCuts.py --data " + training_data_path + " --model_dir " + model_dir + " --outdir " + model_dir + " > " + os.path.join(model_dir, "optjob.log") + "\n")
+        outfile.write("python /home/windischhofer/HiggsPivoting/OptimizeClassifierCuts.py --do_global --data " + training_data_path + " --model_dir " + model_dir + " --outdir " + model_dir + " > " + os.path.join(model_dir, "optjob.log") + "\n")
         outfile.write("deactivate\n")
         
     return script_path

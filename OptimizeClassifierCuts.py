@@ -4,6 +4,8 @@ import pickle
 from sklearn.model_selection import train_test_split
 from scipy.optimize import minimize
 from argparse import ArgumentParser
+from bayes_opt import BayesianOptimization
+from sklearn.gaussian_process.kernels import Matern
 
 from analysis.Category import Category
 from analysis.ClassifierBasedCategoryFiller import ClassifierBasedCategoryFiller
@@ -84,7 +86,7 @@ def EvaluateBinnedSignificance(sig_events, sig_aux_events, sig_weights, sig_proc
 
     return sensdict
 
-def OptimizeClassifierCuts(infile_path, model_dir, out_dir):
+def OptimizeClassifierCuts(infile_path, model_dir, out_dir, do_local = False, do_global = False):
     sig_samples = TrainingConfig.sig_samples
     bkg_samples = TrainingConfig.bkg_samples
     test_size = TrainingConfig.test_size
@@ -147,29 +149,74 @@ def OptimizeClassifierCuts(infile_path, model_dir, out_dir):
     
     # start at some reasonable cut values: tight_cut = 0.3, loose_cut = 0.8
     x0 = [0.8, 0.3 / 0.8]
+    cuts_initial = {"loose": x0[0], "tight": x0[0] * x0[1]}
+    cuts_initial["sig"] = -costfunc(cuts_initial)
+
     ranges = [[0.0, 1.0], [0.0, 1.0]]
 
-    res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
+    if do_local:
+        res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
+        cutopt_local = {"loose": res_local.x[0], "tight": res_local.x[0] * res_local.x[1]}
+        cutopt_local["sig"] = -costfunc_flat(res_local.x)
+    else:
+        cutopt_local = cuts_initial
+
+    # then, try a global (Bayesian) optimization
+    costfunc_bayes = lambda c0, c1: -costfunc_flat((c0, c1))
+
+    if do_global:
+        ranges_bayes = {"c0": (0.0, 1.0), "c1": (0.0, 1.0)}
+        gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
+        optimizer = BayesianOptimization(
+            f = costfunc_bayes,
+            pbounds = ranges_bayes,
+            random_state = 1
+        )
+        optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
+
+        xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
+        for it in range(40):
+            cur_xi = xi_scheduler(it)
+            print("using xi = {}".format(cur_xi))
+            optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
+
+        cutopt_global = {"loose": optimizer.max["params"]["c0"], "tight": optimizer.max["params"]["c0"] * optimizer.max["params"]["c1"]}
+        cutopt_global["sig"] = -costfunc(cutopt_global)
+    else:
+        cutopt_global = cuts_initial
     
     print("==============================================")
     print("initial cuts:")
     print("==============================================")
-    print("loose cut = {}".format(x0[0]))
-    print("tight cut = {}".format(x0[1] * x0[0]))
-    print("significance = {} sigma".format(-costfunc_flat(x0)))
+    print("loose cut = {}".format(cuts_initial["loose"]))
+    print("tight cut = {}".format(cuts_initial["tight"]))
+    print("significance = {} sigma".format(cuts_initial["sig"]))
     print("==============================================")
 
     print("==============================================")
     print("optimized cuts (local optimization):")
     print("==============================================")
-    print("loose cut = {}".format(res_local.x[0]))
-    print("tight cut = {}".format(res_local.x[1] * res_local.x[0]))
-    print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
+    print("loose cut = {}".format(cutopt_local["loose"]))
+    print("tight cut = {}".format(cutopt_local["tight"]))
+    print("significance = {} sigma".format(cutopt_local["sig"]))
     print("==============================================")
 
-    # save the resulting cuts
+    print("==============================================")
+    print("optimized cuts (global optimization):")
+    print("==============================================")
+    print("loose cut = {}".format(cutopt_global["loose"]))
+    print("tight_cut = {}".format(cutopt_global["tight"]))
+    print("significance = {} sigma".format(cutopt_global["sig"]))
+    print("==============================================")
+
+    # save the best result
+    results = [cuts_initial, cutopt_local, cutopt_global]
+    results = sorted(results, key = lambda cur: cur["sig"], reverse = True)
+    cutdict = results[0]
+
     with open(os.path.join(out_dir, "cutdict.pkl"), "wb") as outfile:
-        cutdict = {"tight": res_local.x[1] * res_local.x[0], "loose": res_local.x[0]}
+        print("saving the following cuts:")
+        print(cutdict)
         pickle.dump(cutdict, outfile)
 
 if __name__ == "__main__":
@@ -177,6 +224,8 @@ if __name__ == "__main__":
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--model_dir", action = "store", dest = "model_dir")
     parser.add_argument("--outdir", action = "store", dest = "out_dir")
+    parser.add_argument("--do_local", action = "store_const", const = True, dest = "do_local")
+    parser.add_argument("--do_global", action = "store_const", const = True, dest = "do_global")
     args = vars(parser.parse_args())
 
     OptimizeClassifierCuts(**args)

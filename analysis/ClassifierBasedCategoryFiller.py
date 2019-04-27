@@ -14,6 +14,17 @@ class ClassifierBasedCategoryFiller:
         return ModelEvaluator._weighted_percentile(signal_pred, 1 - sigeff, weights = signal_weights)        
 
     @staticmethod
+    def _score_to_sigeff(env, signal_events, signal_weights, score):
+        signal_events = np.concatenate(signal_events)
+        signal_weights = np.concatenate(signal_weights)
+        signal_pred = env.predict(data = signal_events)[:,1] # obtain the prediction of the model
+        
+        total_passed = np.sum[signal_weights[signal_pred > score]]
+        total_events = np.sum[signal_weights]
+
+        return total_passed / total_events
+
+    @staticmethod
     def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2, interpret_as_sigeff = True, process_preds = None):
 
         if not process_preds:
