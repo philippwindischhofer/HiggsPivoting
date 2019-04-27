@@ -1,6 +1,6 @@
+import pickle, os
 import numpy as np
 import pandas as pd
-import pickle
 from sklearn.model_selection import train_test_split
 from scipy.optimize import minimize
 from argparse import ArgumentParser
@@ -175,7 +175,7 @@ def OptimizeClassifierCuts(infile_path, model_dir, out_dir, do_local = False, do
         optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
         xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
-        for it in range(40):
+        for it in range(500):
             cur_xi = xi_scheduler(it)
             print("using xi = {}".format(cur_xi))
             optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
