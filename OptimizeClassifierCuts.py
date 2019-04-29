@@ -172,10 +172,10 @@ def OptimizeClassifierCuts(infile_path, model_dir, out_dir, do_local = False, do
             pbounds = ranges_bayes,
             random_state = 1
         )
-        optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
+        optimizer.maximize(init_points = 100, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
         xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
-        for it in range(500):
+        for it in range(100):
             cur_xi = xi_scheduler(it)
             print("using xi = {}".format(cur_xi))
             optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
