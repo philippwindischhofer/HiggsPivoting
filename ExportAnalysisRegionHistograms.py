@@ -1,4 +1,4 @@
-import os
+import os, pickle
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
@@ -86,7 +86,9 @@ def main():
     cuts = {"tight": 0.3, "loose": 0.8}
 
     try:
-        with open(os.path.join(model_dir, "cutdict.pkl"), "rb") as infile:
+        cutpath = os.path.join(model_dir, "cutdict.pkl")
+        print("trying to open '{}'".format(cutpath))
+        with open(cutpath, "rb") as infile:
             cuts = pickle.load(infile)
     except:
         print("no cutdict.pkl found, continuing with default cuts")
@@ -130,7 +132,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.20, 0.0),
+                                                                                   classifier_sigeff_range = (cuts["tight"], 0.0),
                                                                                    nJ = cur_nJ)
 
         class_cat_tight.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
@@ -147,7 +149,7 @@ def main():
                                                                                    process_names = samples,
                                                                                    signal_events = sig_data_test,
                                                                                    signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (0.50, 0.20),
+                                                                                   classifier_sigeff_range = (cuts["loose"], cuts["tight"]),
                                                                                    nJ = cur_nJ)
 
         CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
@@ -164,7 +166,7 @@ def main():
                                                                                 process_names = samples,
                                                                                 signal_events = sig_data_test,
                                                                                 signal_weights = sig_weights_test,
-                                                                                classifier_sigeff_range = (1.00, 0.50),
+                                                                                      classifier_sigeff_range = (1.00, cuts["loose"]),
                                                                                 nJ = cur_nJ)
 
         class_cat_depleted.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
