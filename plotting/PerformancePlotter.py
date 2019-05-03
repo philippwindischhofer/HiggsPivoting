@@ -53,7 +53,7 @@ class PerformancePlotter:
         plt.close()                
 
     @staticmethod
-    def plot_asimov_significance_comparison(hypodicts, sensdicts, outfile, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
+    def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'expected significance [$\sigma_A$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
@@ -61,84 +61,71 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        asimov_sigs_tight_loose_background_fixed = {}
-        asimov_sigs_tight_loose_background_floating = {}
-        asimov_sigs_tight_loose_depleted_background_floating = {}
-
-        asimov_sigs_mva_background_fixed = {}
-        asimov_sigs_mva_background_floating = {}
+        asimov_sigs_ncat_background_fixed = {}
+        asimov_sigs_ncat_background_floating = {}
 
         # prepare the individual datasets to plot
         for sensdict, hypodict in zip(sensdicts, hypodicts):
-
-            # fetch the Asimov significances:
-            asimov_sig_tight_loose_background_fixed = hypodict["asimov_sig_tight_loose_background_fixed"]
-            asimov_sig_tight_loose_background_floating = hypodict["asimov_sig_tight_loose_background_floating"]
-            asimov_sig_tight_loose_depleted_background_floating = hypodict["asimov_sig_tight_loose_depleted_background_floating"]
-            
-            asimov_sig_mva_background_fixed = hypodict["asimov_sig_MVA_background_fixed"]
-            asimov_sig_mva_background_floating = hypodict["asimov_sig_MVA_background_floating"]
-
+            asimov_sig_ncat_background_fixed = hypodict["asimov_sig_ncat_background_fixed"]
+            asimov_sig_ncat_background_floating = hypodict["asimov_sig_ncat_background_floating"]
+                                
             cur_lambda = float(sensdict["lambda"])
+                
+            if cur_lambda not in asimov_sigs_ncat_background_fixed:
+                asimov_sigs_ncat_background_fixed[cur_lambda] = []
+            asimov_sigs_ncat_background_fixed[cur_lambda].append(asimov_sig_ncat_background_fixed)
 
-            if cur_lambda not in asimov_sigs_tight_loose_background_fixed:
-                asimov_sigs_tight_loose_background_fixed[cur_lambda] = []
-            asimov_sigs_tight_loose_background_fixed[cur_lambda].append(asimov_sig_tight_loose_background_fixed)
+            if cur_lambda not in asimov_sigs_ncat_background_floating:
+                asimov_sigs_ncat_background_floating[cur_lambda] = []
+            asimov_sigs_ncat_background_floating[cur_lambda].append(asimov_sig_ncat_background_floating)
 
-            if cur_lambda not in asimov_sigs_tight_loose_background_floating:
-                asimov_sigs_tight_loose_background_floating[cur_lambda] = []
-            asimov_sigs_tight_loose_background_floating[cur_lambda].append(asimov_sig_tight_loose_background_floating)
+        # compute the size of the error bars (show the mean as central value, and the standard deviation as uncertainty measure)
+        lambdas = np.array(list(asimov_sigs_ncat_background_fixed.keys()))
+        sortind = np.argsort(lambdas)
+        lambdas = lambdas[sortind]
 
-            if cur_lambda not in asimov_sigs_tight_loose_depleted_background_floating:
-                asimov_sigs_tight_loose_depleted_background_floating[cur_lambda] = []
-            asimov_sigs_tight_loose_depleted_background_floating[cur_lambda].append(asimov_sig_tight_loose_depleted_background_floating)
+        asimov_sigs_ncat_background_fixed_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+        asimov_sigs_ncat_background_fixed_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+        asimov_sigs_ncat_background_fixed_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+        asimov_sigs_ncat_background_fixed_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
 
-            if cur_lambda not in asimov_sigs_mva_background_fixed:
-                asimov_sigs_mva_background_fixed[cur_lambda] = []
-            asimov_sigs_mva_background_fixed[cur_lambda].append(asimov_sig_mva_background_fixed)
+        asimov_sigs_ncat_background_floating_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+        asimov_sigs_ncat_background_floating_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+        asimov_sigs_ncat_background_floating_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+        asimov_sigs_ncat_background_floating_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
 
-            if cur_lambda not in asimov_sigs_mva_background_floating:
-                asimov_sigs_mva_background_floating[cur_lambda] = []
-            asimov_sigs_mva_background_floating[cur_lambda].append(asimov_sig_mva_background_floating)
+        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
+                                             unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
+                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'royalblue', title = "background floating",
+                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "cut-based analysis"))
 
-        # compute the size of the error bars
-        lambdas = asimov_sigs_tight_loose_background_fixed.keys()
+        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
+                                             unc_down = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean, 
+                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'indianred', title = "background fixed",
+                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'indianred', linestyle = "--", label = "cut-based analysis"))
 
-        asimov_sigs_tight_loose_background_fixed_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_background_fixed.values()]
-        asimov_sigs_tight_loose_background_fixed_std = [np.std(cur) for cur in asimov_sigs_tight_loose_background_fixed.values()]
+    @staticmethod
+    def _uncertainty_plot(x, y, unc_up, unc_down, label, outfile, xlabel, ylabel, color, show_legend = True, epilog = None, title = ""):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
-        asimov_sigs_tight_loose_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_background_floating.values()]
-        asimov_sigs_tight_loose_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_background_floating.values()]
+        # first, plot the central value
+        ax.plot(x, y, marker = 'o', label = label, color = color)
+        ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.4)
 
-        asimov_sigs_tight_loose_depleted_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
-        asimov_sigs_tight_loose_depleted_background_floating_std = [np.std(cur) for cur in asimov_sigs_tight_loose_depleted_background_floating.values()]
+        if epilog is not None:
+            epilog(ax)
 
-        asimov_sigs_mva_background_floating_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_floating.values()]
-        asimov_sigs_mva_background_floating_std = [np.std(cur) for cur in asimov_sigs_mva_background_floating.values()]
-
-        asimov_sigs_mva_background_fixed_mean = [np.mean(cur) for cur in asimov_sigs_mva_background_fixed.values()]
-        asimov_sigs_mva_background_fixed_std = [np.std(cur) for cur in asimov_sigs_mva_background_fixed.values()]
-
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_fixed_mean, yerr = asimov_sigs_tight_loose_background_fixed_std, marker = 'o', label = "tight + loose (background fixed)", fmt = 'o', color = 'royalblue')
-        ax.errorbar(lambdas, asimov_sigs_tight_loose_background_floating_mean, yerr = asimov_sigs_tight_loose_background_floating_std, marker = 'o', label = "tight + loose (background floating)", fmt = 'o', color = 'darkorange')
-
-        ax.errorbar(lambdas, asimov_sigs_mva_background_fixed_mean, yerr = asimov_sigs_mva_background_fixed_std, marker = 'o', label = "MVA (background fixed)", fmt = 'o', color = 'royalblue', fillstyle = "none")
-        ax.errorbar(lambdas, asimov_sigs_mva_background_floating_mean, yerr = asimov_sigs_mva_background_floating_std, marker = 'o', label = "MVA (background floating)", fmt = 'o', color = 'darkorange', fillstyle = "none")
-
-        # ax.errorbar(lambdas, asimov_sigs_tight_loose_depleted_background_floating_mean, yerr = asimov_sigs_tight_loose_depleted_background_floating_std, marker = 'o', label = "tight + loose + depleted (background floating)", fmt = 'o', color = 'forestgreen')
-
-        # now, add horizontal lines corresponding to the significance achieved by the cut-based analysis
-        ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "high MET + low MET (background fixed)")
-        ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = 'darkorange', linestyle = "--", label = "high MET + low MET (background floating)")
-
-        ax.legend()
+        if show_legend:
+            ax.legend(loc = 'best')
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        #ax.set_ylim([1.3, 2.8])
+        ax.set_title(title)
+        ax.margins(x = 0.0)
         
         fig.savefig(outfile)
-        plt.close()        
+        plt.close()
 
     @staticmethod
     def plot_significance_KS(sensdicts, outfile, 

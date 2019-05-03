@@ -56,6 +56,9 @@ class CategoryPlotter:
             if ignore_binning:
                 cur_bin_edges = np.linspace(cur_bin_edges[0], cur_bin_edges[-1], num = len(cur_bin_edges), endpoint = True)
 
+            print("cur_bin_edges")
+            print(cur_bin_edges)
+
             lower_edges = cur_bin_edges[:-1]
             upper_edges = cur_bin_edges[1:]
 

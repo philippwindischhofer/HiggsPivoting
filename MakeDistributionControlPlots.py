@@ -19,7 +19,7 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
 
     # for MadGraph
     sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets"]
+    bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson"]
 
     samples = sig_samples + bkg_samples
 
@@ -96,6 +96,9 @@ def MakeDistributionControlPlots(infile, outdir, test_size = 0.999):
     
     # now, create separate histograms for each process and each event variable
     for cur_var in TrainingConfig.training_branches:
+        if cur_var == "nJ": # no plots for number of jets
+            continue
+
         for cur_process in samples:
             CategoryPlotter.plot_category_composition(inclusive, binning = binnings[cur_var], outpath = os.path.join(outdir, "dist_{}_{}_inclusive.pdf".format(cur_var, cur_process)), var = cur_var, 
                                                       process_order = [cur_process], xlabel = cur_var, plotlabel = ["inclusive"], args = {})

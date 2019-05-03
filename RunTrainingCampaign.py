@@ -47,7 +47,7 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
         
             # create the job scripts
             job_script = create_job_script(training_data_path, run_dir, run_dir)
-
+            
             # submit them to the condor batch system
             CondorJobSubmitter.submit_job(job_script)
 

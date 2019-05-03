@@ -36,13 +36,13 @@ def main():
     # extract the training dataset
     test_size = TrainingConfig.test_size
     sig_data_train = []
-    for sample in sig_data:
+    for sample, sample_name in zip(sig_data, sig_samples):
         cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
-    for sample in bkg_data:
+    for sample, sample_name in zip(bkg_data, bkg_samples):
         cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         bkg_data_train.append(cur_train)
@@ -59,19 +59,19 @@ def main():
     nuisdat_bkg = []
     weightdat_bkg = []
 
-    for cur_sig_data_train in sig_data_train:
-        print(cur_sig_data_train.head())
+    for cur_sig_data_train, sample_name in zip(sig_data_train, sig_samples):
         cur_traindat_sig, cur_nuisdat_sig, cur_weightdat_sig = TrainNuisAuxSplit(cur_sig_data_train)
         traindat_sig.append(cur_traindat_sig)
         nuisdat_sig.append(cur_nuisdat_sig)
         weightdat_sig.append(cur_weightdat_sig)
+        print("'{}' with {} entries representing {} events".format(sample_name, len(cur_weightdat_sig), np.sum(cur_weightdat_sig)))
 
-    for cur_bkg_data_train in bkg_data_train:
-        print(cur_bkg_data_train.head())
+    for cur_bkg_data_train, sample_name in zip(bkg_data_train, bkg_samples):
         cur_traindat_bkg, cur_nuisdat_bkg, cur_weightdat_bkg = TrainNuisAuxSplit(cur_bkg_data_train)
         traindat_bkg.append(cur_traindat_bkg)
         nuisdat_bkg.append(cur_nuisdat_bkg)
         weightdat_bkg.append(cur_weightdat_bkg)
+        print("'{}' with {} entries representing {} events".format(sample_name, len(cur_weightdat_bkg), np.sum(cur_weightdat_bkg)))
 
     print("starting up")
     mce = AdversarialEnvironment.from_file(outdir)
@@ -87,6 +87,7 @@ def main():
     # give the full list of signal / background components to the trainer
     train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, 
                 nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
+                #sig_sampling_pars = {"sampling_fractions": TrainingConfig.sig_sampling_fractions}, bkg_sampling_pars = {"sampling_fractions": TrainingConfig.bkg_sampling_fractions})
 
     # save all the necessary information
     if not os.path.exists(outdir):

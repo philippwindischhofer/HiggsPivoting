@@ -19,7 +19,7 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
             print("either sensdict.pkl or hypodict.pkl not found for model '{}'".format(model_dir))
 
     # now have all the data, just need to plot it
-    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outfile = os.path.join(plot_dir, "asimov_binned_significance_comparison.pdf"))
+    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir)
 
 def main():
     parser = ArgumentParser(description = "create global summary plots for Asimov sensitivities")

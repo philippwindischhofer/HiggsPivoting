@@ -93,55 +93,56 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     test_size = TrainingConfig.test_size # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
-    sig_samples = ["Hbb"]
-    bkg_samples = ["ttbar", "Zjets", "Wjets"]
-    #bkg_samples = ["ttbar", "Zjets", "Wjets", "diboson", "singletop"]
+    sig_samples = TrainingConfig.sig_samples
+    bkg_samples = TrainingConfig.bkg_samples
 
     print("loading data ...")
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
-    sig_data_test = []
-    sig_mBB_test = []
-    sig_weights_test = []
-    sig_aux_data_test = []
+    sig_data_train = []
+    sig_mBB_train = []
+    sig_weights_train = []
+    sig_aux_data_train = []
     for sample in sig_data:
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
-        sig_data_test.append(cur_testdata)
-        sig_mBB_test.append(cur_nuisdata)
-        sig_weights_test.append(cur_weights / test_size)
-        sig_aux_data_test.append(cur_aux_data)
+        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_traindata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_train) # load the standard classifier input, nuisances and weights
+        cur_aux_data = cur_train[TrainingConfig.other_branches].values
+        sig_data_train.append(cur_traindata)
+        sig_mBB_train.append(cur_nuisdata)
+        sig_weights_train.append(cur_weights / (1 - test_size))
+        sig_aux_data_train.append(cur_aux_data)
 
-    bkg_data_test = []
-    bkg_mBB_test = []
-    bkg_weights_test = []
-    bkg_aux_data_test = []
+    bkg_data_train = []
+    bkg_mBB_train = []
+    bkg_weights_train = []
+    bkg_aux_data_train = []
     for sample in bkg_data:
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
-        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
-        bkg_data_test.append(cur_testdata)
-        bkg_mBB_test.append(cur_nuisdata)
-        bkg_weights_test.append(cur_weights / test_size)
-        bkg_aux_data_test.append(cur_aux_data)
+        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_traindata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_train) # load the standard classifier input, nuisances and weights
+        cur_aux_data = cur_train[TrainingConfig.other_branches].values
+        bkg_data_train.append(cur_traindata)
+        bkg_mBB_train.append(cur_nuisdata)
+        bkg_weights_train.append(cur_weights / (1 - test_size))
+        bkg_aux_data_train.append(cur_aux_data)
 
     # also prepare the total, concatenated versions
-    data_test = sig_data_test + bkg_data_test
-    aux_test = sig_aux_data_test + bkg_aux_data_test
-    weights_test = sig_weights_test + bkg_weights_test
+    data_train = sig_data_train + bkg_data_train
+    aux_train = sig_aux_data_train + bkg_aux_data_train
+    weights_train = sig_weights_train + bkg_weights_train
     samples = sig_samples + bkg_samples
 
     # define the SR binning for mBB
     SR_low = 30
     SR_up = 210
     SR_binwidth = 10
-    SR_mBB_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+    SR_mBB_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+
+    print("mBB binning: {}".format(SR_mBB_binning))
 
     # the objective function that needs to be minimized
-    costfunc = lambda cuts: -EvaluateBinnedSignificance(process_events = data_test, process_aux_events = aux_test, 
-                                                       process_weights = weights_test, process_names = samples, 
+    costfunc = lambda cuts: -EvaluateBinnedSignificance(process_events = data_train, process_aux_events = aux_train, 
+                                                       process_weights = weights_train, process_names = samples, 
                                                        signal_process_names = sig_samples, background_process_names = bkg_samples, 
                                                        binning = SR_mBB_binning, cuts = cuts)["combined"]
 
@@ -180,21 +181,21 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
     res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
 
-    # # then, try a global search strategy
-    # ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
-    # gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
-    # optimizer = BayesianOptimization(
-    #     f = costfunc_bayes,
-    #     pbounds = ranges_bayes,
-    #     random_state = 1
-    # )
-    # optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
+    # then, try a global search strategy
+    ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
+    optimizer = BayesianOptimization(
+        f = costfunc_bayes,
+        pbounds = ranges_bayes,
+        random_state = 1
+    )
+    optimizer.maximize(init_points = 500, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
-    # xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.03 * iteration)
-    # for it in range(400):
-    #     cur_xi = xi_scheduler(it)
-    #     print("using xi = {}".format(cur_xi))
-    #     optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
+    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.08 * iteration)
+    for it in range(300):
+        cur_xi = xi_scheduler(it)
+        print("using xi = {}".format(cur_xi))
+        optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
     
     # print the results
     print("==============================================")
@@ -215,14 +216,14 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
     print("==============================================")
 
-    # print("==============================================")
-    # print("optimized cuts (global optimization):")
-    # print("==============================================")
-    # print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
-    # print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
-    # print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
-    # print("significance = {} sigma".format(optimizer.max["target"]))
-    # print("==============================================")
+    print("==============================================")
+    print("optimized cuts (global optimization):")
+    print("==============================================")
+    print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
+    print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
+    print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
+    print("significance = {} sigma".format(optimizer.max["target"]))
+    print("==============================================")
         
 if __name__ == "__main__":
     parser = ArgumentParser(description = "optimize the cuts in the CBA for maximum binned significance")

@@ -70,7 +70,7 @@ def main():
     SR_low = 30
     SR_up = 210
     SR_binwidth = 10
-    SR_binning = np.linspace(SR_low, SR_up, num = int((SR_up - SR_low) / SR_binwidth), endpoint = True)
+    SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
     # also prepare the binning along the MVA dimension
     sigeff_binning = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.70, 0.75, 0.80, 0.85, 0.9, 0.92, 0.94, 0.96, 0.98, 0.99, 1.0]
@@ -79,23 +79,16 @@ def main():
     # in terms of the classifier output value
     MVA_binning = [ClassifierBasedCategoryFiller._sigeff_to_score(env = env, signal_events = sig_data_test, signal_weights = sig_weights_test, sigeff = sigeff) for sigeff in sigeff_binning[::-1]]
 
+    print("mBB binning: {}".format(SR_binning))
     print("signal efficiency binning: {}".format(sigeff_binning))
     print("classifier output binning: {}".format(MVA_binning))
 
     # check if have a cutfile available, if so, use the values stored there
-    cuts = {"tight": 0.3, "loose": 0.8}
-
-    try:
-        cutpath = os.path.join(model_dir, "cutdict.pkl")
-        print("trying to open '{}'".format(cutpath))
-        with open(cutpath, "rb") as infile:
-            cuts = pickle.load(infile)
-    except:
-        print("no cutdict.pkl found, continuing with default cuts")
+    cuts = [0.0, 0.3, 0.8]
+    #cuts = [0.0, 0.25, 0.50, 0.8]
         
     print("using the following cuts:")
-    print("tight = {}".format(cuts["tight"]))
-    print("loose = {}".format(cuts["loose"]))
+    print(cuts)
 
     for cur_nJ in [2, 3]:
         # first, export the categories of the cut-based analysis: high / low MET
@@ -106,7 +99,7 @@ def main():
                                                                      nJ = cur_nJ)
 
         low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
-                                          outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = False, density = False)
+                                          outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
@@ -118,62 +111,28 @@ def main():
                                                                        nJ = cur_nJ)
 
         high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
-                                          outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = False, density = False)
+                                          outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
-        # prepare and export three SR/CRs per jet category:
-        # a very tight analysis category, highly enriched in signal ...
-        class_cat_tight = ClassifierBasedCategoryFiller.create_classifier_category(env, 
-                                                                                   process_events = data_test,
-                                                                                   process_aux_events = aux_test,
-                                                                                   process_weights = weights_test,
-                                                                                   process_names = samples,
-                                                                                   signal_events = sig_data_test,
-                                                                                   signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (cuts["tight"], 0.0),
-                                                                                   nJ = cur_nJ)
+        # prepare N categories along the classifier output dimension
+        for cut_end, cut_start in zip(cuts[0:-1], cuts[1:]):
+            print("exporting {}J region with sigeff range {} - {}".format(cur_nJ, cut_start, cut_end))
 
-        class_cat_tight.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
-                                              outfile_path = os.path.join(outdir, "{}jet_tight.root".format(cur_nJ)), clipping = False, density = False)
-
-        CategoryPlotter.plot_category_composition(class_cat_tight, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_class_tight_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
-
-        # ... a loose category with high event yield but low signal purity ...
-        class_cat_loose = ClassifierBasedCategoryFiller.create_classifier_category(env, 
-                                                                                   process_events = data_test,
-                                                                                   process_aux_events = aux_test,
-                                                                                   process_weights = weights_test,
-                                                                                   process_names = samples,
-                                                                                   signal_events = sig_data_test,
-                                                                                   signal_weights = sig_weights_test,
-                                                                                   classifier_sigeff_range = (cuts["loose"], cuts["tight"]),
-                                                                                   nJ = cur_nJ)
-
-        CategoryPlotter.plot_category_composition(class_cat_loose, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_class_loose_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
-
-        class_cat_loose.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
-                                              outfile_path = os.path.join(outdir, "{}jet_loose.root".format(cur_nJ)), clipping = False, density = False)
-
-        # ... and also a signal-depleted region that constrains the backgrounds
-        class_cat_depleted = ClassifierBasedCategoryFiller.create_classifier_category(env, 
-                                                                                process_events = data_test,
-                                                                                process_aux_events = aux_test,
-                                                                                process_weights = weights_test,
-                                                                                process_names = samples,
-                                                                                signal_events = sig_data_test,
-                                                                                signal_weights = sig_weights_test,
-                                                                                      classifier_sigeff_range = (1.00, cuts["loose"]),
-                                                                                nJ = cur_nJ)
-
-        class_cat_depleted.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB", 
-                                                 outfile_path = os.path.join(outdir, "{}jet_depleted.root".format(cur_nJ)), clipping = False, density = False)
-
-        CategoryPlotter.plot_category_composition(class_cat_depleted, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_class_depleted_{}J.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d", "clf loose", "nJ = {}".format(cur_nJ)])
+            cur_cat = ClassifierBasedCategoryFiller.create_classifier_category(env,
+                                                                               process_events = data_test,
+                                                                               process_aux_events = aux_test,
+                                                                               process_weights = weights_test,
+                                                                               process_names = samples,
+                                                                               signal_events = sig_data_test,
+                                                                               signal_weights = sig_weights_test,
+                                                                               classifier_sigeff_range = (cut_start, cut_end),
+                                                                               nJ = cur_nJ)
+            cur_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
+                                           outfile_path = os.path.join(outdir, "region_{}jet_{}_{}.root".format(cur_nJ, cut_start, cut_end)), clipping = True, density = False)
+            CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
 
         # now, also export the classifier categories for each jet split
         class_cat_inclusive = ClassifierBasedCategoryFiller.create_classifier_category(env, 
@@ -187,7 +146,7 @@ def main():
                                                                                        nJ = cur_nJ)
 
         class_cat_inclusive.export_ROOT_histogram(binning = MVA_binning, processes = sig_samples + bkg_samples, var_names = "clf", 
-                                                  outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = False, density = False, ignore_binning = True)
+                                                  outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = True, density = False, ignore_binning = True)
 
         CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', 
                                                   plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True, ignore_binning = True)
