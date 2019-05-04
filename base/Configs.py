@@ -18,6 +18,8 @@ class TrainingConfig:
     #bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson", "singletop"]
     bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
 
+    sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
+
     @classmethod
     def from_file(cls, config_dir):
         gconfig = ConfigParser()
