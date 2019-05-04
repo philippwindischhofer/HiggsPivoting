@@ -1,4 +1,4 @@
-import os, pickle
+import os, pickle, math
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -281,7 +281,7 @@ class ModelEvaluator:
         pred = [self.env.predict(data = sample)[:,1] for sample in data]
 
         fig = plt.figure(figsize = (15, 10))
-        num_rows = len(pred) / num_cols
+        num_rows = math.ceil(len(pred) / num_cols)
 
         for ind, (cur_pred, cur_weights, cur_label) in enumerate(zip(pred, weights, labels)):
             xlabel = "classifier output"
@@ -414,7 +414,7 @@ class ModelEvaluator:
         labels = labels_sig + labels_bkg
 
         fig = plt.figure(figsize = (15, 10))
-        num_rows = len(pred) / num_cols
+        num_rows = math.ceil(len(pred) / num_cols)
 
         # iterate over all data samples and fill a separate subplot for each
         for ind, (cur_pred, cur_nuis, cur_weights, cur_label) in enumerate(zip(pred, nuis, weights, labels)):

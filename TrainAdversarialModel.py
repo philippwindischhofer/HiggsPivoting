@@ -63,14 +63,14 @@ def main():
         cur_traindat_sig, cur_nuisdat_sig, cur_weightdat_sig = TrainNuisAuxSplit(cur_sig_data_train)
         traindat_sig.append(cur_traindat_sig)
         nuisdat_sig.append(cur_nuisdat_sig)
-        weightdat_sig.append(cur_weightdat_sig)
+        weightdat_sig.append(cur_weightdat_sig * TrainingConfig.sample_reweighting[sample_name])
         print("'{}' with {} entries representing {} events".format(sample_name, len(cur_weightdat_sig), np.sum(cur_weightdat_sig)))
 
     for cur_bkg_data_train, sample_name in zip(bkg_data_train, bkg_samples):
         cur_traindat_bkg, cur_nuisdat_bkg, cur_weightdat_bkg = TrainNuisAuxSplit(cur_bkg_data_train)
         traindat_bkg.append(cur_traindat_bkg)
         nuisdat_bkg.append(cur_nuisdat_bkg)
-        weightdat_bkg.append(cur_weightdat_bkg)
+        weightdat_bkg.append(cur_weightdat_bkg * TrainingConfig.sample_reweighting[sample_name])
         print("'{}' with {} entries representing {} events".format(sample_name, len(cur_weightdat_bkg), np.sum(cur_weightdat_bkg)))
 
     print("starting up")

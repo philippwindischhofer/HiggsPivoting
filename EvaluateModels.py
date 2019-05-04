@@ -49,7 +49,7 @@ def main():
         cur_pTB2data = cur_test[["pTB2"]].values
         sig_data_test.append(cur_testdata)
         sig_mBB_test.append(cur_nuisdata)
-        sig_weights_test.append(cur_weights)
+        sig_weights_test.append(TrainingConfig.cur_weights)
         sig_dRBB_test.append(cur_dRBBdata)
         sig_pTB1_test.append(cur_pTB1data)
         sig_pTB2_test.append(cur_pTB2data)
@@ -68,7 +68,7 @@ def main():
         cur_pTB2data = cur_test[["pTB2"]].values
         bkg_data_test.append(cur_testdata)
         bkg_mBB_test.append(cur_nuisdata)
-        bkg_weights_test.append(cur_weights)
+        bkg_weights_test.append(TrainingConfig.cur_weights)
         bkg_dRBB_test.append(cur_dRBBdata)
         bkg_pTB1_test.append(cur_pTB1data)
         bkg_pTB2_test.append(cur_pTB2data)
