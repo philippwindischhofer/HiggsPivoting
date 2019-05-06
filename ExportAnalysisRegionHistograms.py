@@ -35,26 +35,26 @@ def main():
     sig_data_test = [] # this holds all the branches used as inputs to the classifier
     sig_weights_test = []
     sig_aux_data_test = [] # this holds some other branches that may be important
-    for sample in data_sig:
+    for sample, sample_name in zip(data_sig, sig_samples):
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test.append(cur_testdata)
-        sig_weights_test.append(cur_weights / test_size)
+        sig_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
 
     # load all background processes
     bkg_data_test = [] # this holds all the branches used as inputs to the classifier
     bkg_weights_test = []
     bkg_aux_data_test = [] # this holds some other branches that may be important
-    for sample in data_bkg:
+    for sample, sample_name in zip(data_bkg, bkg_samples):
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         bkg_data_test.append(cur_testdata)
-        bkg_weights_test.append(cur_weights / test_size)
+        bkg_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
         bkg_aux_data_test.append(cur_aux_data)
 
     # also prepare the total, concatenated versions
