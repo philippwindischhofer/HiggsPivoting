@@ -35,6 +35,7 @@ def main():
     sig_data_test = [] # this holds all the branches used as inputs to the classifier
     sig_weights_test = []
     sig_aux_data_test = [] # this holds some other branches that may be important
+
     for sample, sample_name in zip(data_sig, sig_samples):
         _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
@@ -43,6 +44,35 @@ def main():
         sig_data_test.append(cur_testdata)
         sig_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
+
+    # also need to keep separate all signal events with 2 jets / 3 jets
+    sig_data_test_2j = []
+    sig_weights_test_2j = []
+    sig_aux_data_test_2j = []
+
+    sig_data_test_3j = []
+    sig_weights_test_3j = []
+    sig_aux_data_test_3j = []
+
+    for sample, sample_name in zip(data_sig, sig_samples):
+        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_test = cur_test[cur_test["nJ"] == 2]
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
+
+        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        sig_data_test_2j.append(cur_testdata)
+        sig_weights_test_2j.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_aux_data_test_2j.append(cur_aux_data)
+
+    for sample, sample_name in zip(data_sig, sig_samples):
+        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_test = cur_test[cur_test["nJ"] == 3]
+        cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
+
+        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        sig_data_test_3j.append(cur_testdata)
+        sig_weights_test_3j.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_aux_data_test_3j.append(cur_aux_data)
 
     # load all background processes
     bkg_data_test = [] # this holds all the branches used as inputs to the classifier
@@ -72,25 +102,17 @@ def main():
     SR_binwidth = 10
     SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
-    # also prepare the binning along the MVA dimension
-    sigeff_binning = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.70, 0.75, 0.80, 0.85, 0.9, 0.92, 0.94, 0.96, 0.98, 0.99, 1.0]
-
-    # now convert the binning in terms of signal efficiency into the actual binning
-    # in terms of the classifier output value
-    MVA_binning = [ClassifierBasedCategoryFiller._sigeff_to_score(env = env, signal_events = sig_data_test, signal_weights = sig_weights_test, sigeff = sigeff) for sigeff in sigeff_binning[::-1]]
-
     print("mBB binning: {}".format(SR_binning))
     print("signal efficiency binning: {}".format(sigeff_binning))
-    print("classifier output binning: {}".format(MVA_binning))
 
-    # check if have a cutfile available, if so, use the values stored there
-    cuts = [0.0, 0.3, 0.8]
-    #cuts = [0.0, 0.25, 0.50, 0.8]
-        
+    # the cuts on the classifier (in terms of signal efficiency, separately for 2- and 3-jet events)
+    cuts = {2: [0.0, 0.3609901582980384, 0.8797635831120305], 
+            3: [0.0, 0.32613469848310933, 0.7895892560956852]}
+    
     print("using the following cuts:")
     print(cuts)
-
-    for cur_nJ in [2, 3]:
+    
+    for cur_nJ, cur_signal_events, cur_signal_weights in zip([2, 3], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j]):
         # first, export the categories of the cut-based analysis: high / low MET
         low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
                                                                      process_aux_events = aux_test,
@@ -117,7 +139,7 @@ def main():
                                                   plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
 
         # prepare N categories along the classifier output dimension
-        for cut_end, cut_start in zip(cuts[0:-1], cuts[1:]):
+        for cut_end, cut_start in zip(cuts[cur_nJ][0:-1], cuts[cur_nJ][1:]):
             print("exporting {}J region with sigeff range {} - {}".format(cur_nJ, cut_start, cut_end))
 
             cur_cat = ClassifierBasedCategoryFiller.create_classifier_category(env,
@@ -125,14 +147,16 @@ def main():
                                                                                process_aux_events = aux_test,
                                                                                process_weights = weights_test,
                                                                                process_names = samples,
-                                                                               signal_events = sig_data_test,
-                                                                               signal_weights = sig_weights_test,
+                                                                               signal_events = cur_signal_events,
+                                                                               signal_weights = cur_signal_weights,
                                                                                classifier_sigeff_range = (cut_start, cut_end),
                                                                                nJ = cur_nJ)
             cur_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                            outfile_path = os.path.join(outdir, "region_{}jet_{}_{}.root".format(cur_nJ, cut_start, cut_end)), clipping = True, density = False)
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
                                                       var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
+
+            print("filled {} signal events".format(cur_cat.get_number_events("Hbb")))
 
         # now, also export the classifier categories for each jet split
         class_cat_inclusive = ClassifierBasedCategoryFiller.create_classifier_category(env, 
