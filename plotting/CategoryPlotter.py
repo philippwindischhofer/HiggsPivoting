@@ -49,15 +49,20 @@ class CategoryPlotter:
 
         centers = []
         bin_contents = []
+        sow_squared_total = np.zeros(len(binning) - 1)
+
         for cur_data, cur_weights in zip(data, weights):
 
             cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten())
+            bins = np.digitize(cur_data, bins = binning) - 1 # subtract 1 to get back a 0-indexed array
+
+            # compute sum-of-weights-squared for each bin to get the uncertainties correct
+            sow_squared = np.array([np.sum(np.square(cur_weights[np.argwhere(bins == cur_bin)])) for cur_bin in range(0, len(binning) - 1)]).flatten()
+
+            sow_squared_total = np.add(sow_squared_total, sow_squared)
 
             if ignore_binning:
                 cur_bin_edges = np.linspace(cur_bin_edges[0], cur_bin_edges[-1], num = len(cur_bin_edges), endpoint = True)
-
-            print("cur_bin_edges")
-            print(cur_bin_edges)
 
             lower_edges = cur_bin_edges[:-1]
             upper_edges = cur_bin_edges[1:]
@@ -67,8 +72,16 @@ class CategoryPlotter:
             centers.append(cur_centers)
             bin_contents.append(cur_bin_contents)
 
+        # compute the actual per-bin uncertainty
+        sow_total = np.sqrt(sow_squared_total)
+        
         #n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
         n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = cur_bin_edges, **args)
+
+        error_centers = centers[0]
+        error_offset = np.sum(bin_contents, axis = 0)
+
+        ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
