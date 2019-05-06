@@ -102,8 +102,16 @@ def main():
     SR_binwidth = 10
     SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
-    print("mBB binning: {}".format(SR_binning))
+    # also prepare the binning along the MVA dimension
+    sigeff_binning = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.70, 0.75, 0.80, 0.85, 0.9, 0.92, 0.94, 0.96, 0.98, 0.99, 1.0]
+
+    # now convert the binning in terms of signal efficiency into the actual binning
+    # in terms of the classifier output value
+    MVA_binning = [ClassifierBasedCategoryFiller._sigeff_to_score(env = env, signal_events = sig_data_test, signal_weights = sig_weights_test, sigeff = sigeff) for sigeff in sigeff_binning[::-1]]
+
     print("signal efficiency binning: {}".format(sigeff_binning))
+    print("classifier output binning: {}".format(MVA_binning))
+    print("mBB binning: {}".format(SR_binning))
 
     # the cuts on the classifier (in terms of signal efficiency, separately for 2- and 3-jet events)
     cuts = {2: [0.0, 0.3609901582980384, 0.8797635831120305], 
