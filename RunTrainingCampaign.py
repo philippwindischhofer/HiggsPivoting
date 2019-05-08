@@ -5,6 +5,7 @@ from shutil import copyfile
 
 from ConfigFileSweeper import ConfigFileSweeper
 from utils.CondorJobSubmitter import CondorJobSubmitter
+from utils.LocalJobSubmitter import LocalJobSubmitter
 from base.Configs import TrainingConfig
 
 def create_job_script(training_data_path, run_dir, script_dir):
@@ -50,6 +51,7 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
             
             # submit them to the condor batch system
             CondorJobSubmitter.submit_job(job_script)
+            #LocalJobSubmitter.submit_job(job_script)
 
         os.remove(config_file)
 
