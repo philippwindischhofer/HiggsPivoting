@@ -17,6 +17,7 @@ class TrainingConfig:
     sig_samples = ["Hbb"]
     #bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson", "singletop"]
     bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
+    #bkg_samples = ["Zjets", "Wjets", "ttbar"]
 
     #sample_reweighting = {"Hbb": 0.287, "Zjets": 0.279, "Wjets": 0.513, "ttbar": 0.219, "diboson": 0.380}
     sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
