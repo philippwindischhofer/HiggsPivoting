@@ -34,8 +34,11 @@ region_infiles = ["2jet_high_MET.root", "2jet_low_MET.root",
 # names of the individual signal templates available in each region
 #sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]
 sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "Hbb"]
+#sample_names = ["ttbar", "Zjets", "Wjets", "Hbb"]
 #sample_names = TrainingConfigs.bkg_samples + TrainingConfigs.sig_samples
+#normalization_floating = [False, False, False, True]
 normalization_floating = [False, False, False, False, True]
+#signal_samples = [False, False, False, True]
 signal_samples = [False, False, False, False, True]
 template_names = [sample_name + "_mBB" for sample_name in sample_names]
 #template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
