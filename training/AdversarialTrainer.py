@@ -54,7 +54,8 @@ class AdversarialTrainer(Trainer):
         sampled_data = []
         sampled_weights = []
         for cur_source, cur_weights, cur_nevents in zip(sources, weights, nevents):
-            cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size * cur_nevents / total_nevents))
+            #cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size * cur_nevents / total_nevents))
+            cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size / len(sources)))
             sampled_data.append(cur_sampled_data)
             sampled_weights.append(cur_sampled_weights)
             total_SOW += np.sum(cur_sampled_weights)
