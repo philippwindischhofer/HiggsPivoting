@@ -18,7 +18,7 @@ class CategoryPlotter:
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
-    def plot_category_composition(category, binning, outpath, process_order = TrainingConfig.bkg_samples + TrainingConfig.sig_samples, var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}, logscale = False, ignore_binning = False):
+    def plot_category_composition(category, binning, outpath, process_order = TrainingConfig.bkg_samples + TrainingConfig.sig_samples, var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}, logscale = False, ignore_binning = False, histtype = 'stepfilled', stacked = True, density = False):
         if not isinstance(binning, (list, np.ndarray)):
             raise Exception("Error: expect a list of explicit bin edges for this function!")
         
@@ -53,7 +53,7 @@ class CategoryPlotter:
 
         for cur_data, cur_weights in zip(data, weights):
 
-            cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten())
+            cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten(), density = density)
             bins = np.digitize(cur_data, bins = binning) - 1 # subtract 1 to get back a 0-indexed array
 
             # compute sum-of-weights-squared for each bin to get the uncertainties correct
@@ -76,12 +76,13 @@ class CategoryPlotter:
         sow_total = np.sqrt(sow_squared_total)
         
         #n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
-        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = cur_bin_edges, **args)
+        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = histtype, stacked = stacked, color = colors, label = labels, bins = cur_bin_edges, **args)
 
-        error_centers = centers[0]
-        error_offset = np.sum(bin_contents, axis = 0)
+        if stacked:
+            error_centers = centers[0]
+            error_offset = np.sum(bin_contents, axis = 0)
+            ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
 
-        ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
         ax.legend()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
