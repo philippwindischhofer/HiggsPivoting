@@ -9,6 +9,7 @@ from models.SimpleClassifier import SimpleClassifier
 from models.SimpleProbabilisticClassifier import SimpleProbabilisticClassifier
 from models.GMMAdversary import GMMAdversary
 from models.MINEAdversary import MINEAdversary
+from models.JSAdversary import JSAdversary
 from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 
 class AdversarialEnvironment(TFEnvironment):
