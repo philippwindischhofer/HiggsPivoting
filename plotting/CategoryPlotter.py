@@ -48,7 +48,7 @@ class CategoryPlotter:
             clipped_values = np.clip(process_values, binning[0], binning[-1])
             data.append(clipped_values)
             weights.append(process_weights)
-            labels.append(process_name)
+            labels.append(CategoryPlotter.process_labels[process_name])
 
         # then plot the histogram
         fig = plt.figure(figsize = (6, 5))
@@ -90,12 +90,15 @@ class CategoryPlotter:
             error_offset = np.sum(bin_contents, axis = 0)
             ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
 
-        leg = ax.legend()
+        leg = ax.legend(loc = "upper right")
         leg.get_frame().set_linewidth(0.0)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.margins(0.0)
+
+        # add some margin on top of the figures
+        ax.set_ylim([0, 1.2 * ax.get_ylim()[1]])
 
         if logscale:
             plt.yscale('log')
