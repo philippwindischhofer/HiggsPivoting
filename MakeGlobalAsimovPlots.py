@@ -29,6 +29,8 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
     for (name, sig) in sorted_model_performance:
         print("{}: {} sigma".format(name, sig))
 
+    print("CBA: {} sigma".format(hypodict["asimov_sig_high_low_MET_background_floating"]))
+
     # now have all the data, just need to plot it
     PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir)
 
