@@ -46,6 +46,7 @@ def main():
 
     for sample, sample_name in zip(data_sig, sig_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
@@ -65,6 +66,7 @@ def main():
 
     for sample, sample_name in zip(data_sig, sig_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_test = cur_test[cur_test["nJ"] == 2]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
@@ -76,6 +78,7 @@ def main():
 
     for sample, sample_name in zip(data_sig, sig_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_test = cur_test[cur_test["nJ"] == 3]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
@@ -91,6 +94,7 @@ def main():
     bkg_aux_data_test = [] # this holds some other branches that may be important
     for sample, sample_name in zip(data_bkg, bkg_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 

@@ -37,15 +37,17 @@ def main():
     sig_data_train = []
     for sample, sample_name in zip(sig_data, sig_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        #cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        #cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         bkg_data_train.append(cur_train)
 
     print("got " + str(len(sig_data)) + " signal datasets")

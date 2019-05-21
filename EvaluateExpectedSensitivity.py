@@ -2,7 +2,6 @@ import os, pickle
 from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
 from models.AdversarialEnvironment import AdversarialEnvironment
 from analysis.Category import Category
@@ -18,13 +17,22 @@ def main():
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--model_dir", action = "store", dest = "model_dir")
     parser.add_argument("--plot_dir", action = "store", dest = "plot_dir")
+    parser.add_argument("--use_test", action = "store_const", const = True, default = False)
     args = vars(parser.parse_args())
+
+    # extract the validation or test dataset
+    if args["use_test"]:
+        print("using test dataset")
+        data_slice = TrainingConfig.test_slice
+    else:
+        print("using validation dataset")
+        data_slice = TrainingConfig.validation_slice
+
+    slice_size = data_slice[1] - data_slice[0]
 
     infile_path = args["infile_path"]
     model_dir = args["model_dir"]
     plotdir = args["plot_dir"]
-
-    test_size = TrainingConfig.test_size # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
     sig_samples = TrainingConfig.sig_samples
@@ -39,12 +47,13 @@ def main():
     sig_weights_test = []
     sig_aux_data_test = []
     for sample, sample_name in zip(sig_data, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test.append(cur_testdata)
         sig_mBB_test.append(cur_nuisdata)
-        sig_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
 
     bkg_data_test = []
@@ -52,12 +61,13 @@ def main():
     bkg_weights_test = []
     bkg_aux_data_test = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         bkg_data_test.append(cur_testdata)
         bkg_mBB_test.append(cur_nuisdata)
-        bkg_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        bkg_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         bkg_aux_data_test.append(cur_aux_data)
 
     # also prepare the total, concatenated versions

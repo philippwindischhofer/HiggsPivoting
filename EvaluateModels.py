@@ -48,6 +48,7 @@ def main():
     sig_weights_test = []
     for sample, sample_name in zip(sig_data, sig_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_dRBBdata = cur_test[["dRBB"]].values
@@ -68,6 +69,7 @@ def main():
     bkg_weights_test = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
         cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_dRBBdata = cur_test[["dRBB"]].values
