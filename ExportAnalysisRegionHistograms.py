@@ -2,7 +2,6 @@ import os, pickle
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 
 from models.AdversarialEnvironment import AdversarialEnvironment
 from analysis.Category import Category
@@ -16,14 +15,23 @@ def main():
     parser = ArgumentParser(description = "populate analysis signal regions and export them to be used with HistFitter")
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--model_dir", action = "store", dest = "model_dir")
-    parser.add_argument("--test_size", action = "store", dest = "test_size")
     parser.add_argument("--out_dir", action = "store", dest = "out_dir")
+    parser.add_argument("--use_test", action = "store_const", const = True, default = False)
     args = vars(parser.parse_args())
+
+    # extract the validation or test dataset
+    if args["use_test"]:
+        print("using test dataset")
+        data_slice = TrainingConfig.test_slice
+    else:
+        print("using validation dataset")
+        data_slice = TrainingConfig.validation_slice
+
+    slice_size = data_slice[1] - data_slice[0]
 
     infile_path = args["infile_path"]
     model_dir = args["model_dir"]
     outdir = args["out_dir"]
-    test_size = float(args["test_size"]) # need this when reading datasets that haven't been used for training (but instead for assessing systematics)
 
     sig_samples = TrainingConfig.sig_samples
     bkg_samples = TrainingConfig.bkg_samples
@@ -37,12 +45,13 @@ def main():
     sig_aux_data_test = [] # this holds some other branches that may be important
 
     for sample, sample_name in zip(data_sig, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test.append(cur_testdata)
-        sig_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
 
     # also need to keep separate all signal events with 2 jets / 3 jets
@@ -55,23 +64,25 @@ def main():
     sig_aux_data_test_3j = []
 
     for sample, sample_name in zip(data_sig, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_test = cur_test[cur_test["nJ"] == 2]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test_2j.append(cur_testdata)
-        sig_weights_test_2j.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test_2j.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test_2j.append(cur_aux_data)
 
     for sample, sample_name in zip(data_sig, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_test = cur_test[cur_test["nJ"] == 3]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test_3j.append(cur_testdata)
-        sig_weights_test_3j.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test_3j.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test_3j.append(cur_aux_data)
 
     # load all background processes
@@ -79,12 +90,13 @@ def main():
     bkg_weights_test = []
     bkg_aux_data_test = [] # this holds some other branches that may be important
     for sample, sample_name in zip(data_bkg, bkg_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         bkg_data_test.append(cur_testdata)
-        bkg_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        bkg_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         bkg_aux_data_test.append(cur_aux_data)
 
     # also prepare the total, concatenated versions

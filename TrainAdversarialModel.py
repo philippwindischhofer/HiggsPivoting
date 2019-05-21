@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from argparse import ArgumentParser
 
 from models.AdversarialEnvironment import AdversarialEnvironment
@@ -28,22 +27,24 @@ def main():
     # read the training data
     sig_samples = TrainingConfig.sig_samples
     bkg_samples = TrainingConfig.bkg_samples
+    training_slice = TrainingConfig.training_slice
 
     print("loading data ...")
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
     # extract the training dataset
-    test_size = TrainingConfig.test_size
     sig_data_train = []
     for sample, sample_name in zip(sig_data, sig_samples):
-        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
         cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
-        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
         cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         bkg_data_train.append(cur_train)
 

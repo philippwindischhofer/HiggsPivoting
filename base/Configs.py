@@ -11,15 +11,17 @@ class TrainingConfig:
     training_pars = {"pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
     test_size = 0.5
+
+    training_slice = [0.0, 0.33]
+    validation_slice = [0.33, 0.66]
+    test_slice = [0.66, 1.0]
+
     data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-diboson-2.h5"
     #data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
     sig_samples = ["Hbb"]
-    #bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson", "singletop"]
     bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
-    #bkg_samples = ["Zjets", "Wjets", "ttbar"]
 
-    #sample_reweighting = {"Hbb": 0.287, "Zjets": 0.279, "Wjets": 0.513, "ttbar": 0.219, "diboson": 0.380}
     sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
 
     @classmethod

@@ -1,8 +1,6 @@
 import os, pickle
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import mutual_info_regression
 from argparse import ArgumentParser
 
 from models.AdversarialEnvironment import AdversarialEnvironment
@@ -17,6 +15,7 @@ def main():
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--plot_dir", action = "store", dest = "plot_dir")
     parser.add_argument("--plot_clf_distribs", action = "store_const", const = True, default = False)
+    parser.add_argument("--use_test", action = "store_const", const = True, default = False)
     parser.add_argument("model_dirs", nargs = '+', action = "store")
     args = vars(parser.parse_args())
 
@@ -33,8 +32,14 @@ def main():
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
-    # extract the test dataset
-    test_size = TrainingConfig.test_size
+    # extract the validation or test dataset
+    if args["use_test"]:
+        print("using test dataset")
+        data_slice = TrainingConfig.test_slice
+    else:
+        print("using validation dataset")
+        data_slice = TrainingConfig.validation_slice
+
     sig_data_test = []
     sig_mBB_test = []
     sig_dRBB_test = []
@@ -42,7 +47,8 @@ def main():
     sig_pTB2_test = []
     sig_weights_test = []
     for sample, sample_name in zip(sig_data, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_dRBBdata = cur_test[["dRBB"]].values
         cur_pTB1data = cur_test[["pTB1"]].values
@@ -61,7 +67,8 @@ def main():
     bkg_pTB2_test = []
     bkg_weights_test = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
         cur_dRBBdata = cur_test[["dRBB"]].values
         cur_pTB1data = cur_test[["pTB1"]].values
