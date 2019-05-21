@@ -8,13 +8,20 @@ from base.Configs import TrainingConfig
 class CategoryPlotter:
     
     # try to be compatible with the official colors
-    process_colors = {"Hbb": "#ff0000ff", 
-                      "ttbar": "#ffcc00ff", 
-                      "singletop": "#cc9700ff", 
-                      "Wjets": "#006300ff", 
-                      "Zjets": "#0063ccff", 
-                      "diboson": "#ccccccff",
-                      "generic_process": "#726c6aff"}
+    process_colors = {"Hbb": "#ff0000", 
+                      "ttbar": "#ffcc00", 
+                      "singletop": "#cc9700", 
+                      "Wjets": "#006300", 
+                      "Zjets": "#0063cc", 
+                      "diboson": "#cccccc",
+                      "generic_process": "#726c6a"}
+
+    process_labels = {"Hbb": r'$VH$, $H\rightarrow b\bar{b}$',
+                      "ttbar": r'$t\bar{t}$',
+                      "Wjets": r'$W$ + jets',
+                      "Zjets": r'$Z$ + jets',
+                      "diboson": r'Diboson'
+    }
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
@@ -76,14 +83,16 @@ class CategoryPlotter:
         sow_total = np.sqrt(sow_squared_total)
         
         #n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
-        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = histtype, stacked = stacked, color = colors, label = labels, bins = cur_bin_edges, **args)
+        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = histtype, stacked = stacked, color = colors, edgecolor = 'black', label = labels, bins = cur_bin_edges, **args)
 
         if stacked:
             error_centers = centers[0]
             error_offset = np.sum(bin_contents, axis = 0)
             ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
 
-        ax.legend()
+        leg = ax.legend()
+        leg.get_frame().set_linewidth(0.0)
+
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.margins(0.0)

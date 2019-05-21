@@ -132,6 +132,8 @@ def main():
     # the cuts on the classifier (in terms of signal efficiency, separately for 2- and 3-jet events)
     cuts = {2: [0.0, 0.3609901582980384, 0.8797635831120305], 
             3: [0.0, 0.32613469848310933, 0.7895892560956852]}
+
+    cut_labels = ["tight", "loose"]
     
     print("using the following cuts:")
     print(cuts)
@@ -148,10 +150,10 @@ def main():
                                           outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {})
+                                                  plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MC16d", r'150 GeV < MET < 200 GeV', "dRBB < 1.8", "nJ = {}".format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+                                                  plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
 
         high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
                                                                        process_aux_events = aux_test,
@@ -163,13 +165,13 @@ def main():
                                           outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {})
+                                                  plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MC16d", "MET > 200 GeV", "dRBB < 1.2", "nJ = {}".format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+                                                  plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
 
         # prepare N categories along the classifier output dimension
-        for cut_end, cut_start in zip(cuts[cur_nJ][0:-1], cuts[cur_nJ][1:]):
+        for cut_end, cut_start, cut_label in zip(cuts[cur_nJ][0:-1], cuts[cur_nJ][1:], cut_labels):
             print("exporting {}J region with sigeff range {} - {}".format(cur_nJ, cut_start, cut_end))
 
             cur_cat = ClassifierBasedCategoryFiller.create_classifier_category(env,
@@ -184,10 +186,10 @@ def main():
             cur_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                            outfile_path = os.path.join(outdir, "region_{}jet_{}_{}.root".format(cur_nJ, cut_start, cut_end)), clipping = True, density = False)
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)])
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)])
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}_nostack.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MC16d", "clf tight", "nJ = {}".format(cur_nJ)], stacked = False, histtype = 'step', density = True)
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
 
             print("filled {} signal events".format(cur_cat.get_number_events("Hbb")))
 
