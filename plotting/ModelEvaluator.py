@@ -11,11 +11,31 @@ from sklearn.feature_selection import mutual_info_regression
 from scipy.special import rel_entr
 
 from base.Configs import TrainingConfig
+from analysis.Category import Category
 
 class ModelEvaluator:
 
     def __init__(self, env):
         self.env = env
+
+    # compute the acceptance
+    @staticmethod
+    def get_efficiency(signal_category, inclusive_category, processes):
+        selected_events = 0
+        inclusive_events = 0
+
+        for process in processes:
+            selected_events += signal_category.get_number_events(process)
+            inclusive_events += inclusive_category.get_number_events(process)
+
+        return selected_events / inclusive_events
+
+    @staticmethod
+    def get_JS_categories(cat_a, cat_b, binning, var, processes):
+        var_a, weights_a = cat_a.get_event_variable(processes, var)
+        var_b, weights_b = cat_b.get_event_variable(processes, var)
+
+        return ModelEvaluator._get_JS(var_a, weights_a.flatten(), var_b, weights_b.flatten(), binning)
 
     # computes the Jenson-Shannon divergence (using logarithms in base 2!!) between 
     # sets of weighted samples drawn from distributions p and q. Using log_2 ensures

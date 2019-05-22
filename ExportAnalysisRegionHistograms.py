@@ -9,6 +9,7 @@ from analysis.ClassifierBasedCategoryFiller import ClassifierBasedCategoryFiller
 from analysis.CutBasedCategoryFiller import CutBasedCategoryFiller
 from base.Configs import TrainingConfig
 from plotting.CategoryPlotter import CategoryPlotter
+from plotting.ModelEvaluator import ModelEvaluator
 from DatasetExtractor import TrainNuisAuxSplit
 
 def main():
@@ -137,8 +138,27 @@ def main():
     
     print("using the following cuts:")
     print(cuts)
+
+    # fill the inclusive categories with 2j / 3j events
+    inclusive_2J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
+                                                             process_aux_events = aux_test,
+                                                             process_weights = weights_test,
+                                                             process_names = samples,
+                                                             nJ = 2)
+    for cur_process in samples:
+        inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_2jet.pkl".format(cur_process)), density = True)
+
+    inclusive_3J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
+                                                             process_aux_events = aux_test,
+                                                             process_weights = weights_test,
+                                                             process_names = samples,
+                                                             nJ = 3)
+    for cur_process in samples:
+        inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_3jet.pkl".format(cur_process)), density = True)
+
+    anadict = {}
     
-    for cur_nJ, cur_signal_events, cur_signal_weights in zip([2, 3], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j]):
+    for cur_nJ, cur_inclusive_cat, cur_signal_events, cur_signal_weights in zip([2, 3], [inclusive_2J, inclusive_3J], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j]):
         # first, export the categories of the cut-based analysis: high / low MET
         low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
                                                                      process_aux_events = aux_test,
@@ -148,6 +168,15 @@ def main():
 
         low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                           outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
+
+        anadict["low_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, sig_samples)
+        anadict["low_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, bkg_samples)
+
+        anadict["low_MET_{}jet_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(low_MET_cat, cur_inclusive_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
+
+        for cur_process in samples:
+            low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
+
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
@@ -163,6 +192,12 @@ def main():
 
         high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                           outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)
+
+        anadict["high_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, sig_samples)
+        anadict["high_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, bkg_samples)
+
+        for cur_process in samples:
+            high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
@@ -185,6 +220,13 @@ def main():
                                                                                nJ = cur_nJ)
             cur_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                            outfile_path = os.path.join(outdir, "region_{}jet_{}_{}.root".format(cur_nJ, cut_start, cut_end)), clipping = True, density = False)
+
+            anadict["{}_{}jet_sig_eff".format(cut_label, cur_nJ)] = ModelEvaluator.get_efficiency(cur_cat, cur_inclusive_cat, sig_samples)
+            anadict["{}_{}jet_bkg_eff".format(cut_label, cur_nJ)] = ModelEvaluator.get_efficiency(cur_cat, cur_inclusive_cat, bkg_samples)
+
+            for cur_process in samples:
+                cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
+
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
                                                       var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)])
 
@@ -212,6 +254,11 @@ def main():
 
         CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J_nostack.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', ylabel = "a.u.",
                                                   plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True, ignore_binning = True, stacked = False, histtype = 'step', density = True)
+
+        print("got the following anadict: {}".format(anadict))
+        with open(os.path.join(outdir, "anadict.pkl"), "wb") as outfile:
+            pickle.dump(anadict, outfile)
+
         
 if __name__ == "__main__":
     main()
