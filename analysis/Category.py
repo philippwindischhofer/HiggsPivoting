@@ -94,29 +94,6 @@ class Category:
         with open(outfile, "wb") as outfile:
             pickle.dump((n, bins, var_name), outfile)
 
-    def export_KDE(self, processes, var_name, outfile, density = True, npoints = 1000):
-        data, weights = self.get_event_variable(processes, var_name)
-
-        # determine the range
-        data_min = np.min(data)
-        data_max = np.max(data)
-
-        evalpts = np.linspace(data_min, data_max, npoints)
-
-        if density:
-            data /= np.sum(weights)
-
-        # perform the KDE
-        import statsmodels.api as sm
-        dens = sm.nonparametric.KDEUnivariate(data)
-        dens.fit(weights = weights, fft = False)
-        kde_evaluated = dens.evaluate(evalpts)
-
-        print(np.shape(kde_evaluated))
-
-        with open(outfile, "wb") as outfile:
-            pickle.dump((kde_evaluated, evalpts, var_name), outfile)
-
     # similar to 'export_histogram', but instead writes a *.root file
     def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False, ignore_binning = False):
         if isinstance(var_names, list):

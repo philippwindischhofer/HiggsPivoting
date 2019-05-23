@@ -348,9 +348,42 @@ class PerformancePlotter:
                 PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = "binned significance", ylabel = "1/JSD",
                                                        colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [0, 5], ylog = True, epilog = CBA_epilog)
 
+    # @staticmethod
+    # def _smooth_histogram(contents, edges, mode = "hist", npoints = 1000):
+    #     from sklearn.neighbors import KernelDensity
+
+    #     if mode == "hist":
+    #         centres = (edges[:-1] + edges[1:]) / 2
+    #     elif mode == "plot":
+    #         centres = edges
+
+    #     bw = (centres[1] - centres[0]) * 0.6
+
+    #     kde = KernelDensity(bandwidth=bw)
+    #     kde.fit(centres.reshape(-1, 1), sample_weight = contents)
+
+    #     evalpts = np.linspace(centres[0], centres[-1], npoints)
+    #     values = np.exp(kde.score_samples(evalpts))
+
+    #     return evalpts, values
+
+    @staticmethod
+    def _smooth_histogram(contents, centres, npoints = 1000):
+        import statsmodels.api as sm
+
+        bw = (centres[1] - centres[0]) * 0.6
+
+        dens = sm.nonparametric.KDEUnivariate(centres)
+        dens.fit(fft = False, weights = contents.flatten(), bw = bw)
+
+        evalpts = np.linspace(centres[0], centres[-1], npoints)
+        values = dens.evaluate(evalpts)
+
+        return evalpts, values
+
     # combine the passed plots and save them
     @staticmethod
-    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = ""):
+    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False):
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -377,7 +410,10 @@ class PerformancePlotter:
             high_edges = edges[1:]
             cur_centers = 0.5 * (low_edges + high_edges)
 
-            bin_centers.append(cur_centers)
+            if smoothing:
+                cur_centres, cur_bin_values = PerformancePlotter._smooth_histogram(cur_bin_values, cur_centers)
+            
+            bin_centers.append(cur_centres)
             bin_values.append(cur_bin_values)
 
         fig = plt.figure()
@@ -392,6 +428,9 @@ class PerformancePlotter:
         
         # plot the overlays
         for (x, y, opts) in overlays:
+            if smoothing:
+                x, y = PerformancePlotter._smooth_histogram(y, x)
+
             ax.plot(x, y, **opts)
             leg = ax.legend()
             leg.get_frame().set_linewidth(0.0)
