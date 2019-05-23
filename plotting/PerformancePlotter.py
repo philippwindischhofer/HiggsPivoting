@@ -237,11 +237,8 @@ class PerformancePlotter:
                 if not cur_type in seen_types:
                     seen_types.append(cur_type)
 
-                ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = label, marker = marker)
-
-        # make legend with the different types that were encountered
-        legend_elems = [Line2D([0], [0], marker = markerstyle(cur_type), color = 'white', markerfacecolor = "black", label = markerlabel(cur_type)) for cur_type in seen_types]
-        ax.legend(handles = legend_elems)
+                #ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = label, marker = marker)
+                ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = None, marker = marker)
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
@@ -264,6 +261,11 @@ class PerformancePlotter:
             ax.set_yscale("log")
         if epilog:
             epilog(ax)
+
+        # make legend with the different types that were encountered
+        #legend_elems = [Line2D([0], [0], marker = markerstyle(cur_type), color = 'white', markerfacecolor = "black", label = markerlabel(cur_type)) for cur_type in seen_types]
+        #ax.legend(handles = legend_elems)
+        ax.legend()
         
         fig.savefig(outfile)
         plt.close()        
@@ -303,9 +305,52 @@ class PerformancePlotter:
                                                xlabel = r'$1/\epsilon_{\mathrm{bkg}}$ @ $\epsilon_{\mathrm{sig}} = 0.25$', ylabel = r'1/JSD @ $\epsilon_{\mathrm{sig}} = 0.25$',
                                                xaxis_range = [1, 100], yaxis_range = [0.5, 1e4], xlog = True, ylog = True, epilog = shade_epilog_25, grid = False)   
 
+    @staticmethod
+    def plot_significance_fairness_inclusive(anadicts, outdir, colorquant = "lambda"):
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+
+        nJ = [2, 3]
+
+        for cur_nJ in nJ:
+            CBA_performance = anadicts[0]["{}jet_binned_sig_CBA".format(cur_nJ)]
+            CBA_fairness = anadicts[0]["{}jet_high_low_MET_inv_JS_bkg".format(cur_nJ)]
+
+            def CBA_epilog(ax):
+                ax.text(x = 4, y = 2e3, s = "{} jet".format(cur_nJ))
+                ax.scatter(CBA_performance, CBA_fairness, color = "tomato", label = "cut-based analysis")
+            
+            xquant = "{}jet_binned_sig_PCA".format(cur_nJ)
+            yquant = re.compile("{}jet_tight_loose_inv_JS_bkg".format(cur_nJ))
+            PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = "binned significance", ylabel = "1/JSD",
+                                                   colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [0, 5], ylog = True, epilog = CBA_epilog)
+            
+    @staticmethod
+    def plot_significance_fairness_exclusive(anadicts, outdir, colorquant = "lambda"):
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+
+        nJ = [2, 3]
+        cut_labels = ["tight", "loose"]
+        CBA_labels = ["high_MET", "low_MET"]
+
+        for cur_nJ in nJ:
+            for cur_cut_label, cur_CBA_label in zip(cut_labels, CBA_labels):
+                CBA_performance = anadicts[0]["{}_{}jet_binned_sig".format(cur_CBA_label, cur_nJ)]
+                CBA_fairness = anadicts[0]["{}_{}jet_inv_JS_bkg".format(cur_CBA_label, cur_nJ)]
+
+                def CBA_epilog(ax):
+                    ax.text(x = 4, y = 2e3, s = "{}, {} jet".format(cur_cut_label, cur_nJ))
+                    ax.scatter(CBA_performance, CBA_fairness, color = "tomato", label = "cut-based analysis")
+
+                xquant = "{}_{}jet_binned_sig".format(cur_cut_label, cur_nJ)
+                yquant = re.compile("{}_{}jet_inv_JS_bkg".format(cur_cut_label, cur_nJ))
+                PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = "binned significance", ylabel = "1/JSD",
+                                                       colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [0, 5], ylog = True, epilog = CBA_epilog)
+
     # combine the passed plots and save them
     @staticmethod
-    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = []):
+    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = ""):
         cmap = plt.cm.viridis
 
         # find the proper normalization of the color map
@@ -322,8 +367,8 @@ class PerformancePlotter:
         for perfdict, cur_hist in zip(perfdicts, hist_data):
             cur_bin_values = cur_hist[0]
             edges = cur_hist[1]
-            xlabel = cur_hist[2]
-            ylabel = cur_hist[3]
+            xlabel_r = xlabel if xlabel else cur_hist[2]
+            ylabel_r = ylabel if ylabel else cur_hist[3]
 
             color = cmap(norm(float(perfdict[colorquant]))) if colorquant in perfdict else "black"
             colors.append(color)
@@ -341,14 +386,19 @@ class PerformancePlotter:
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
             ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.1)
+
+        if epilog:
+            epilog(ax)
         
         # plot the overlays
         for (x, y, opts) in overlays:
             ax.plot(x, y, **opts)
-            ax.legend()
+            leg = ax.legend()
+            leg.get_frame().set_linewidth(0.0)
 
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel_r)
+        ax.set_ylabel(ylabel_r)
+        ax.margins(0.0)
         ax.set_title(plot_title)
         ax.set_ylim((0, 1.2 * ax.get_ylim()[1])) # add some more margin on top
 
