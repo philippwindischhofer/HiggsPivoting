@@ -21,6 +21,21 @@ class Category:
         self.aux_content = {}
         self.aux_variables = {}
 
+    @classmethod
+    def from_merger(cls, categories):
+        retval = cls(categories[0].name)
+
+        for category in categories:
+            for process in category.event_content.keys():
+                retval.add_events(events = category.event_content[process],
+                                  weights = category.weight_content[process],
+                                  process = process,
+                                  event_variables = category.event_variables[process],
+                                  aux_content = category.aux_content[process],
+                                  aux_variables = category.aux_variables[process])
+
+        return retval
+
     def add_events(self, events, weights, process, event_variables, aux_content = None, aux_variables = None):
         if len(events) != len(weights):
             raise Exception("Need to have exactly one weight per event!")
