@@ -147,7 +147,6 @@ def main():
                                                              nJ = 2)
     for cur_process in samples:
         inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_2jet.pkl".format(cur_process)), density = True)
-        #inclusive_2J.export_KDE(processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "kde_mBB_{}_2jet.pkl".format(cur_process)), density = True)
 
     inclusive_3J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
                                                              process_aux_events = aux_test,
@@ -156,7 +155,6 @@ def main():
                                                              nJ = 3)
     for cur_process in samples:
         inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_3jet.pkl".format(cur_process)), density = True)
-        #inclusive_2J.export_KDE(processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "kde_mBB_{}_3jet.pkl".format(cur_process)), density = True)
 
     total_events = inclusive_2J.get_total_events() + inclusive_3J.get_total_events()
     CBA_used_events = 0
@@ -185,7 +183,6 @@ def main():
 
         for cur_process in samples:
             low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
-            #low_MET_cat.export_KDE(processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "kde_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
@@ -216,7 +213,6 @@ def main():
 
         for cur_process in samples:
             high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
-            #high_MET_cat.export_KDE(processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "kde_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                   plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
@@ -255,7 +251,6 @@ def main():
 
             for cur_process in samples:
                 cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
-                #cur_cat.export_KDE(processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "kde_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
                                                       var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)])
