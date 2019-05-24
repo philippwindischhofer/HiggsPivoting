@@ -51,6 +51,10 @@ class ModelEvaluator:
         p_binned, _ = np.histogram(np.clip(p, binning[0], binning[-1]), bins = binning, weights = p_weights, density = True)
         q_binned, _ = np.histogram(np.clip(q, binning[0], binning[-1]), bins = binning, weights = q_weights, density = True)
 
+        # scale it up by the bin width to get actual per-bin probabilities instead of a density
+        p_binned *= (binning[1] - binning[0])
+        q_binned *= (binning[1] - binning[0])
+
         # this code is taken (almost) verbatim from https://github.com/scipy/scipy/blob/c42462a/scipy/spatial/distance.py#L1239-L1296
         m_binned = (p_binned + q_binned) / 2.0
         left = rel_entr(p_binned, m_binned)
