@@ -27,6 +27,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
 
     def annotation_epilog(ax):
         ax.text(x = 0.05, y = 0.9, s = "\n".join(inner_label), transform=ax.transAxes)
+        ax.set_ylim([0, ax.get_ylim()[1] * 0.6])
     
     # load the plots that are to be mapped over runs
     for model_dir in model_dirs:
@@ -76,6 +77,9 @@ if __name__ == "__main__":
 
     dicts = []
 
+    # plot the shaping / performance metrics in all SRs
+    MakeGlobalPerformanceFairnessPlots(**args)
+
     # make shaping plots for all signal regions
     for process in processes:
         for cur_nJ in nJ:
@@ -91,24 +95,5 @@ if __name__ == "__main__":
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))
 
-                #MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
+                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
                 MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)], smoothing = True)
-
-    # # make shaping plots for all signal regions using KDE
-    # for process in processes:
-    #     for cur_nJ in nJ:
-    #         for cur_SR, cur_CBA_SR in zip(SRs, CBA_SRs):
-    #             filename = "kde_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR)
-    #             overlay_inclusive = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet.pkl".format(process, cur_nJ))
-    #             overlay_CBA = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
-
-    #             overlay_paths = [overlay_inclusive, overlay_CBA]
-    #             overlay_labels = ["inclusive", "cut-based analysis"]
-    #             overlay_colors = ["black", "tomato"]
-                
-    #             outpath = os.path.join(args["plotdir"], "kde_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
-
-    #             MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = "mBB", ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors)
-
-    # also plot the shaping / performance metrics in all SRs
-    MakeGlobalPerformanceFairnessPlots(**args)
