@@ -18,7 +18,8 @@ def GetCBASignalEfficiencies(outdir):
     bkg_samples = TrainingConfig.bkg_samples
     infile_path = TrainingConfig.data_path
 
-    test_size = TrainingConfig.test_size
+    data_slice = TrainingConfig.validation_slice
+    slice_size = data_slice[1] - data_slice[0]
 
     data_sig = [pd.read_hdf(infile_path, key = sample) for sample in sig_samples]
     data_bkg = [pd.read_hdf(infile_path, key = sample) for sample in bkg_samples]
@@ -28,12 +29,14 @@ def GetCBASignalEfficiencies(outdir):
     sig_weights_test = []
     sig_aux_data_test = [] # this holds some other branches that may be important
     for sample, sample_name in zip(data_sig, sig_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test.append(cur_testdata)
-        sig_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
 
     # load all background processes
@@ -41,12 +44,14 @@ def GetCBASignalEfficiencies(outdir):
     bkg_weights_test = []
     bkg_aux_data_test = [] # this holds some other branches that may be important
     for sample, sample_name in zip(data_bkg, bkg_samples):
-        _, cur_test = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         bkg_data_test.append(cur_testdata)
-        bkg_weights_test.append(cur_weights / test_size * TrainingConfig.sample_reweighting[sample_name])
+        bkg_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         bkg_aux_data_test.append(cur_aux_data)
 
     # also prepare the total, concatenated versions
