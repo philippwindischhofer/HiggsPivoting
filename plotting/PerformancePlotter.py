@@ -238,7 +238,7 @@ class PerformancePlotter:
                     seen_types.append(cur_type)
 
                 #ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = label, marker = marker)
-                ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = None, marker = marker)
+                ax.scatter(perfdict[xquant], perfdict[yquant], color = color, label = None, marker = marker, alpha = 0.5)
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
@@ -265,7 +265,8 @@ class PerformancePlotter:
         # make legend with the different types that were encountered
         #legend_elems = [Line2D([0], [0], marker = markerstyle(cur_type), color = 'white', markerfacecolor = "black", label = markerlabel(cur_type)) for cur_type in seen_types]
         #ax.legend(handles = legend_elems)
-        ax.legend()
+        leg = ax.legend()
+        leg.get_frame().set_linewidth(0.0)
         
         fig.savefig(outfile)
         plt.close()        
@@ -323,7 +324,24 @@ class PerformancePlotter:
             xquant = "{}jet_binned_sig_PCA".format(cur_nJ)
             yquant = re.compile("{}jet_tight_loose_inv_JS_bkg".format(cur_nJ))
             PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = "binned significance", ylabel = "1/JSD",
-                                                   colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [0, 5], ylog = True, epilog = CBA_epilog)
+                                                   colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [4, 6], ylog = True, epilog = CBA_epilog)
+
+            xvals = [float(cur_dict["lambda"]) for cur_dict in anadicts]
+            yvals = [float(cur_dict["{}jet_tight_loose_inv_JS_bkg".format(cur_nJ)]) for cur_dict in anadicts]
+            yvals_2 = [float(cur_dict["loose_{}jet_inv_JS_bkg".format(cur_nJ)]) for cur_dict in anadicts]
+            yvals_3 = [float(cur_dict["{}jet_binned_sig_PCA".format(cur_nJ)]) for cur_dict in anadicts]
+
+            plt.scatter(xvals, yvals)
+            plt.savefig(os.path.join(outdir, "lambda_traj_{}jet.pdf".format(cur_nJ)))
+            plt.close()
+
+            plt.scatter(xvals, yvals_2)
+            plt.savefig(os.path.join(outdir, "lambda_traj_inclusive_{}jet.pdf".format(cur_nJ)))
+            plt.close()
+
+            plt.scatter(xvals, yvals_3)
+            plt.savefig(os.path.join(outdir, "lambda_traj_comb_sig_{}jet.pdf".format(cur_nJ)))
+            plt.close()
             
     @staticmethod
     def plot_significance_fairness_exclusive(anadicts, outdir, colorquant = "lambda"):
@@ -334,19 +352,19 @@ class PerformancePlotter:
         cut_labels = ["tight", "loose"]
         CBA_labels = ["high_MET", "low_MET"]
 
-        for cur_nJ in nJ:
+        for cur_nJ, cur_axisrange in zip(nJ, [[2, 4.5], [0.5, 2.5]]):
             for cur_cut_label, cur_CBA_label in zip(cut_labels, CBA_labels):
                 CBA_performance = anadicts[0]["{}_{}jet_binned_sig".format(cur_CBA_label, cur_nJ)]
                 CBA_fairness = anadicts[0]["{}_{}jet_inv_JS_bkg".format(cur_CBA_label, cur_nJ)]
 
                 def CBA_epilog(ax):
-                    ax.text(x = 4, y = 2e3, s = "{}, {} jet".format(cur_cut_label, cur_nJ))
+                    ax.text(x = 0.79, y = 0.85, s = "{}, {} jet".format(cur_cut_label, cur_nJ), transform = ax.transAxes)
                     ax.scatter(CBA_performance, CBA_fairness, color = "tomato", label = "cut-based analysis")
 
                 xquant = "{}_{}jet_binned_sig".format(cur_cut_label, cur_nJ)
                 yquant = re.compile("{}_{}jet_inv_JS_bkg".format(cur_cut_label, cur_nJ))
-                PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = "binned significance", ylabel = "1/JSD",
-                                                       colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = [0, 5], ylog = True, epilog = CBA_epilog)
+                PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = r'binned significance [$\sigma$]', ylabel = "1/JSD",
+                                                       colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = cur_axisrange, ylog = True, epilog = CBA_epilog, grid = False)
 
     # @staticmethod
     # def _smooth_histogram(contents, edges, mode = "hist", npoints = 1000):
@@ -411,9 +429,9 @@ class PerformancePlotter:
             cur_centers = 0.5 * (low_edges + high_edges)
 
             if smoothing:
-                cur_centres, cur_bin_values = PerformancePlotter._smooth_histogram(cur_bin_values, cur_centers)
+                cur_centers, cur_bin_values = PerformancePlotter._smooth_histogram(cur_bin_values, cur_centers)
             
-            bin_centers.append(cur_centres)
+            bin_centers.append(cur_centers)
             bin_values.append(cur_bin_values)
 
         fig = plt.figure()
@@ -422,6 +440,12 @@ class PerformancePlotter:
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
             ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.1)
+
+        ax.set_xlabel(xlabel_r)
+        ax.set_ylabel(ylabel_r)
+        ax.margins(0.0)
+        ax.set_title(plot_title)
+        ax.set_ylim((0, 1.2 * ax.get_ylim()[1])) # add some more margin on top
 
         if epilog:
             epilog(ax)
@@ -434,12 +458,6 @@ class PerformancePlotter:
             ax.plot(x, y, **opts)
             leg = ax.legend()
             leg.get_frame().set_linewidth(0.0)
-
-        ax.set_xlabel(xlabel_r)
-        ax.set_ylabel(ylabel_r)
-        ax.margins(0.0)
-        ax.set_title(plot_title)
-        ax.set_ylim((0, 1.2 * ax.get_ylim()[1])) # add some more margin on top
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
