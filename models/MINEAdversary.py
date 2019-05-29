@@ -30,7 +30,8 @@ class MINEAdversary(AdversaryModel):
             lay = in_tensor
 
             for layer in range(int(float(self.hyperpars["num_hidden_layers"]))):
-                lay = layers.relu(lay, int(float(self.hyperpars["num_units"])), weights_initializer = layers.xavier_initializer(seed = 12345))
+                lay = layers.relu(lay, int(float(self.hyperpars["num_units"])), weights_initializer = layers.xavier_initializer(seed = 12345),
+                                  weights_regularizer = layers.l2_regularizer(scale = 0.0))
                 lay = layers.dropout(lay, keep_prob = 1 - float(self.hyperpars["dropout_rate"]), is_training = is_training)
 
             outputs = layers.linear(lay, 1)

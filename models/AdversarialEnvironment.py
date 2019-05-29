@@ -85,7 +85,10 @@ class AdversarialEnvironment(TFEnvironment):
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
             self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_in, batchnum = self.batchnum, is_training = self.is_training)
 
-            self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
+            # collect the regularization losses
+            self.regs = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+
+            self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss) + float(self.global_pars["regstrength"]) * sum(self.regs)
 
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
