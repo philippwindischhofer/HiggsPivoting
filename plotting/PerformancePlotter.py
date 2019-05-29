@@ -366,6 +366,44 @@ class PerformancePlotter:
                 PerformancePlotter._perf_fairness_plot(anadicts, xquant = xquant, KS_regex = yquant, xlabel = r'binned significance [$\sigma$]', ylabel = "1/JSD",
                                                        colorquant = colorquant, outpath = outdir, yaxis_range = [0.5, 1e4], xaxis_range = cur_axisrange, ylog = True, epilog = CBA_epilog, grid = False)
 
+    # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
+    @staticmethod
+    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2):
+        cmap = plt.cm.viridis
+        colorquant = "lambda"
+
+        # find the proper normalization of the color map
+        colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
+        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        for ind, anadict in enumerate(anadicts):
+            color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
+
+            try:
+                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = 'o', alpha = 0.5)
+                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = '+', alpha = 0.5)
+            except KeyError:
+                print(anadict)
+
+        ax.scatter(anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)], 
+                   anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                   color = "tomato", label = "cut-based analysis", marker = 'o')
+
+        ax.scatter(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)],
+                   anadicts[0]["low_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                   color = "tomato", label = "cut-based analysis", marker = '+')
+
+        ax.set_yscale("log")
+        ax.set_xlabel(r'binned signficance [$\sigma$]')
+        ax.set_ylabel(r'1/JSD')
+        ax.set_ylim(bottom = 0.5)
+        outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
+        fig.savefig(outfile)
+        plt.close()
+                
     # @staticmethod
     # def _smooth_histogram(contents, edges, mode = "hist", npoints = 1000):
     #     from sklearn.neighbors import KernelDensity

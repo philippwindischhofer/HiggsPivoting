@@ -20,6 +20,9 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     PerformancePlotter.plot_significance_fairness_exclusive(dicts, plotdir)
     PerformancePlotter.plot_significance_fairness_inclusive(dicts, plotdir)
 
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3)
+
 def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
     
     dicts = []
