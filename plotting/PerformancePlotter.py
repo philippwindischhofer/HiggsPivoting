@@ -385,6 +385,10 @@ class PerformancePlotter:
             try:
                 ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = 'o', alpha = 0.5)
                 ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = '+', alpha = 0.5)
+
+                combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = 's', alpha = 0.5)
+
             except KeyError:
                 print(anadict)
 
@@ -395,6 +399,12 @@ class PerformancePlotter:
         ax.scatter(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)],
                    anadicts[0]["low_MET_{}jet_inv_JS_bkg".format(nJ)], 
                    color = "tomato", label = "cut-based analysis", marker = '+')
+
+        combined_sig = np.sqrt(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)] ** 2)
+
+        ax.scatter(combined_sig,
+                   anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                   color = "tomato", label = "cut-based analysis", marker = 's')
 
         ax.set_yscale("log")
         ax.set_xlabel(r'binned signficance [$\sigma$]')
