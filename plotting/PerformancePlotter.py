@@ -383,11 +383,11 @@ class PerformancePlotter:
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
 
             try:
-                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = 'o', alpha = 0.5)
-                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = '+', alpha = 0.5)
+                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = 'none', linewidths = 1, label = None, marker = 'o', alpha = 1.0)
+                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = 'none', linewidths = 1, label = None, marker = '^', alpha = 1.0)
 
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
-                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, label = None, marker = 's', alpha = 0.5)
+                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = 'none', edgecolors = color, label = None, marker = 's', alpha = 1.0)
 
             except KeyError:
                 print(anadict)
@@ -398,7 +398,7 @@ class PerformancePlotter:
 
         ax.scatter(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)],
                    anadicts[0]["low_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "tomato", label = "cut-based analysis", marker = '+')
+                   color = "tomato", label = "cut-based analysis", marker = '^')
 
         combined_sig = np.sqrt(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)] ** 2)
 
@@ -406,10 +406,32 @@ class PerformancePlotter:
                    anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                    color = "tomato", label = "cut-based analysis", marker = 's')
 
+        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
+        fig.subplots_adjust(right = 0.8)
+        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                       norm = norm,
+                                       orientation = 'vertical')
+        cb.set_label(r'$\lambda$')
+
+        legend_elems = [
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
+            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "loose"),
+            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "combined"),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:"),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "high MET"),
+            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "low MET"),
+            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "combined")
+        ]
+        leg = ax.legend(handles = legend_elems, ncol = 2)
+        leg.get_frame().set_linewidth(0.0)
+
+        ax.text(x = 0.3, y = 0.7, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+
         ax.set_yscale("log")
         ax.set_xlabel(r'binned signficance [$\sigma$]')
-        ax.set_ylabel(r'1/JSD')
-        ax.set_ylim(bottom = 0.5)
+        ax.set_ylabel(r'1/JSD$_i$')
+        ax.set_ylim(bottom = 0.5, top = 1e4)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
         fig.savefig(outfile)
         plt.close()
