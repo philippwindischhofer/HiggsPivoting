@@ -86,8 +86,8 @@ class AdversarialEnvironment(TFEnvironment):
             self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot, weights = self.weights_in, batchnum = self.batchnum)
 
             # set the weights separately for 2j / 3j to effectively route the events into the two separate adversaries
-            self.weights_2j = tf.where(self.nJ_in < 2.5, self.weights_in, tf.zeros_like(self.weights_in))
-            self.weights_3j = tf.where(self.nJ_in > 2.5, self.weights_in, tf.zeros_like(self.weights_in))
+            self.weights_2j = tf.where(tf.math.less(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
+            self.weights_3j = tf.where(tf.math.greater(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
 
             # set up the model for the adversary
             self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
@@ -134,7 +134,7 @@ class AdversarialEnvironment(TFEnvironment):
         lambda_cur = self.lambda_final
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data_step)
@@ -142,14 +142,14 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def train_classifier(self, data_step, labels_step, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data_step)
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_standalone, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_standalone, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def evaluate_classifier_loss(self, data, labels, weights_step):
         data_pre = self.pre.process(data)
@@ -165,7 +165,7 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[TrainingConfig.other_branches.index("nJ")]})
+            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
         return retval
 
