@@ -15,9 +15,10 @@ from base.Configs import TrainingConfig
 
 class AdversarialEnvironment(TFEnvironment):
     
-    def __init__(self, classifier_model, adversary_model_2j, adversary_model_3j, global_pars):
+    def __init__(self, classifier_model_2j, classifier_model_3j, adversary_model_2j, adversary_model_3j, global_pars):
         super(AdversarialEnvironment, self).__init__()
-        self.classifier_model = classifier_model
+        self.classifier_model_2j = classifier_model_2j
+        self.classifier_model_3j = classifier_model_3j
         self.adversary_model_2j = adversary_model_2j
         self.adversary_model_3j = adversary_model_3j
 
@@ -42,10 +43,11 @@ class AdversarialEnvironment(TFEnvironment):
         classifier_hyperpars = gconfig[classifier_model_type]
         adversary_hyperpars = gconfig[adversary_model_type]
 
-        mod = classifier_model("class", hyperpars = classifier_hyperpars)
+        mod_2j = classifier_model("class_2j", hyperpars = classifier_hyperpars)
+        mod_3j = classifier_model("class_3j", hyperpars = classifier_hyperpars)
         adv_2j = adversary_model("adv_2j", hyperpars = adversary_hyperpars)
         adv_3j = adversary_model("adv_3j", hyperpars = adversary_hyperpars)
-        obj = cls(mod, adv_2j, adv_3j, global_pars)
+        obj = cls(mod_2j, mod_3j, adv_2j, adv_3j, global_pars)
 
         # then re-build the graph using these settings
         obj.build()
@@ -80,41 +82,65 @@ class AdversarialEnvironment(TFEnvironment):
             self.lambdaval = tf.placeholder(tf.float32, [1], name = 'lambdaval')
             self.nJ_in = tf.placeholder(tf.float32, [None, ], name = 'nJ_in')
 
-            # set up the classifier model
-            self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in, is_training = self.is_training)
             self.labels_one_hot = tf.one_hot(self.labels_in, depth = 2)
-            self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot, weights = self.weights_in, batchnum = self.batchnum)
 
             # set the weights separately for 2j / 3j to effectively route the events into the two separate adversaries
             self.weights_2j = tf.where(tf.math.less(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
             self.weights_3j = tf.where(tf.math.greater(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
 
+            # set up the classifier models, separately for 2j and 3j
+            self.classifier_out_2j, self.classifier_vars_2j = self.classifier_model_2j.build_model(self.data_in, is_training = self.is_training)
+            self.classification_loss_2j = self.classifier_model_2j.build_loss(self.classifier_out_2j, self.labels_one_hot, weights = self.weights_in_2j, batchnum = self.batchnum)
+
+            self.classifier_out_3j, self.classifier_vars_3j = self.classifier_model_3j.build_model(self.data_in, is_training = self.is_training)
+            self.classification_loss_3j = self.classifier_model_3j.build_loss(self.classifier_out_3j, self.labels_one_hot, weights = self.weights_in_3j, batchnum = self.batchnum)
+
+            self.classifier_out_single_2j = tf.expand_dims(self.classifier_out_2j[:,0], axis = 1)
+            self.classifier_out_single_3j = tf.expand_dims(self.classifier_out_3j[:,0], axis = 1)
+
             # set up the model for the adversary
-            self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
-            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
-            self.adv_loss_3j, self.adversary_vars_3j = self.adversary_model_3j.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_3j, batchnum = self.batchnum, is_training = self.is_training)
+            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
+            self.adv_loss_3j, self.adversary_vars_3j = self.adversary_model_3j.build_loss(self.classifier_out_single_3j, self.nuisances_in, weights = self.weights_3j, batchnum = self.batchnum, is_training = self.is_training)
 
             # collect the regularization losses
             self.regs = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
             self.adv_loss = self.adv_loss_2j + self.adv_loss_3j
-            self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss) + float(self.global_pars["regstrength"]) * sum(self.regs)
+            self.classification_loss = self.classification_loss_2j + self.classification_loss_3j
+
+            self.total_loss_2j = self.classification_loss_2j + self.lambdaval * (-self.adv_loss_2j)
+            self.total_loss_2j = self.classification_loss_3j + self.lambdaval * (-self.adv_loss_2j)
 
             # set up the optimizers for both classifier and adversary
-            self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
-                                                                      beta1 = float(self.global_pars["adam_clf_beta1"]), 
-                                                                      beta2 = float(self.global_pars["adam_clf_beta2"]), 
-                                                                      epsilon = float(self.global_pars["adam_clf_eps"])).minimize(self.classification_loss, var_list = self.classifier_vars)
+            self.train_classifier_standalone_2j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
+                                                                         beta1 = float(self.global_pars["adam_clf_beta1"]), 
+                                                                         beta2 = float(self.global_pars["adam_clf_beta2"]), 
+                                                                         epsilon = float(self.global_pars["adam_clf_eps"])).minimize(self.classification_loss_2j, var_list = self.classifier_vars_2j)
 
-            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_adv_lr"]),
-                                                                     beta1 = float(self.global_pars["adam_adv_beta1"]), 
-                                                                     beta2 = float(self.global_pars["adam_adv_beta2"]), 
-                                                                     epsilon = float(self.global_pars["adam_adv_eps"])).minimize(self.adv_loss, var_list = self.adversary_vars_2j + self.adversary_vars_3j)
+            self.train_classifier_standalone_3j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
+                                                                         beta1 = float(self.global_pars["adam_clf_beta1"]), 
+                                                                         beta2 = float(self.global_pars["adam_clf_beta2"]), 
+                                                                         epsilon = float(self.global_pars["adam_clf_eps"])).minimize(self.classification_loss_3j, var_list = self.classifier_vars_3j)
 
-            self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_adv_lr"]), 
-                                                               beta1 = float(self.global_pars["adam_clf_adv_beta1"]), 
-                                                               beta2 = float(self.global_pars["adam_clf_adv_beta2"]), 
-                                                               epsilon = float(self.global_pars["adam_clf_adv_eps"])).minimize(self.total_loss, var_list = self.classifier_vars)            
+            self.train_adversary_standalone_2j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_adv_lr"]),
+                                                                        beta1 = float(self.global_pars["adam_adv_beta1"]), 
+                                                                        beta2 = float(self.global_pars["adam_adv_beta2"]), 
+                                                                        epsilon = float(self.global_pars["adam_adv_eps"])).minimize(self.adv_loss_2j, var_list = self.adversary_vars_2j)
+
+            self.train_adversary_standalone_3j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_adv_lr"]),
+                                                                        beta1 = float(self.global_pars["adam_adv_beta1"]), 
+                                                                        beta2 = float(self.global_pars["adam_adv_beta2"]), 
+                                                                        epsilon = float(self.global_pars["adam_adv_eps"])).minimize(self.adv_loss_3j, var_list = self.adversary_vars_3j)
+
+            self.train_classifier_adv_2j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_adv_lr"]), 
+                                                                  beta1 = float(self.global_pars["adam_clf_adv_beta1"]), 
+                                                                  beta2 = float(self.global_pars["adam_clf_adv_beta2"]), 
+                                                                  epsilon = float(self.global_pars["adam_clf_adv_eps"])).minimize(self.total_loss_2j, var_list = self.classifier_vars_2j)            
+
+            self.train_classifier_adv_3j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_adv_lr"]), 
+                                                                  beta1 = float(self.global_pars["adam_clf_adv_beta1"]), 
+                                                                  beta2 = float(self.global_pars["adam_clf_adv_beta2"]), 
+                                                                  epsilon = float(self.global_pars["adam_clf_adv_eps"])).minimize(self.total_loss_3j, var_list = self.classifier_vars_3j)            
 
             self.saver = tf.train.Saver()
 
@@ -134,7 +160,8 @@ class AdversarialEnvironment(TFEnvironment):
         lambda_cur = self.lambda_final
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_adv_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_adv_3j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data_step)
@@ -142,21 +169,23 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_adversary_standalone_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_adversary_standalone_3j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def train_classifier(self, data_step, labels_step, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data_step)
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_classifier_standalone, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_standalone_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            self.sess.run(self.train_classifier_standalone_3j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def evaluate_classifier_loss(self, data, labels, weights_step):
         data_pre = self.pre.process(data)
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
+            classifier_lossval = self.sess.run(self.classification_loss_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
         return classifier_lossval
 
     def evaluate_adversary_loss(self, data, nuisances, labels, weights_step, batchnum, auxdat_step):
@@ -165,7 +194,7 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            retval = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            retval = self.sess.run(self.adv_loss_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
         return retval
 
@@ -230,7 +259,7 @@ class AdversarialEnvironment(TFEnvironment):
         gconfig = ConfigParser()
         gconfig.read(config_path) # start from the current version of the config file and add changes on top
         gconfig["AdversarialEnvironment"] = self.global_pars
-        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
+        gconfig[self.classifier_model_2j.__class__.__name__] = self.classifier_model_2j.hyperpars
         gconfig[self.adversary_model_2j.__class__.__name__] = self.adversary_model_2j.hyperpars
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
@@ -242,8 +271,8 @@ class AdversarialEnvironment(TFEnvironment):
         for key, val in self.global_pars.items():
             paramdict[key] = val
 
-        for key, val in self.classifier_model.hyperpars.items():
-            paramdict[self.classifier_model.name + "_" + key] = val
+        for key, val in self.classifier_model_2j.hyperpars.items():
+            paramdict[self.classifier_model_2j.name + "_" + key] = val
 
         for key, val in self.adversary_model_2j.hyperpars.items():
             paramdict[self.adversary_model_2j.name + "_" + key] = val
