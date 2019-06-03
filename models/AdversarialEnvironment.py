@@ -90,13 +90,15 @@ class AdversarialEnvironment(TFEnvironment):
 
             # set up the classifier models, separately for 2j and 3j
             self.classifier_out_2j, self.classifier_vars_2j = self.classifier_model_2j.build_model(self.data_in, is_training = self.is_training)
-            self.classification_loss_2j = self.classifier_model_2j.build_loss(self.classifier_out_2j, self.labels_one_hot, weights = self.weights_in_2j, batchnum = self.batchnum)
+            self.classification_loss_2j = self.classifier_model_2j.build_loss(self.classifier_out_2j, self.labels_one_hot, weights = self.weights_2j, batchnum = self.batchnum)
 
             self.classifier_out_3j, self.classifier_vars_3j = self.classifier_model_3j.build_model(self.data_in, is_training = self.is_training)
-            self.classification_loss_3j = self.classifier_model_3j.build_loss(self.classifier_out_3j, self.labels_one_hot, weights = self.weights_in_3j, batchnum = self.batchnum)
+            self.classification_loss_3j = self.classifier_model_3j.build_loss(self.classifier_out_3j, self.labels_one_hot, weights = self.weights_3j, batchnum = self.batchnum)
 
             self.classifier_out_single_2j = tf.expand_dims(self.classifier_out_2j[:,0], axis = 1)
             self.classifier_out_single_3j = tf.expand_dims(self.classifier_out_3j[:,0], axis = 1)
+
+            self.classifier_out = tf.where(tf.math.less(self.nJ_in, 2.5), self.classifier_out_2j, self.classifier_out_3j)
 
             # set up the model for the adversary
             self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
@@ -109,7 +111,7 @@ class AdversarialEnvironment(TFEnvironment):
             self.classification_loss = self.classification_loss_2j + self.classification_loss_3j
 
             self.total_loss_2j = self.classification_loss_2j + self.lambdaval * (-self.adv_loss_2j)
-            self.total_loss_2j = self.classification_loss_3j + self.lambdaval * (-self.adv_loss_2j)
+            self.total_loss_3j = self.classification_loss_3j + self.lambdaval * (-self.adv_loss_3j)
 
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone_2j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
@@ -180,12 +182,12 @@ class AdversarialEnvironment(TFEnvironment):
             self.sess.run(self.train_classifier_standalone_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
             self.sess.run(self.train_classifier_standalone_3j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
-    def evaluate_classifier_loss(self, data, labels, weights_step):
+    def evaluate_classifier_loss(self, data, labels, weights_step, auxdat_step):
         data_pre = self.pre.process(data)
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
+            classifier_lossval = self.sess.run(self.classification_loss_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
         return classifier_lossval
 
     def evaluate_adversary_loss(self, data, nuisances, labels, weights_step, batchnum, auxdat_step):
@@ -199,29 +201,30 @@ class AdversarialEnvironment(TFEnvironment):
         return retval
 
     def dump_loss_information(self, data, nuisances, labels, weights, auxdat_step):
-        classifier_lossval = self.evaluate_classifier_loss(data, labels, weights)
+        classifier_lossval = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
         adversary_lossval = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
         weights = weights.flatten()
         print("classifier loss: {:.4e}, adv. loss = {:.4e}".format(classifier_lossval, adversary_lossval))
 
     # use the model to make predictions on 'data', adhering to a certain batch size for evolution
-    def predict(self, data, pred_size = 256, use_dropout = True):
+    def predict(self, data, auxdat, pred_size = 256, use_dropout = True):
         data_pre = self.pre.process(data)
 
         datlen = len(data_pre)
         chunks = np.split(data_pre, datlen / pred_size, axis = 0)
+        aux_chunks = np.split(auxdat, datlen / pred_size, axis = 0)
 
         retvals = []
-        for chunk in chunks:
+        for chunk, aux_chunk in zip(chunks, aux_chunks):
             with self.graph.as_default():
-                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout})
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout, self.nJ_in: aux_chunk[:, TrainingConfig.other_branches.index("nJ")]})
                 retvals.append(retval_cur)
 
         return np.concatenate(retvals, axis = 0)
 
     def get_model_statistics(self, data, nuisances, labels, weights, auxdat_step):
         retdict = {}
-        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels, weights)
+        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
         retdict["adv. loss"] = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
         return retdict
 

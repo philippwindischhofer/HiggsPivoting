@@ -7,17 +7,19 @@ from base.Configs import TrainingConfig
 class ClassifierBasedCategoryFiller:
 
     @staticmethod
-    def _sigeff_to_score(env, signal_events, signal_weights, sigeff):
+    def _sigeff_to_score(env, signal_events, signal_weights, signal_aux_events, sigeff):
         signal_events = np.concatenate(signal_events)
+        signal_aux_events = np.concatenate(signal_aux_events)
         signal_weights = np.concatenate(signal_weights)
-        signal_pred = env.predict(data = signal_events)[:,1] # obtain the prediction of the model
+        signal_pred = env.predict(data = signal_events, auxdat = signal_aux_events)[:,1] # obtain the prediction of the model
         return ModelEvaluator._weighted_percentile(signal_pred, 1 - sigeff, weights = signal_weights)        
 
     @staticmethod
-    def _score_to_sigeff(env, signal_events, signal_weights, score):
+    def _score_to_sigeff(env, signal_events, signal_weights, signal_aux_events, score):
         signal_events = np.concatenate(signal_events)
         signal_weights = np.concatenate(signal_weights)
-        signal_pred = env.predict(data = signal_events)[:,1] # obtain the prediction of the model
+        signal_aux_events = np.concatenate(signal_aux_events)
+        signal_pred = env.predict(data = signal_events, auxdat = signal_aux_events)[:,1] # obtain the prediction of the model
         
         total_passed = np.sum[signal_weights[signal_pred > score]]
         total_events = np.sum[signal_weights]
@@ -25,7 +27,7 @@ class ClassifierBasedCategoryFiller:
         return total_passed / total_events
 
     @staticmethod
-    def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2, interpret_as_sigeff = True, process_preds = None):
+    def create_classifier_category(env, process_events, process_aux_events, process_weights, process_names, signal_events, signal_aux_events, signal_weights, classifier_sigeff_range = (1, 0), nJ = 2, interpret_as_sigeff = True, process_preds = None):
 
         if not process_preds:
             process_preds = [None for cur_events in process_events]
@@ -33,10 +35,10 @@ class ClassifierBasedCategoryFiller:
         if interpret_as_sigeff:
             if(classifier_sigeff_range[0] < classifier_sigeff_range[1]):
                 raise Exception("Warning: are you sure you understand what these cuts are doing? Lower signal efficiencies correspond to _harsher_ cuts, so expect (higher number, lower number)!")
-            
+
             # first, compute the cut values that correspond to the given signal efficiency values
-            classifier_range = (ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[0]),
-                                ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, classifier_sigeff_range[1]))
+            classifier_range = (ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, signal_aux_events, sigeff = classifier_sigeff_range[0]),
+                                ClassifierBasedCategoryFiller._sigeff_to_score(env, signal_events, signal_weights, signal_aux_events, sigeff = classifier_sigeff_range[1]))
 
             print("translated signal efficiency range ({}, {}) to classifier output range ({}, {})".format(classifier_sigeff_range[0], classifier_sigeff_range[1], 
                                                                                                            classifier_range[0], classifier_range[1]))
@@ -48,7 +50,7 @@ class ClassifierBasedCategoryFiller:
         for cur_events, cur_aux_events, cur_weights, process_name, cur_pred in zip(process_events, process_aux_events, process_weights, process_names, process_preds):
             # get the classifier predictions
             if cur_pred is None:
-                cur_pred = env.predict(data = cur_events)[:,1]
+                cur_pred = env.predict(data = cur_events, auxdat = cur_aux_events)[:,1]
 
             cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
 

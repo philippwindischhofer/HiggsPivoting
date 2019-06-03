@@ -51,7 +51,7 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
             
             # submit them to the condor batch system
             #CondorJobSubmitter.submit_job(job_script)
-            LocalJobSubmitter.submit_job(job_script)
+            #LocalJobSubmitter.submit_job(job_script)
 
         os.remove(config_file)
 
