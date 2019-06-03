@@ -6,7 +6,7 @@ from h5add import h5add
 def IsGoodEventFile(eventfile):
     try:
         import pandas as pd
-        pd.read_hdf(eventfile)
+        df = pd.read_hdf(eventfile)
         return True
     except:
         return False
@@ -35,7 +35,7 @@ def CombineEventFiles(indir, channel):
         else:
             print("Warning: '{}' does not have a good lumi file or a corrupted event file, ignoring its events!".format(sub_dir))
 
-    print("have found {} event files in this directory".format(len(event_file_candidates)))
+    print("have found {} good event files in this directory".format(len(event_file_candidates)))
 
     # combine them together
     output_file = os.path.join(indir, "events.h5")

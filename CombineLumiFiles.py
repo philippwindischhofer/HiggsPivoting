@@ -9,7 +9,10 @@ def IsGoodLumiFile(lumifile):
     
         lumisection = lumiconfig["global"]
         if "SOW" in lumisection and "xsec" in lumisection and "lumi" in lumisection:
-            return True
+            if float(lumisection["SOW"]) < 473.0:
+                return True
+            else:
+                return False
         else:
             return False
     except (IOError, KeyError):
@@ -22,7 +25,8 @@ def CombineLumiFiles(indir, channel):
 
     # the assumed event file names
     eventfile = {"0lep": "events_0lep.h5",
-                 "1lep": "events_1lep.h5"}
+                 "1lep": "events_1lep.h5",
+                 "compat": "events.h5"} # compatibility mode
 
     # first, look for all existing lumi files
     # Note: this semi-automatic way of doing it is faster than simply
@@ -43,6 +47,7 @@ def CombineLumiFiles(indir, channel):
     SOW_combined = 0
     xsec_combined = -1
     lumi_combined = -1
+    used_files = 0
 
     for cur_lumifile in lumifiles:
         if IsGoodLumiFile(cur_lumifile):
@@ -63,6 +68,7 @@ def CombineLumiFiles(indir, channel):
                 raise Exception("Error: some of your lumi files are not compatible!")
 
             SOW_combined += cur_SOW
+            used_files += 1
         else:
             print("'{}' is not a good lumifile, ignore it".format(cur_lumifile))
 
@@ -70,6 +76,8 @@ def CombineLumiFiles(indir, channel):
     lumiconfig_combined["global"] = {"xsec": str(xsec_combined), "lumi": str(lumi_combined), "SOW": str(SOW_combined)}
     with open(os.path.join(indir, "lumi.conf"), "w") as combined_outfile:
         lumiconfig_combined.write(combined_outfile)
+
+    print("Done with everything. Used {} lumi files.".format(used_files))
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "combine lumi files")
