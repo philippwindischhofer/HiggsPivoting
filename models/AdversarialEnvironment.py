@@ -230,8 +230,8 @@ class AdversarialEnvironment(TFEnvironment):
         gconfig = ConfigParser()
         gconfig.read(config_path) # start from the current version of the config file and add changes on top
         gconfig["AdversarialEnvironment"] = self.global_pars
-        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model_2j.hyperpars
-        gconfig[self.adversary_model.__class__.__name__] = self.adversary_model_2j.hyperpars
+        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
+        gconfig[self.adversary_model_2j.__class__.__name__] = self.adversary_model_2j.hyperpars
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
 
