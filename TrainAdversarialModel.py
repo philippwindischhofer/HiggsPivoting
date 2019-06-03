@@ -33,13 +33,16 @@ def main():
     sig_data = [pd.read_hdf(infile_path, key = sig_sample) for sig_sample in sig_samples]
     bkg_data = [pd.read_hdf(infile_path, key = bkg_sample) for bkg_sample in bkg_samples]
 
+    auxdat_sig = []
+    auxdat_bkg = []
+
     # extract the training dataset
     sig_data_train = []
     for sample, sample_name in zip(sig_data, sig_samples):
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        #cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        auxdat_sig.append(cur_train[TrainingConfig.other_branches].values)
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
@@ -47,7 +50,7 @@ def main():
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        #cur_train = cur_train.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        auxdat_bkg.append(cur_train[TrainingConfig.other_branches].values)
         bkg_data_train.append(cur_train)
 
     print("got " + str(len(sig_data)) + " signal datasets")
@@ -89,7 +92,7 @@ def main():
 
     # give the full list of signal / background components to the trainer
     train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, 
-                nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg)
+                nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg, auxdat_sig = auxdat_sig, auxdat_bkg = auxdat_bkg)
                 #sig_sampling_pars = {"sampling_fractions": TrainingConfig.sig_sampling_fractions}, bkg_sampling_pars = {"sampling_fractions": TrainingConfig.bkg_sampling_fractions})
 
     # save all the necessary information

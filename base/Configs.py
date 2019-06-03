@@ -10,10 +10,6 @@ class TrainingConfig:
 
     training_pars = {"pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
-    # training_slice = [0.0, 0.33]
-    # validation_slice = [0.33, 0.66]
-    # test_slice = [0.66, 1.0]
-
     training_slice = [0.0, 0.33]
     validation_slice = [0.33, 0.66]
     validation_slice = [0.66, 1.0]
