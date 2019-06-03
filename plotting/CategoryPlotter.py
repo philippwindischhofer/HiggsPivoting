@@ -48,7 +48,11 @@ class CategoryPlotter:
             clipped_values = np.clip(process_values, binning[0], binning[-1])
             data.append(clipped_values)
             weights.append(process_weights)
-            labels.append(CategoryPlotter.process_labels[process_name])
+            if process_name in CategoryPlotter.process_labels:
+                label = CategoryPlotter.process_labels[process_name]
+            else:
+                label = process_name
+            labels.append(process_name)
 
         # then plot the histogram
         fig = plt.figure(figsize = (6, 5))
