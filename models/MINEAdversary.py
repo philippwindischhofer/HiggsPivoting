@@ -11,19 +11,30 @@ class MINEAdversary(AdversaryModel):
         self.hyperpars = hyperpars
 
     def build_loss(self, pred, nuisance, is_training, weights = 1.0, eps = 1e-6, batchnum = 0):
-        nuisance_shuffled = tf.random_shuffle(nuisance)
+        with tf.variable_scope(self.name):
+            self.idx = tf.range(tf.squeeze(tf.shape(weights)))
+            self.idx_shuffled = tf.random_shuffle(self.idx)
 
-        data_xy = tf.concat([pred, nuisance], axis = 1)
-        data_x_y = tf.concat([pred, nuisance_shuffled], axis = 1)
+            self.nuisance_shuffled = tf.gather(nuisance, self.idx_shuffled)
+            self.weights_shuffled = tf.gather(weights, self.idx_shuffled)
 
-        T_xy, these_vars = self._adversary_model(data_xy, is_training)
-        T_x_y, these_vars_cc = self._adversary_model(data_x_y, is_training)
+            self.data_xy = tf.concat([pred, nuisance], axis = 1)
+            self.data_x_y = tf.concat([pred, self.nuisance_shuffled], axis = 1)
+            
+            self.T_xy, self.these_vars = self._adversary_model(self.data_xy, is_training)
+            self.T_x_y, self.these_vars_cc = self._adversary_model(self.data_x_y, is_training)
+            
+            self.T_xy = tf.squeeze(self.T_xy)
+            self.T_x_y = tf.squeeze(self.T_x_y)
 
-        #MINE_lossval = -(tf.reduce_mean(T_xy * weights, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(T_x_y) * weights, axis = 0))
-        MINE_lossval = -(tf.reduce_mean(T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(T_x_y - 1) * weights, axis = 0))
-        MINE_lossval = MINE_lossval[0]
+            self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1.0) * weights * self.weights_shuffled, axis = 0))
+            self.MINE_lossval = self.MINE_lossval / tf.reduce_mean(weights)
+            #self.MINE_lossval_unrolled = tf.math.multiply(-(self.T_xy - tf.math.exp(self.T_x_y - 1)), weights)
+            #self.MINE_lossval = tf.reduce_mean(self.MINE_lossval_unrolled)
+            #self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1) * weights, axis = 0))
+            #self.MINE_lossval = self.MINE_lossval[0]
 
-        return MINE_lossval, these_vars
+        return self.MINE_lossval, self.these_vars
 
     def _adversary_model(self, in_tensor, is_training):
         with tf.variable_scope(self.name, reuse = tf.AUTO_REUSE):

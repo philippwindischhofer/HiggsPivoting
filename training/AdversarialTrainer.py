@@ -98,7 +98,7 @@ class AdversarialTrainer(Trainer):
 
         # concatenate the individual components
         data_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
-        weights_combined = np.concatenate([sig_weights, bkg_weights], axis = 0)
+        weights_combined = np.concatenate([sig_weights, bkg_weights], axis = 0) * 100
 
         return data_combined, weights_combined
 
@@ -240,8 +240,7 @@ class AdversarialTrainer(Trainer):
                                                                                                                          size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
             (data_batch_3j, nuisances_batch_3j, labels_batch_3j, auxdata_batch_3j), weights_batch_3j = sampling_callback([data_sig_3j, nuisances_sig_3j, labels_sig_3j, auxdat_sig_3j], weights_sig_3j, 
                                                                                                                          [data_bkg_3j, nuisances_bkg_3j, labels_bkg_3j, auxdat_bkg_3j], weights_bkg_3j,
-                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
-
+                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)            
             data_batch = np.concatenate([data_batch_2j, data_batch_3j])
             nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
             labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
@@ -292,6 +291,7 @@ class AdversarialTrainer(Trainer):
             
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
+            env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
 
             # callbacks to keep track of the parameter evolution during training
             stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)

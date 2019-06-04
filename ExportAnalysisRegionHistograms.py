@@ -167,11 +167,13 @@ def main():
     
     for cur_nJ, cur_inclusive_cat, cur_signal_events, cur_signal_weights, cur_signal_aux_events in zip([2, 3], [inclusive_2J, inclusive_3J], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j], [sig_aux_data_test_2j, sig_aux_data_test_3j]):
         # first, export the categories of the cut-based analysis: high / low MET
+        print("filling {} jet low_MET category".format(cur_nJ))
         low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
                                                                      process_aux_events = aux_test,
                                                                      process_weights = weights_test,
                                                                      process_names = samples,
                                                                      nJ = cur_nJ)
+        print("filled {} signal events".format(low_MET_cat.get_number_events("Hbb")))
 
         low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                           outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
@@ -193,11 +195,13 @@ def main():
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
                                                   plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
 
+        print("filling {} jet high_MET category".format(cur_nJ))
         high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
                                                                        process_aux_events = aux_test,
                                                                        process_weights = weights_test,
                                                                        process_names = samples,
                                                                        nJ = cur_nJ)
+        print("filled {} signal events".format(high_MET_cat.get_number_events("Hbb")))
 
         high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
                                           outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)

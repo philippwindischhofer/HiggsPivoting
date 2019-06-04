@@ -101,8 +101,12 @@ class AdversarialEnvironment(TFEnvironment):
             self.classifier_out = tf.where(tf.math.less(self.nJ_in, 2.5), self.classifier_out_2j, self.classifier_out_3j)
 
             # set up the model for the adversary
-            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
             self.adv_loss_3j, self.adversary_vars_3j = self.adversary_model_3j.build_loss(self.classifier_out_single_3j, self.nuisances_in, weights = self.weights_3j, batchnum = self.batchnum, is_training = self.is_training)
+            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
+
+            self.print_0 = tf.print("nJ", self.nJ_in)
+            self.print_1 = tf.print("weights (2j)", self.weights_2j)
+            self.print_2 = tf.print("weights (3j)", self.weights_3j)
 
             # collect the regularization losses
             self.regs = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
@@ -171,8 +175,10 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            self.sess.run(self.train_adversary_standalone_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
-            self.sess.run(self.train_adversary_standalone_3j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            print("train 2j")
+            self.sess.run([self.print_0, self.print_1, self.print_2, self.train_adversary_standalone_2j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            print("train 3j")
+            self.sess.run([self.print_0, self.print_1, self.print_2, self.train_adversary_standalone_3j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
     def train_classifier(self, data_step, labels_step, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data_step)
@@ -187,8 +193,9 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            classifier_lossval = self.sess.run(self.classification_loss_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
-        return classifier_lossval
+            classifier_lossval_2j = self.sess.run(self.classification_loss_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            classifier_lossval_3j = self.sess.run(self.classification_loss_3j, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+        return classifier_lossval_2j, classifier_lossval_3j
 
     def evaluate_adversary_loss(self, data, nuisances, labels, weights_step, batchnum, auxdat_step):
         data_pre = self.pre.process(data)
@@ -196,36 +203,41 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         with self.graph.as_default():
-            retval = self.sess.run(self.adv_loss_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            adv_loss_2j = self.sess.run(self.adv_loss_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
+            adv_loss_3j = self.sess.run(self.adv_loss_3j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.other_branches.index("nJ")]})
 
-        return retval
+        return adv_loss_2j, adv_loss_3j
 
     def dump_loss_information(self, data, nuisances, labels, weights, auxdat_step):
-        classifier_lossval = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
-        adversary_lossval = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
+        classifier_lossval_2j, classifier_lossval_3j = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
+        adversary_lossval_2j, adversary_lossval_3j = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
         weights = weights.flatten()
-        print("classifier loss: {:.4e}, adv. loss = {:.4e}".format(classifier_lossval, adversary_lossval))
+        print("classifier loss (2j): {:.4e}, classifier loss (3j): {:.4e}, adv. loss (2j) = {:.4e}, adv. loss (3j) = {:.4e}".format(classifier_lossval_2j, classifier_lossval_3j, adversary_lossval_2j, adversary_lossval_3j))
 
     # use the model to make predictions on 'data', adhering to a certain batch size for evolution
-    def predict(self, data, auxdat, pred_size = 256, use_dropout = True):
+    def predict(self, data, auxdat = None, pred_size = 256, use_dropout = True):
+        if auxdat is None:
+            nJ = data[:, TrainingConfig.training_branches.index("nJ")]
+        else:
+            nJ = auxdat[:, TrainingConfig.other_branches.index("nJ")]
         data_pre = self.pre.process(data)
 
         datlen = len(data_pre)
         chunks = np.split(data_pre, datlen / pred_size, axis = 0)
-        aux_chunks = np.split(auxdat, datlen / pred_size, axis = 0)
+        nJ_chunks = np.split(nJ, datlen / pred_size, axis = 0)
 
         retvals = []
-        for chunk, aux_chunk in zip(chunks, aux_chunks):
+        for chunk, nJ_chunk in zip(chunks, nJ_chunks):
             with self.graph.as_default():
-                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout, self.nJ_in: aux_chunk[:, TrainingConfig.other_branches.index("nJ")]})
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout, self.nJ_in: nJ_chunk})
                 retvals.append(retval_cur)
 
         return np.concatenate(retvals, axis = 0)
 
     def get_model_statistics(self, data, nuisances, labels, weights, auxdat_step):
         retdict = {}
-        retdict["class. loss"] = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
-        retdict["adv. loss"] = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
+        retdict["class. loss (2j)"], retdict["class. loss (3j)"] = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
+        retdict["adv. loss (2j)"], retdict["adv. loss (3j)"] = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
         return retdict
 
     # try to load back the environment
