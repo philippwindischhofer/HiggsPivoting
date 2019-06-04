@@ -24,15 +24,15 @@ class MINEAdversary(AdversaryModel):
             self.T_xy, self.these_vars = self._adversary_model(self.data_xy, is_training)
             self.T_x_y, self.these_vars_cc = self._adversary_model(self.data_x_y, is_training)
             
-            self.T_xy = tf.squeeze(self.T_xy)
-            self.T_x_y = tf.squeeze(self.T_x_y)
+            # self.T_xy = tf.squeeze(self.T_xy)
+            # self.T_x_y = tf.squeeze(self.T_x_y)
 
-            self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1.0) * weights * self.weights_shuffled, axis = 0))
-            self.MINE_lossval = self.MINE_lossval / tf.reduce_mean(weights)
+            self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1.0) * weights, axis = 0))
+            #self.MINE_lossval = self.MINE_lossval / tf.reduce_mean(weights)
             #self.MINE_lossval_unrolled = tf.math.multiply(-(self.T_xy - tf.math.exp(self.T_x_y - 1)), weights)
             #self.MINE_lossval = tf.reduce_mean(self.MINE_lossval_unrolled)
             #self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1) * weights, axis = 0))
-            #self.MINE_lossval = self.MINE_lossval[0]
+            self.MINE_lossval = self.MINE_lossval[0]
 
         return self.MINE_lossval, self.these_vars
 
