@@ -36,8 +36,8 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                if float(anadict["lambda"]) > 1.0:
-                    continue
+                # if float(anadict["lambda"]) > 1.0:
+                #     continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)
 
