@@ -25,7 +25,7 @@ class CategoryPlotter:
 
     # use the events in the given category to plot the spectrum of a certain event variable
     @staticmethod
-    def plot_category_composition(category, binning, outpath, process_order = TrainingConfig.bkg_samples + TrainingConfig.sig_samples, var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}, logscale = False, ignore_binning = False, histtype = 'stepfilled', stacked = True, density = False):
+    def plot_category_composition(category, binning, outpath, process_order = TrainingConfig.bkg_samples + TrainingConfig.sig_samples, var = "mBB", xlabel = "", ylabel = "events", plotlabel = [], args = {}, logscale = False, ignore_binning = False, histtype = 'stepfilled', stacked = True, density = False, clipping = False):
         if not isinstance(binning, (list, np.ndarray)):
             raise Exception("Error: expect a list of explicit bin edges for this function!")
         
@@ -45,7 +45,10 @@ class CategoryPlotter:
             color = CategoryPlotter.process_colors[process_name]
 
             colors.append(color)
-            clipped_values = np.clip(process_values, binning[0], binning[-1])
+            if clipping:
+                clipped_values = np.clip(process_values, binning[0], binning[-1])
+            else:
+                clipped_values = process_values
             data.append(clipped_values)
             weights.append(process_weights)
             if process_name in CategoryPlotter.process_labels:
