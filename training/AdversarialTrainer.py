@@ -66,12 +66,12 @@ class AdversarialTrainer(Trainer):
         print([np.sum(cur) / total_SOW for cur in sampled_weights])
 
         # # ... and normalize them such that their SOWs are in the correct relation to each other
-        # for cur, cur_SOW in enumerate(SOWs):
-        #     sampled_weights[cur] *= cur_SOW / np.sum(sampled_weights[cur]) # each batch will have a total SOW of 1
+        for cur, cur_SOW in enumerate(SOWs):
+            sampled_weights[cur] *= cur_SOW / np.sum(sampled_weights[cur]) # each batch will have a total SOW of 1
 
         # just normalize them to have the same SOW as the signal
-        for cur, cur_SOW in enumerate(SOWs):
-            sampled_weights[cur] /= total_SOW
+        # for cur, cur_SOW in enumerate(SOWs):
+        #     sampled_weights[cur] /= total_SOW
 
         print("fractions after rescaling")
         print([np.sum(cur) for cur in sampled_weights])

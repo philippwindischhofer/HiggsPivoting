@@ -12,7 +12,6 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
-            if float(anadict["lambda"]) <= 1.0:
                 dicts.append(anadict)
         except:
             print("no information found for model '{}'".format(model_dir))
