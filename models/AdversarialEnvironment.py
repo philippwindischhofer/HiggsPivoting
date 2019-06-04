@@ -115,7 +115,7 @@ class AdversarialEnvironment(TFEnvironment):
             self.classification_loss = self.classification_loss_2j + self.classification_loss_3j
 
             self.total_loss_2j = self.classification_loss_2j + self.lambdaval * (-self.adv_loss_2j)
-            self.total_loss_3j = self.classification_loss_3j + self.lambdaval * (-self.adv_loss_3j)
+            self.total_loss_3j = self.classification_loss_3j + self.lambdaval * (-self.adv_loss_3j * 1.5)
 
             # set up the optimizers for both classifier and adversary
             self.train_classifier_standalone_2j = tf.train.AdamOptimizer(learning_rate = float(self.global_pars["adam_clf_lr"]), 
