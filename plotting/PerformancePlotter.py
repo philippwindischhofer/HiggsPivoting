@@ -2,7 +2,7 @@ import os, re
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-#plt.rcParams.update({'font.size': 5})
+plt.rcParams.update({'font.size': 12})
 from matplotlib.lines import Line2D
 import numpy as np
 
@@ -54,7 +54,7 @@ class PerformancePlotter:
         plt.close()                
 
     @staticmethod
-    def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'expected significance [$\sigma_A$]',
+    def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
                                         model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
@@ -97,7 +97,7 @@ class PerformancePlotter:
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
                                              unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
-                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'royalblue', title = "background floating",
+                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'royalblue', title = "",
                                              epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "cut-based analysis"))
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
@@ -118,7 +118,8 @@ class PerformancePlotter:
             epilog(ax)
 
         if show_legend:
-            ax.legend(loc = 'best')
+            leg = ax.legend(loc = 'best')
+            leg.get_frame().set_linewidth(0.0)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
