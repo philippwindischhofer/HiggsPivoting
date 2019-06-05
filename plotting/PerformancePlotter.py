@@ -2,6 +2,7 @@ import os, re
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+#plt.rcParams.update({'font.size': 5})
 from matplotlib.lines import Line2D
 import numpy as np
 
@@ -368,7 +369,7 @@ class PerformancePlotter:
 
     # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
     @staticmethod
-    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2):
+    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2, overlaydict = None):
         cmap = plt.cm.viridis
         colorquant = "lambda"
 
@@ -388,9 +389,15 @@ class PerformancePlotter:
 
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
                 ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = 'none', edgecolors = color, label = None, marker = 's', alpha = 1.0)
-
             except KeyError:
                 print(anadict)
+
+        if overlaydict:
+            ax.scatter(overlaydict["tight_{}jet_binned_sig".format(nJ)], overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = 'o', alpha = 1.0)
+            ax.scatter(overlaydict["loose_{}jet_binned_sig".format(nJ)], overlaydict["loose_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = '^', alpha = 1.0)
+            
+            combined_sig = np.sqrt(overlaydict["loose_{}jet_binned_sig".format(nJ)] ** 2 + overlaydict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+            ax.scatter(combined_sig, overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = 's', alpha = 1.0)
 
         ax.scatter(anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)], 
                    anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
@@ -413,23 +420,34 @@ class PerformancePlotter:
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
 
-        legend_elems = [
+        legend_elems_PCA = [
             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "loose"),
             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "combined"),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:"),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "high MET"),
-            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "low MET"),
-            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "gray", markeredgecolor = "gray", label = "combined")
+            (Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue"),
+             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue"),
+             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue", label = r'\lambda = 1.4'))
         ]
-        leg = ax.legend(handles = legend_elems, ncol = 2)
-        leg.get_frame().set_linewidth(0.0)
+        legend_elems_CBA = [
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "high MET"),
+            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "low MET"),
+            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "combined")
+        ]
+        leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
+        leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
+        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.22, 1.0))
+        leg_PCA.get_frame().set_linewidth(0.0)
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.62, 1.0))
+        leg_CBA.get_frame().set_linewidth(0.0)
+        ax.add_artist(leg_PCA)
 
-        ax.text(x = 0.3, y = 0.7, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+        ax.text(x = 0.35, y = 0.58, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
 
+        ax.set_xlim(right = ax.get_xlim()[1] * 1.05)
         ax.set_yscale("log")
-        ax.set_xlabel(r'binned signficance [$\sigma$]')
+        ax.set_xlabel(r'binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD$_i$')
         ax.set_ylim(bottom = 0.5, top = 1e4)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
@@ -526,7 +544,10 @@ class PerformancePlotter:
                 x, y = PerformancePlotter._smooth_histogram(y, x)
 
             ax.plot(x, y, **opts)
-            leg = ax.legend()
+            #leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.5, 1.05), ncol = 2)
+            leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.79, 1.0), ncol = 1, framealpha = 0.0)
+            for t in leg.texts:
+                t.set_multialignment('left')
             leg.get_frame().set_linewidth(0.0)
 
         # make colorbar for the range of encountered legended values

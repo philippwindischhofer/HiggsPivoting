@@ -16,11 +16,14 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         except:
             print("no information found for model '{}'".format(model_dir))
 
+    with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.4", "anadict.pkl"), "rb") as infile:
+        overlaydict = pickle.load(infile)
+
     PerformancePlotter.plot_significance_fairness_exclusive(dicts, plotdir)
     PerformancePlotter.plot_significance_fairness_inclusive(dicts, plotdir)
 
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2, overlaydict = overlaydict)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3, overlaydict = overlaydict)
 
 def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
     
@@ -28,8 +31,9 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     plot_data = []
 
     def annotation_epilog(ax):
-        ax.text(x = 0.05, y = 0.9, s = "\n".join(inner_label), transform=ax.transAxes)
-        ax.set_ylim([0, ax.get_ylim()[1] * 0.6])
+        ax.text(x = 0.05, y = 0.85, s = "\n".join(inner_label), transform = ax.transAxes,
+                horizontalalignment = 'left', verticalalignment = 'bottom')
+        ax.set_ylim([0, ax.get_ylim()[1] * 0.5])
     
     # load the plots that are to be mapped over runs
     for model_dir in model_dirs:
@@ -89,10 +93,11 @@ if __name__ == "__main__":
                 filename = "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR)
                 overlay_inclusive = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet.pkl".format(process, cur_nJ))
                 overlay_CBA = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
+                overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.4", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
 
-                overlay_paths = [overlay_inclusive, overlay_CBA]
-                overlay_labels = ["inclusive", "cut-based analysis"]
-                overlay_colors = ["black", "tomato"]
+                overlay_paths = [overlay_inclusive, overlay_CBA, overlay_PCA]
+                overlay_labels = ["inclusive", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']
+                overlay_colors = ["black", "tomato", "royalblue"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))

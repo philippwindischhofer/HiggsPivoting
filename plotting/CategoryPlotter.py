@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 12})
 
 from base.Configs import TrainingConfig
 
@@ -97,7 +98,7 @@ class CategoryPlotter:
             error_offset = np.sum(bin_contents, axis = 0)
             ax.errorbar(error_centers, error_offset, yerr = sow_total, fmt = 'k', linestyle = 'None')
 
-        leg = ax.legend(loc = "upper right")
+        leg = ax.legend(loc = "upper right", framealpha = 0.0)
         leg.get_frame().set_linewidth(0.0)
 
         ax.set_xlabel(xlabel)

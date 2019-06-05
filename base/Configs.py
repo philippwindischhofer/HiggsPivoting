@@ -11,7 +11,7 @@ class TrainingConfig:
     training_pars = {"pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
     training_slice = [0.0, 0.33]
-    validation_slice = [0.33, 0.66]
+    test_slice = [0.33, 0.66]
     validation_slice = [0.66, 1.0]
 
     data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-diboson-2.h5"
