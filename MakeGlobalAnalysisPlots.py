@@ -64,7 +64,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
                 high_edges = bins[1:]
                 centers = 0.5 * (low_edges + high_edges)
 
-                overlays.append((centers, n, {'color': overlay_color, 'lw': 1.2, 'label': overlay_label}))
+                overlays.append((centers, n, {'color': overlay_color, 'lw': 1.5, 'label': overlay_label}))
     except:
         overlays = []
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
                 overlay_paths = [overlay_inclusive, overlay_CBA, overlay_PCA]
                 overlay_labels = ["inclusive", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']
-                overlay_colors = ["black", "tomato", "royalblue"]
+                overlay_colors = ["black", "firebrick", "salmon"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))

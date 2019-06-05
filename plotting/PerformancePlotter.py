@@ -95,10 +95,12 @@ class PerformancePlotter:
         asimov_sigs_ncat_background_floating_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
         asimov_sigs_ncat_background_floating_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
 
+        #dark_blue  = (4*1./255, 30*1./255, 66*1./255)
+        dark_blue = plt.cm.Blues(1000)
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
                                              unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
-                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'royalblue', title = "",
-                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = 'royalblue', linestyle = "--", label = "cut-based analysis"))
+                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = dark_blue, title = "",
+                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = dark_blue, linestyle = "--", label = "cut-based analysis"))
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
                                              unc_down = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean, 
@@ -166,7 +168,7 @@ class PerformancePlotter:
 
         # get the contributing KS values for the signal regions:
         KS_vals = [sensdict[cur_KS] for cur_KS in reference_KSs]
-        ax.plot(combined_sigs, KS_vals, color = "tomato", linestyle = '-', marker = '_', label = "cut-based analysis")
+        ax.plot(combined_sigs, KS_vals, color = "firebrick", linestyle = '-', marker = '_', label = "cut-based analysis")
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
@@ -321,7 +323,7 @@ class PerformancePlotter:
 
             def CBA_epilog(ax):
                 ax.text(x = 4, y = 2e3, s = "{} jet".format(cur_nJ))
-                ax.scatter(CBA_performance, CBA_fairness, color = "tomato", label = "cut-based analysis")
+                ax.scatter(CBA_performance, CBA_fairness, color = "firebrick", label = "cut-based analysis")
             
             xquant = "{}jet_binned_sig_PCA".format(cur_nJ)
             yquant = re.compile("{}jet_tight_loose_inv_JS_bkg".format(cur_nJ))
@@ -361,7 +363,7 @@ class PerformancePlotter:
 
                 def CBA_epilog(ax):
                     ax.text(x = 0.79, y = 0.85, s = "{}, {} jet".format(cur_cut_label, cur_nJ), transform = ax.transAxes)
-                    ax.scatter(CBA_performance, CBA_fairness, color = "tomato", label = "cut-based analysis")
+                    ax.scatter(CBA_performance, CBA_fairness, color = "firebrick", label = "cut-based analysis")
 
                 xquant = "{}_{}jet_binned_sig".format(cur_cut_label, cur_nJ)
                 yquant = re.compile("{}_{}jet_inv_JS_bkg".format(cur_cut_label, cur_nJ))
@@ -371,7 +373,7 @@ class PerformancePlotter:
     # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
     @staticmethod
     def plot_significance_fairness_combined(anadicts, outdir, nJ = 2, overlaydict = None):
-        cmap = plt.cm.viridis
+        cmap = plt.cm.Blues
         colorquant = "lambda"
 
         # find the proper normalization of the color map
@@ -394,25 +396,25 @@ class PerformancePlotter:
                 print(anadict)
 
         if overlaydict:
-            ax.scatter(overlaydict["tight_{}jet_binned_sig".format(nJ)], overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = 'o', alpha = 1.0)
-            ax.scatter(overlaydict["loose_{}jet_binned_sig".format(nJ)], overlaydict["loose_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = '^', alpha = 1.0)
+            ax.scatter(overlaydict["tight_{}jet_binned_sig".format(nJ)], overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = 'o', alpha = 1.0)
+            ax.scatter(overlaydict["loose_{}jet_binned_sig".format(nJ)], overlaydict["loose_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = '^', alpha = 1.0)
             
             combined_sig = np.sqrt(overlaydict["loose_{}jet_binned_sig".format(nJ)] ** 2 + overlaydict["tight_{}jet_binned_sig".format(nJ)] ** 2)
-            ax.scatter(combined_sig, overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'royalblue', label = None, marker = 's', alpha = 1.0)
+            ax.scatter(combined_sig, overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = 's', alpha = 1.0)
 
         ax.scatter(anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)], 
                    anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "tomato", label = "cut-based analysis", marker = 'o')
+                   color = "firebrick", label = "cut-based analysis", marker = 'o')
 
         ax.scatter(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)],
                    anadicts[0]["low_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "tomato", label = "cut-based analysis", marker = '^')
+                   color = "firebrick", label = "cut-based analysis", marker = '^')
 
         combined_sig = np.sqrt(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)] ** 2)
 
         ax.scatter(combined_sig,
                    anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "tomato", label = "cut-based analysis", marker = 's')
+                   color = "firebrick", label = "cut-based analysis", marker = 's')
 
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
         fig.subplots_adjust(right = 0.8)
@@ -426,15 +428,15 @@ class PerformancePlotter:
             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "loose"),
             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "combined"),
-            (Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue"),
-             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue"),
-             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "royalblue", markeredgecolor = "royalblue", label = r'\lambda = 1.4'))
+            (Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
         ]
         legend_elems_CBA = [
             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "high MET"),
-            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "low MET"),
-            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "tomato", markeredgecolor = "tomato", label = "combined")
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "high MET"),
+            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "low MET"),
+            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "combined")
         ]
         leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
@@ -491,7 +493,7 @@ class PerformancePlotter:
     # combine the passed plots and save them
     @staticmethod
     def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False):
-        cmap = plt.cm.viridis
+        cmap = plt.cm.Blues
 
         # find the proper normalization of the color map
         colorrange = [float(perfdict[colorquant]) for perfdict in perfdicts if colorquant in perfdict]
