@@ -32,7 +32,7 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
     print("CBA: {} sigma".format(hypodict["asimov_sig_high_low_MET_background_floating"]))
 
     # now have all the data, just need to plot it
-    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir)
+    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'])
 
 def main():
     parser = ArgumentParser(description = "create global summary plots for Asimov sensitivities")

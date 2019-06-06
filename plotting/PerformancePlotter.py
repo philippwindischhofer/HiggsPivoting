@@ -55,7 +55,7 @@ class PerformancePlotter:
 
     @staticmethod
     def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
-                                        model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"]):
+                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
         
@@ -100,15 +100,17 @@ class PerformancePlotter:
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
                                              unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
                                              label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = dark_blue, title = "",
-                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = dark_blue, linestyle = "--", label = "cut-based analysis"))
+                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = dark_blue, linestyle = "--", label = "cut-based analysis"),
+                                             plotlabel = plotlabel)
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
                                              unc_down = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean, 
                                              label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'indianred', title = "background fixed",
-                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'indianred', linestyle = "--", label = "cut-based analysis"))
+                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'indianred', linestyle = "--", label = "cut-based analysis"),
+                                             plotlabel = plotlabel)
 
     @staticmethod
-    def _uncertainty_plot(x, y, unc_up, unc_down, label, outfile, xlabel, ylabel, color, show_legend = True, epilog = None, title = ""):
+    def _uncertainty_plot(x, y, unc_up, unc_down, label, outfile, xlabel, ylabel, color, show_legend = True, epilog = None, title = "", plotlabel = []):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
@@ -119,14 +121,18 @@ class PerformancePlotter:
         if epilog is not None:
             epilog(ax)
 
-        if show_legend:
-            leg = ax.legend(loc = 'best')
-            leg.get_frame().set_linewidth(0.0)
-
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.margins(x = 0.0)
+
+        if plotlabel:
+            text = "\n".join(plotlabel)
+            plt.text(0.4, 0.95, text, verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
+
+        if show_legend:
+            leg = ax.legend(loc = 'lower right')
+            leg.get_frame().set_linewidth(0.0)
         
         fig.savefig(outfile)
         plt.close()

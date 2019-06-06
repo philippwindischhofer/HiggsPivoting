@@ -190,10 +190,10 @@ def main():
             low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
+                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
 
         CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MadGraph + Pythia8", r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
 
         print("filling {} jet high_MET category".format(cur_nJ))
         high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
@@ -222,10 +222,10 @@ def main():
             high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
+                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
 
         CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MadGraph + Pythia8", "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
 
         # keep track of the tight and loose categories for later
         classifier_categories = {}
@@ -261,10 +261,10 @@ def main():
                 cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)])
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label, r'$n_J$ = {}'.format(cur_nJ)])
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}_nostack.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", cut_label, r'$n_J$ = {}'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label, r'$n_J$ = {}'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
 
             print("filled {} signal events".format(cur_cat.get_number_events("Hbb")))
 
