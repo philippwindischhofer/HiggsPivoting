@@ -9,7 +9,7 @@ def IsGoodLumiFile(lumifile):
     
         lumisection = lumiconfig["global"]
         if "SOW" in lumisection and "xsec" in lumisection and "lumi" in lumisection:
-            if float(lumisection["SOW"]) < 473.0:
+            if float(lumisection["SOW"]) < 500.0:
                 return True
             else:
                 return False
