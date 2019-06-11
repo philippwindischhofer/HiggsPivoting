@@ -246,7 +246,7 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     )
     optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
-    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.08 * iteration)
+    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.008 * iteration)
     for it in range(250):
         cur_xi = xi_scheduler(it)
         print("using xi = {}".format(cur_xi))
