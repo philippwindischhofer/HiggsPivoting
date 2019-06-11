@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import itertools
 from sklearn.model_selection import train_test_split
 from sklearn.gaussian_process.kernels import Matern
 from scipy.optimize import minimize
@@ -90,7 +91,8 @@ def EvaluateBinnedSignificance(process_events, process_aux_events, process_weigh
     return sensdict
 
 def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
-    test_size = TrainingConfig.test_size # fraction of MC16d events used for the estimation of the expected sensitivity (therefore need to scale up the results by the inverse of this factor)
+    data_slice = TrainingConfig.training_slice
+    slice_size = data_slice[1] - data_slice[0]
 
     # read the test dataset, which will be used to get the expected sensitivity of the analysis
     sig_samples = TrainingConfig.sig_samples
@@ -105,12 +107,14 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     sig_weights_train = []
     sig_aux_data_train = []
     for sample in sig_data:
-        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        cur_train = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_traindata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_train) # load the standard classifier input, nuisances and weights
         cur_aux_data = cur_train[TrainingConfig.other_branches].values
         sig_data_train.append(cur_traindata)
         sig_mBB_train.append(cur_nuisdata)
-        sig_weights_train.append(cur_weights / (1 - test_size))
+        sig_weights_train.append(cur_weights / slice_size)
         sig_aux_data_train.append(cur_aux_data)
 
     bkg_data_train = []
@@ -118,12 +122,14 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     bkg_weights_train = []
     bkg_aux_data_train = []
     for sample in bkg_data:
-        cur_train, _ = train_test_split(sample, test_size = test_size, shuffle = True, random_state = 12345)
+        cur_length = len(sample)
+        sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
+        cur_train = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_traindata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_train) # load the standard classifier input, nuisances and weights
         cur_aux_data = cur_train[TrainingConfig.other_branches].values
         bkg_data_train.append(cur_traindata)
         bkg_mBB_train.append(cur_nuisdata)
-        bkg_weights_train.append(cur_weights / (1 - test_size))
+        bkg_weights_train.append(cur_weights / slice_size)
         bkg_aux_data_train.append(cur_aux_data)
 
     # also prepare the total, concatenated versions
@@ -182,20 +188,40 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
 
     # # then, try a global search strategy
-    # ranges_bayes = {"MET_cut": (120, 300), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    # ranges_bayes = {"MET_cut": (200, 200.5), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
     # gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
     # optimizer = BayesianOptimization(
     #     f = costfunc_bayes,
     #     pbounds = ranges_bayes,
     #     random_state = 1
     # )
-    # optimizer.maximize(init_points = 500, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
+    # optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
     # xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.08 * iteration)
-    # for it in range(300):
+    # for it in range(100):
     #     cur_xi = xi_scheduler(it)
     #     print("using xi = {}".format(cur_xi))
     #     optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
+
+    # try a simple grid scan
+    range_MET = np.linspace(200, 200, 1)
+    range_dRBB_highMET = np.linspace(0.5, 3.0, 100)
+    range_dRBB_lowMET = np.linspace(0.5, 3.0, 100)
+
+    best_sig = 0
+    best_MET = 0
+    best_dRBB_highMET = 0
+    best_dRBB_lowMET = 0
+
+    for (cur_MET, cur_dRBB_highMET, cur_dRBB_lowMET) in itertools.product(range_MET, range_dRBB_highMET, range_dRBB_lowMET):
+        cur_sig = costfunc_bayes(MET_cut = cur_MET, dRBB_highMET_cut = cur_dRBB_highMET, dRBB_lowMET_cut = cur_dRBB_lowMET)
+        print("testing MET = {}, dRBB_highMET = {}, dRBB_lowMET = {} -> {} sigma".format(cur_MET, cur_dRBB_highMET, cur_dRBB_lowMET, cur_sig))
+
+        if cur_sig > best_sig:
+            best_sig = cur_sig
+            best_MET = cur_MET
+            best_dRBB_highMET = cur_dRBB_highMET
+            best_dRBB_lowMET = cur_dRBB_lowMET
     
     # print the results
     print("==============================================")
@@ -205,6 +231,15 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     print("dRBB_highMET_cut = {}".format(x0[1]))
     print("dRBB_lowMET_cut = {}".format(x0[2]))
     print("significance = {} sigma".format(-costfunc_flat(x0)))
+    print("==============================================")
+
+    print("==============================================")
+    print("optimized cuts (grid scan):")
+    print("==============================================")
+    print("MET_cut = {}".format(best_MET))
+    print("dRBB_highMET_cut = {}".format(best_dRBB_highMET))
+    print("dRBB_lowMET_cut = {}".format(best_dRBB_lowMET))
+    print("significance = {} sigma".format(best_sig))
     print("==============================================")
 
     print("==============================================")

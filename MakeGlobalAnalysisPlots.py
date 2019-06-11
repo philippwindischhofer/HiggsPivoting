@@ -16,7 +16,7 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         except:
             print("no information found for model '{}'".format(model_dir))
 
-    with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.4", "anadict.pkl"), "rb") as infile:
+    with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.0", "anadict.pkl"), "rb") as infile:
         overlaydict = pickle.load(infile)
 
     PerformancePlotter.plot_significance_fairness_exclusive(dicts, plotdir)
