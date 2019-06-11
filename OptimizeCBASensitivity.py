@@ -1,6 +1,7 @@
-import os
+import os, pickle
 import numpy as np
 import pandas as pd
+import subprocess as sp
 import itertools
 from sklearn.model_selection import train_test_split
 from sklearn.gaussian_process.kernels import Matern
@@ -90,6 +91,85 @@ def EvaluateBinnedSignificance(process_events, process_aux_events, process_weigh
     
     return sensdict
 
+def EvaluateAsimovSignificance(process_events, process_aux_events, process_weights, process_names, signal_process_names, background_process_names, binning, cuts, fit_dir):
+
+    if not os.path.exists(fit_dir):
+        os.makedirs(fit_dir)
+
+    sensdict = {}
+
+    # first, fill the four event categories (high / low MET, each split into 2 jet and 3 jet) and export them
+    low_MET_cat_2j = CutBasedCategoryFiller.create_low_MET_category(process_events = process_events,
+                                                                    process_aux_events = process_aux_events,
+                                                                    process_weights = process_weights,
+                                                                    process_names = process_names,
+                                                                    nJ = 2, cuts = cuts)
+    low_MET_cat_2j.export_ROOT_histogram(binning = binning, processes = process_names, var_names = "mBB",
+                                         outfile_path = os.path.join(fit_dir, "2jet_low_MET.root"), clipping = True, density = False)
+    
+    high_MET_cat_2j = CutBasedCategoryFiller.create_high_MET_category(process_events = process_events,
+                                                                   process_aux_events = process_aux_events,
+                                                                   process_weights = process_weights,
+                                                                   process_names = process_names,
+                                                                   nJ = 2, cuts = cuts)
+    high_MET_cat_2j.export_ROOT_histogram(binning = binning, processes = process_names, var_names = "mBB",
+                                         outfile_path = os.path.join(fit_dir, "2jet_high_MET.root"), clipping = True, density = False)
+
+    low_MET_cat_3j = CutBasedCategoryFiller.create_low_MET_category(process_events = process_events,
+                                                                    process_aux_events = process_aux_events,
+                                                                    process_weights = process_weights,
+                                                                    process_names = process_names,
+                                                                    nJ = 3, cuts = cuts)
+    low_MET_cat_3j.export_ROOT_histogram(binning = binning, processes = process_names, var_names = "mBB",
+                                         outfile_path = os.path.join(fit_dir, "3jet_low_MET.root"), clipping = True, density = False)
+
+    high_MET_cat_3j = CutBasedCategoryFiller.create_high_MET_category(process_events = process_events,
+                                                                      process_aux_events = process_aux_events,
+                                                                      process_weights = process_weights,
+                                                                      process_names = process_names,
+                                                                      nJ = 3, cuts = cuts)
+    high_MET_cat_3j.export_ROOT_histogram(binning = binning, processes = process_names, var_names = "mBB",
+                                          outfile_path = os.path.join(fit_dir, "3jet_high_MET.root"), clipping = True, density = False)
+
+    # prepare the script to run HistFitter and extract the result
+    hist_fitter_sceleton = """#!/bin/bash
+    export PYTHONPATH=/home/windischhofer/HiggsPivoting/fitting:$PYTHONPATH
+    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+    export ALRB_rootVersion=6.14.04-x86_64-slc6-gcc62-opt
+    source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh
+    lsetup root
+    source /home/windischhofer/HistFitter/v0.61.0/setup.sh
+    cd {fit_dir}
+    /home/windischhofer/HistFitter/v0.61.0/scripts/HistFitter.py -w -f -F disc -m ALL -a -z --userArg {fit_dir} /home/windischhofer/HiggsPivoting/fitting/ShapeFitHighLowMETBackgroundFloating.py &> {fit_log}
+    python /home/windischhofer/HiggsPivoting/fitting/ConvertHistFitterResult.py --mode hypotest --infile {fit_outfile} --outkey asimov_sig_high_low_MET_background_floating --outfile {sig_outfile}
+
+    rm -r {fit_dir}/config
+    rm -r {fit_dir}/data
+    rm -r {fit_dir}/results
+    """
+
+    # run the fit
+    pars = {"fit_dir": fit_dir, "fit_log": os.path.join(fit_dir, "fit.log"), 
+            "fit_outfile": os.path.join(fit_dir, "results", "ShapeFitHighLowMETBackgroundFloating_hypotest.root"),
+            "sig_outfile": os.path.join(fit_dir, "fit_results.pkl")}
+
+    jobfile_path = os.path.join(fit_dir, "do_fit.sh")
+    with open(jobfile_path, "w") as jobfile:
+        jobfile.write(hist_fitter_sceleton.format(**pars))    
+
+    sp.check_output(["sh", jobfile_path])
+
+    # read the result
+    with open(os.path.join(fit_dir, "fit_results.pkl"), "rb") as infile:
+        resdict = pickle.load(infile)
+        sensdict["combined"] = resdict["asimov_sig_high_low_MET_background_floating"]
+
+    print("testing: MET_cut = {}, dRBB_highMET_cut = {}, dRBB_lowMET_cut = {} --> {} sigma".format(
+        cuts["MET_cut"], cuts["dRBB_highMET_cut"], cuts["dRBB_lowMET_cut"], sensdict["combined"])
+    )
+
+    return sensdict
+
 def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     data_slice = TrainingConfig.training_slice
     slice_size = data_slice[1] - data_slice[0]
@@ -146,125 +226,55 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
 
     print("mBB binning: {}".format(SR_mBB_binning))
 
+    original_cuts = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}
+
     # the objective function that needs to be minimized
-    costfunc = lambda cuts: -EvaluateBinnedSignificance(process_events = data_train, process_aux_events = aux_train, 
-                                                       process_weights = weights_train, process_names = samples, 
-                                                       signal_process_names = sig_samples, background_process_names = bkg_samples, 
-                                                       binning = SR_mBB_binning, cuts = cuts)["combined"]
-
+    costfunc = lambda cuts: -EvaluateAsimovSignificance(process_events = data_train, process_aux_events = aux_train, 
+                                                        process_weights = weights_train, process_names = samples, 
+                                                        signal_process_names = sig_samples, background_process_names = bkg_samples, 
+                                                        binning = SR_mBB_binning, cuts = cuts, fit_dir = outdir)["combined"]
+    
     costfunc_bayes = lambda MET_cut, dRBB_highMET_cut, dRBB_lowMET_cut: -costfunc({"MET_cut": MET_cut, "dRBB_highMET_cut": dRBB_highMET_cut, "dRBB_lowMET_cut": dRBB_lowMET_cut})
+    
+    # then, try a global search strategy
+    ranges_bayes = {"MET_cut": (150, 250), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
+    optimizer = BayesianOptimization(
+        f = costfunc_bayes,
+        pbounds = ranges_bayes,
+        random_state = 1
+    )
+    optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
-    # the same function, but with a flat array holding the parameters
-    # in the order [MET_cut, dRBB_highMET_cut, dRBB_lowMET_cut]
-    costfunc_flat = lambda cuts: costfunc({"MET_cut": cuts[0], "dRBB_highMET_cut": cuts[1], "dRBB_lowMET_cut": cuts[2]})
-
-    if do_plots:
-        # make some illustrative plots of the sensitivity
-        for MET_cut in np.linspace(210.5, 220.5, 11):
-            
-            dRBB_cut_range = np.linspace(1.0, 1.7, 71)
-            res = np.zeros((len(dRBB_cut_range), len(dRBB_cut_range)))
-            
-            for x, dRBB_highMET_cut in enumerate(dRBB_cut_range):
-                for y, dRBB_lowMET_cut in enumerate(dRBB_cut_range):
-                    cuts = {"MET_cut": MET_cut, "dRBB_highMET_cut": dRBB_highMET_cut, "dRBB_lowMET_cut": dRBB_lowMET_cut}
-                    print("query with {}".format(cuts))
-                    res[x,y] = -costfunc(cuts)
-                    print(res)
-
-            # generate the plot and store it:
-            GenerateHeatMapSensitivityPlot(res, x_ticks = dRBB_cut_range, y_ticks = dRBB_cut_range, title = "MET_cut = {} GeV".format(MET_cut), 
-                                           xlabel = "dRBB_highMET_cut", ylabel = "dRBB_lowMET_cut", outfile = os.path.join(outdir, "dRBB_MET_{}.pdf".format(MET_cut)))
-
-
-    # # perform the optimization:
-
-    # first, try a local optimizer
-    # start at the current cut values:
-    x0 = [200, 1.2, 1.8]
-
-    # the parameter ranges
-    ranges = [[120, 300], [0.5, 3.0], [0.5, 3.0]]
-    res_local = minimize(costfunc_flat, x0 = x0, method = 'Nelder-Mead', bounds = ranges, options = {'disp': True})
-
-    # # then, try a global search strategy
-    # ranges_bayes = {"MET_cut": (200, 200.5), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
-    # gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
-    # optimizer = BayesianOptimization(
-    #     f = costfunc_bayes,
-    #     pbounds = ranges_bayes,
-    #     random_state = 1
-    # )
-    # optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
-
-    # xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.08 * iteration)
-    # for it in range(100):
-    #     cur_xi = xi_scheduler(it)
-    #     print("using xi = {}".format(cur_xi))
-    #     optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
-
-    # try a simple grid scan
-    range_MET = np.linspace(200, 200, 1)
-    range_dRBB_highMET = np.linspace(0.5, 3.0, 100)
-    range_dRBB_lowMET = np.linspace(0.5, 3.0, 100)
-
-    best_sig = 0
-    best_MET = 0
-    best_dRBB_highMET = 0
-    best_dRBB_lowMET = 0
-
-    for (cur_MET, cur_dRBB_highMET, cur_dRBB_lowMET) in itertools.product(range_MET, range_dRBB_highMET, range_dRBB_lowMET):
-        cur_sig = costfunc_bayes(MET_cut = cur_MET, dRBB_highMET_cut = cur_dRBB_highMET, dRBB_lowMET_cut = cur_dRBB_lowMET)
-        print("testing MET = {}, dRBB_highMET = {}, dRBB_lowMET = {} -> {} sigma".format(cur_MET, cur_dRBB_highMET, cur_dRBB_lowMET, cur_sig))
-
-        if cur_sig > best_sig:
-            best_sig = cur_sig
-            best_MET = cur_MET
-            best_dRBB_highMET = cur_dRBB_highMET
-            best_dRBB_lowMET = cur_dRBB_lowMET
+    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.08 * iteration)
+    for it in range(250):
+        cur_xi = xi_scheduler(it)
+        print("using xi = {}".format(cur_xi))
+        optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
     
     # print the results
     print("==============================================")
     print("initial cuts:")
     print("==============================================")
-    print("MET_cut = {}".format(x0[0]))
-    print("dRBB_highMET_cut = {}".format(x0[1]))
-    print("dRBB_lowMET_cut = {}".format(x0[2]))
-    print("significance = {} sigma".format(-costfunc_flat(x0)))
+    print("MET_cut = {}".format(original_cuts["MET_cut"]))
+    print("dRBB_highMET_cut = {}".format(original_cuts["dRBB_highMET_cut"]))
+    print("dRBB_lowMET_cut = {}".format(original_cuts["dRBB_lowMET_cut"]))
+    print("significance = {} sigma".format(costfunc_bayes(**original_cuts)))
     print("==============================================")
 
     print("==============================================")
-    print("optimized cuts (grid scan):")
+    print("optimized cuts (global optimization):")
     print("==============================================")
-    print("MET_cut = {}".format(best_MET))
-    print("dRBB_highMET_cut = {}".format(best_dRBB_highMET))
-    print("dRBB_lowMET_cut = {}".format(best_dRBB_lowMET))
-    print("significance = {} sigma".format(best_sig))
+    print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
+    print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
+    print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
+    print("significance = {} sigma".format(optimizer.max["target"]))
     print("==============================================")
-
-    print("==============================================")
-    print("optimized cuts (local optimization):")
-    print("==============================================")
-    print("MET_cut = {}".format(res_local.x[0]))
-    print("dRBB_highMET_cut = {}".format(res_local.x[1]))
-    print("dRBB_lowMET_cut = {}".format(res_local.x[2]))
-    print("significance = {} sigma".format(-costfunc_flat(res_local.x)))
-    print("==============================================")
-
-    # print("==============================================")
-    # print("optimized cuts (global optimization):")
-    # print("==============================================")
-    # print("MET_cut = {}".format(optimizer.max["params"]["MET_cut"]))
-    # print("dRBB_highMET_cut = {}".format(optimizer.max["params"]["dRBB_highMET_cut"]))
-    # print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
-    # print("significance = {} sigma".format(optimizer.max["target"]))
-    # print("==============================================")
         
 if __name__ == "__main__":
     parser = ArgumentParser(description = "optimize the cuts in the CBA for maximum binned significance")
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--outdir", action = "store", dest = "outdir")
-    parser.add_argument("--do_plots", action = "store_const", const = True, default = False)
     args = vars(parser.parse_args())
 
     outdir = args["outdir"]
