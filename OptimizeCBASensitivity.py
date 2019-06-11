@@ -17,81 +17,11 @@ from base.Configs import TrainingConfig
 from analysis.CutBasedCategoryFiller import CutBasedCategoryFiller
 from DatasetExtractor import TrainNuisAuxSplit
 
-def GenerateHeatMapSensitivityPlot(res, outfile, x_ticks, y_ticks, title = "", xlabel = "", ylabel = ""):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    # convert the coordinates (essentially the 'bin centers') into proper tickmarks
-    binwidth_x = x_ticks[1] - x_ticks[0]
-    binwidth_y = y_ticks[1] - y_ticks[0]
-
-    l_edges_x = list(x_ticks - binwidth_x / 2)
-    u_edges_x = list(x_ticks + binwidth_x / 2)
-    l_edges_y = list(y_ticks - binwidth_y / 2)
-    u_edges_y = list(y_ticks + binwidth_y / 2)
-
-    x_edges = sorted(l_edges_x + [u_edges_x[-1]])
-    y_edges = sorted(l_edges_y + [u_edges_y[-1]])
-
-    # prepare the colormap for the sensitivity
-    cmap = plt.cm.coolwarm
-    norm = mpl.colors.Normalize(vmin = 2.4, vmax = 2.8)
-
-    im = ax.pcolor(x_edges, y_edges, res.T, cmap = cmap, norm = norm)
-    cb = plt.colorbar(im)
-    cb.set_label(r'binned significance [$\sigma$]')
-
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-
-    plt.tight_layout()
-    fig.savefig(outfile)
-    plt.close(fig)
-
-def EvaluateBinnedSignificance(process_events, process_aux_events, process_weights, process_names, signal_process_names, background_process_names, binning, cuts):
-
-    sensdict = {}
-
-    # first, fill the four event categories (high / low MET, each split into 2 jet and 3 jet)
-    low_MET_cat_2j = CutBasedCategoryFiller.create_low_MET_category(process_events = process_events,
-                                                                    process_aux_events = process_aux_events,
-                                                                    process_weights = process_weights,
-                                                                    process_names = process_names,
-                                                                    nJ = 2, cuts = cuts)
-    sensdict["low_MET_cat_2j"] = low_MET_cat_2j.get_binned_significance(binning = binning, signal_processes = signal_process_names, 
-                                                                        background_processes = background_process_names, var_name = "mBB")
-
-    high_MET_cat_2j = CutBasedCategoryFiller.create_high_MET_category(process_events = process_events,
-                                                                   process_aux_events = process_aux_events,
-                                                                   process_weights = process_weights,
-                                                                   process_names = process_names,
-                                                                   nJ = 2, cuts = cuts)
-    sensdict["high_MET_cat_2j"] = high_MET_cat_2j.get_binned_significance(binning = binning, signal_processes = signal_process_names, 
-                                                                        background_processes = background_process_names, var_name = "mBB")
-
-    low_MET_cat_3j = CutBasedCategoryFiller.create_low_MET_category(process_events = process_events,
-                                                                    process_aux_events = process_aux_events,
-                                                                    process_weights = process_weights,
-                                                                    process_names = process_names,
-                                                                    nJ = 3, cuts = cuts)
-    sensdict["low_MET_cat_3j"] = low_MET_cat_3j.get_binned_significance(binning = binning, signal_processes = signal_process_names, 
-                                                                        background_processes = background_process_names, var_name = "mBB")
-
-    high_MET_cat_3j = CutBasedCategoryFiller.create_high_MET_category(process_events = process_events,
-                                                                      process_aux_events = process_aux_events,
-                                                                      process_weights = process_weights,
-                                                                      process_names = process_names,
-                                                                      nJ = 3, cuts = cuts)
-    sensdict["high_MET_cat_3j"] = high_MET_cat_3j.get_binned_significance(binning = binning, signal_processes = signal_process_names, 
-                                                                        background_processes = background_process_names, var_name = "mBB")
-
-    # compute the combined sensitivity
-    sensdict["combined"] = np.sqrt(sensdict["low_MET_cat_2j"]**2 + sensdict["high_MET_cat_2j"]**2 + sensdict["low_MET_cat_3j"]**2 + sensdict["high_MET_cat_3j"]**2)
-    
-    return sensdict
+evalcnt = 0
 
 def EvaluateAsimovSignificance(process_events, process_aux_events, process_weights, process_names, signal_process_names, background_process_names, binning, cuts, fit_dir):
+    global evalcnt
+    evalcnt += 1
 
     if not os.path.exists(fit_dir):
         os.makedirs(fit_dir)
@@ -167,6 +97,20 @@ def EvaluateAsimovSignificance(process_events, process_aux_events, process_weigh
     print("testing: MET_cut = {}, dRBB_highMET_cut = {}, dRBB_lowMET_cut = {} --> {} sigma".format(
         cuts["MET_cut"], cuts["dRBB_highMET_cut"], cuts["dRBB_lowMET_cut"], sensdict["combined"])
     )
+
+    # update the log
+    fit_evolution_file = os.path.join(fit_dir, "fit_evolution.pkl")
+    try:
+        with open(fit_evolution_file, "rb") as evol_logfile:
+            fit_evolution_dict = pickle.load(evol_logfile)
+    except:
+        fit_evolution_dict = {}
+
+    print("current evolution log: {}".format(fit_evolution_dict))
+    fit_evolution_dict[evalcnt] = sensdict
+
+    with open(fit_evolution_file, "wb") as evol_logfile:
+        pickle.dump(fit_evolution_dict, evol_logfile)
 
     return sensdict
 
@@ -247,7 +191,7 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
     xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.008 * iteration)
-    for it in range(250):
+    for it in range(200):
         cur_xi = xi_scheduler(it)
         print("using xi = {}".format(cur_xi))
         optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
@@ -270,6 +214,10 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     print("dRBB_lowMET_cut = {}".format(optimizer.max["params"]["dRBB_lowMET_cut"]))
     print("significance = {} sigma".format(optimizer.max["target"]))
     print("==============================================")
+
+    # save the results:
+    with open(os.path.join(outdir, "opt_results.pkl"), "wb") as opt_outfile:
+        pickle.dump(optimizer.max, opt_outfile)
         
 if __name__ == "__main__":
     parser = ArgumentParser(description = "optimize the cuts in the CBA for maximum binned significance")
