@@ -237,7 +237,7 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     costfunc_bayes = lambda MET_cut, dRBB_highMET_cut, dRBB_lowMET_cut: -costfunc({"MET_cut": MET_cut, "dRBB_highMET_cut": dRBB_highMET_cut, "dRBB_lowMET_cut": dRBB_lowMET_cut})
     
     # then, try a global search strategy
-    ranges_bayes = {"MET_cut": (150, 250), "dRBB_highMET_cut": (0.5, 3.0), "dRBB_lowMET_cut": (0.5, 3.0)}
+    ranges_bayes = {"MET_cut": (150, 250), "dRBB_highMET_cut": (0.5, 4.0), "dRBB_lowMET_cut": (0.5, 4.0)}
     gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
     optimizer = BayesianOptimization(
         f = costfunc_bayes,
