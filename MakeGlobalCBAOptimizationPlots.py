@@ -41,7 +41,7 @@ def MakeGlobalCBAOptimizationPlots(opt_dirs, plot_dir):
     # compute the median, as well as the position of the upper and lower uncertainty bands
     median = np.median(all_evolcurves, axis = 0)
     unc_up = np.max(all_evolcurves, axis = 0) - median
-    unc_down = median - np.min(all_evolcurves, axis = 0)
+    unc_down = -(median - np.min(all_evolcurves, axis = 0))
 
     PerformancePlotter._uncertainty_plot(stepcurves[0], median, 
                                          unc_up = unc_up, unc_down = unc_down, label = "Bayesian Optimization", outfile = os.path.join(plot_dir, "evolution.pdf"), xlabel = "step", ylabel = "Asimov significance", color = "black")
