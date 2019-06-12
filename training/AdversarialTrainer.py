@@ -275,7 +275,7 @@ class AdversarialTrainer(Trainer):
         # start the actual adversarial training
         print("starting adversarial training:")
         for batch in range(int(number_batches)):
-            for cur in range(5):
+            for cur in range(1):
                 # sample coherently from (data, nuisance, label) tuples
                 (data_batch_2j, nuisances_batch_2j, labels_batch_2j, auxdata_batch_2j), weights_batch_2j = sampling_callback([data_sig_2j, nuisances_sig_2j, labels_sig_2j, auxdat_sig_2j], weights_sig_2j, 
                                                                                                                              [data_bkg_2j, nuisances_bkg_2j, labels_bkg_2j, auxdat_bkg_2j], weights_bkg_2j, 
