@@ -92,8 +92,8 @@ def main():
 
     # give the full list of signal / background components to the trainer
     train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, 
-                nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg, auxdat_sig = auxdat_sig, auxdat_bkg = auxdat_bkg)
-                #sig_sampling_pars = {"sampling_fractions": TrainingConfig.sig_sampling_fractions}, bkg_sampling_pars = {"sampling_fractions": TrainingConfig.bkg_sampling_fractions})
+                nuisances_sig = nuisdat_sig, nuisances_bkg = nuisdat_bkg, weights_sig = weightdat_sig, weights_bkg = weightdat_bkg, auxdat_sig = auxdat_sig, auxdat_bkg = auxdat_bkg,
+                sig_sampling_pars = {"sampling_lengths": TrainingConfig.sig_sampling_lengths}, bkg_sampling_pars = {"sampling_lengths": TrainingConfig.bkg_sampling_lengths})
 
     # save all the necessary information
     if not os.path.exists(outdir):

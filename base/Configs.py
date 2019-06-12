@@ -18,7 +18,10 @@ class TrainingConfig:
     #data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
     sig_samples = ["Hbb"]
+    sig_sampling_lengths = [1.0]
+
     bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
+    bkg_sampling_lengths = [0.33, 0.33, 0.0, 0.34]
 
     sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
 

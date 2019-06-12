@@ -40,30 +40,35 @@ class AdversarialTrainer(Trainer):
             # pretend that each component came with an equal SOW to start with
             # SOWs = [1 / len(weights) for cur in weights]
             SOWs = np.array(sampling_pars["sampling_fractions"])
-            print("using explicit sampling fractions: {}".format(SOWs))
+            #print("using explicit sampling fractions: {}".format(SOWs))
         else:
             # keep the original proportions
             SOWs = [np.sum(cur) for cur in weights]
             total_SOW = np.sum(SOWs)
             SOWs /= total_SOW # normalize total SOW to 1
-            print("using original sampling fractions: {}".format(SOWs))
+            #print("using original sampling fractions: {}".format(SOWs))
 
         total_SOW = 0
+
+        # check if a manual override is provided for the number of samples drawn from each signal / background component
+        samplinglengths = [1.0 for cur_source in sources]
+        if "sampling_lengths" in sampling_pars:
+            samplinglengths = sampling_pars["sampling_lengths"]
 
         # now, compute the number of events that should be sampled from each signal / background component:
         # sample them in the same proportions with which they appear in the training dataset ...
         sampled_data = []
         sampled_weights = []
-        for cur_source, cur_weights, cur_nevents in zip(sources, weights, nevents):
+        for cur_source, cur_weights, cur_nevents, cur_samplinglength in zip(sources, weights, nevents, samplinglengths):
             #cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size * cur_nevents / total_nevents))
-            cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size / len(sources)))
+            cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(cur_samplinglength * batch_size / len(sources)))
             sampled_data.append(cur_sampled_data)
             sampled_weights.append(cur_sampled_weights)
             total_SOW += np.sum(cur_sampled_weights)
         
-        print("---")
-        print("fractions before rescaling")
-        print([np.sum(cur) / total_SOW for cur in sampled_weights])
+        # print("---")
+        # print("fractions before rescaling")
+        # print([np.sum(cur) / total_SOW for cur in sampled_weights])
 
         # # ... and normalize them such that their SOWs are in the correct relation to each other
         for cur, cur_SOW in enumerate(SOWs):
@@ -73,9 +78,9 @@ class AdversarialTrainer(Trainer):
         # for cur, cur_SOW in enumerate(SOWs):
         #     sampled_weights[cur] /= total_SOW
 
-        print("fractions after rescaling")
-        print([np.sum(cur) for cur in sampled_weights])
-        print("---")
+        # print("fractions after rescaling")
+        # print([np.sum(cur) for cur in sampled_weights])
+        # print("---")
 
         # transpose them back for easy concatenation
         sampled_sources = list(map(list, zip(*sampled_data)))
@@ -91,10 +96,10 @@ class AdversarialTrainer(Trainer):
         # sample a halfbatch size full of events from signal, and from background, individually normalized to unit SOW
         # and keeping their relative proportions fixed
         sig_sampled, sig_weights = self.sample_from_components(sources_sig, weights_sig, batch_size = size // 2, sampling_pars = sig_sampling_pars)
-        print("sampled {} events from signal components with total SOW = {}".format(len(sig_weights), np.sum(sig_weights)))
+        #print("sampled {} events from signal components with total SOW = {}".format(len(sig_weights), np.sum(sig_weights)))
 
         bkg_sampled, bkg_weights = self.sample_from_components(sources_bkg, weights_bkg, batch_size = size // 2, sampling_pars = bkg_sampling_pars)
-        print("sampled {} events from background components with total SOW = {}".format(len(bkg_weights), np.sum(bkg_weights)))
+        #print("sampled {} events from background components with total SOW = {}".format(len(bkg_weights), np.sum(bkg_weights)))
 
         # concatenate the individual components
         data_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
