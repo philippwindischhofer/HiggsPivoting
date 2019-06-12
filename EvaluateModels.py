@@ -56,7 +56,7 @@ def main():
         cur_pTB2data = cur_test[["pTB2"]].values
         sig_data_test.append(cur_testdata)
         sig_mBB_test.append(cur_nuisdata)
-        sig_weights_test.append(cur_weights * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test.append(cur_weights)
         sig_dRBB_test.append(cur_dRBBdata)
         sig_pTB1_test.append(cur_pTB1data)
         sig_pTB2_test.append(cur_pTB2data)
@@ -77,7 +77,7 @@ def main():
         cur_pTB2data = cur_test[["pTB2"]].values
         bkg_data_test.append(cur_testdata)
         bkg_mBB_test.append(cur_nuisdata)
-        bkg_weights_test.append(cur_weights * TrainingConfig.sample_reweighting[sample_name])
+        bkg_weights_test.append(cur_weights)
         bkg_dRBB_test.append(cur_dRBBdata)
         bkg_pTB1_test.append(cur_pTB1data)
         bkg_pTB2_test.append(cur_pTB2data)
@@ -98,6 +98,10 @@ def main():
                     event = sample[[event_num]]
                     ev.plot_clf_pdf(event = event, varlabels = TrainingConfig.training_branches, plotlabel = sample_name, outpath = os.path.join(plots_outdir, "clf_pdf_" + sample_name + "_" + str(event_num) + ".pdf"))
 
+        # generate plots showing the evolution of certain parameters during training
+        tsp = TrainingStatisticsPlotter(model_dir)
+        tsp.plot(outdir = plots_outdir)
+
         # plot the ROC curve as performance measure
         ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
 
@@ -108,18 +112,18 @@ def main():
         ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_dRBB_test, var_bkg = bkg_dRBB_test, 
                            weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
                            labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB", histrange = (0, 5))
-        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB1_test, var_bkg = bkg_pTB1_test, 
-                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
-                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(1)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB1")
-        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB2_test, var_bkg = bkg_pTB2_test, 
-                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
-                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(2)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB2")
+        # ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB1_test, var_bkg = bkg_pTB1_test, 
+        #                    weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+        #                    labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(1)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB1")
+        # ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB2_test, var_bkg = bkg_pTB2_test, 
+        #                    weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+        #                    labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(2)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB2")
 
         # plot classifier distributions
-        ev.plot_clf_distribution(data = sig_data_test + bkg_data_test, weights = sig_weights_test + bkg_weights_test, outpath = plots_outdir, labels = sig_samples + bkg_samples, num_cols = 2)
+        #ev.plot_clf_distribution(data = sig_data_test + bkg_data_test, weights = sig_weights_test + bkg_weights_test, outpath = plots_outdir, labels = sig_samples + bkg_samples, num_cols = 2)
 
         # plot correlation plots of the classifier with m_BB
-        ev.plot_clf_correlations(varname = "mBB", data_sig = sig_data_test, weights_sig = sig_weights_test, labels_sig = sig_samples, data_bkg = bkg_data_test, weights_bkg = bkg_weights_test, labels_bkg = bkg_samples, outpath = plots_outdir)
+        #ev.plot_clf_correlations(varname = "mBB", data_sig = sig_data_test, weights_sig = sig_weights_test, labels_sig = sig_samples, data_bkg = bkg_data_test, weights_bkg = bkg_weights_test, labels_bkg = bkg_samples, outpath = plots_outdir)
 
         # get inclusive performance metrics and save them
         perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_mBB_test, bkg_mBB_test, sig_weights_test, 
@@ -155,10 +159,6 @@ def main():
         # save the combined perfdict
         with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
            pickle.dump(perfdict, outfile)
-
-        # generate plots showing the evolution of certain parameters during training
-        tsp = TrainingStatisticsPlotter(model_dir)
-        tsp.plot(outdir = plots_outdir)
 
 if __name__ == "__main__":
     main()

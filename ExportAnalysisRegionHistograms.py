@@ -53,7 +53,7 @@ def main():
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test.append(cur_testdata)
-        sig_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test.append(cur_weights / slice_size)
         sig_aux_data_test.append(cur_aux_data)
 
     # also need to keep separate all signal events with 2 jets / 3 jets
@@ -74,7 +74,7 @@ def main():
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test_2j.append(cur_testdata)
-        sig_weights_test_2j.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test_2j.append(cur_weights / slice_size)
         sig_aux_data_test_2j.append(cur_aux_data)
 
     for sample, sample_name in zip(data_sig, sig_samples):
@@ -86,7 +86,7 @@ def main():
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         sig_data_test_3j.append(cur_testdata)
-        sig_weights_test_3j.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
+        sig_weights_test_3j.append(cur_weights / slice_size)
         sig_aux_data_test_3j.append(cur_aux_data)
 
     # load all background processes
@@ -101,7 +101,7 @@ def main():
 
         cur_aux_data = cur_test[TrainingConfig.other_branches].values
         bkg_data_test.append(cur_testdata)
-        bkg_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
+        bkg_weights_test.append(cur_weights / slice_size)
         bkg_aux_data_test.append(cur_aux_data)
 
     # also prepare the total, concatenated versions
@@ -139,8 +139,12 @@ def main():
     #         3: [0.0, 0.326514026005491, 0.7917872994832997]}
 
     # for ATLAS MC
-    cuts = {2: [0.0, 0.34669408038894933, 0.9073610781343515],
-            3: [0.0, 0.32230881360286623, 0.8215582540701756]}
+    # cuts = {2: [0.0, 0.34669408038894933, 0.9073610781343515],
+    #         3: [0.0, 0.32230881360286623, 0.8215582540701756]}
+
+    # for ATLAS MC (with optimized CBA)
+    cuts = {2: [0.0, 0.48292271447653023, 0.9515851878011691],
+            3: [0.0, 0.45242440329433675, 0.9019498861149849]}
 
     cut_labels = ["tight", "loose"]
     
