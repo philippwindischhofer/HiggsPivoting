@@ -51,6 +51,10 @@ class ModelEvaluator:
         p_binned, _ = np.histogram(np.clip(p, binning[0], binning[-1]), bins = binning, weights = p_weights, density = True)
         q_binned, _ = np.histogram(np.clip(q, binning[0], binning[-1]), bins = binning, weights = q_weights, density = True)
 
+        # make sure they do not contain negative entries
+        p_binned = np.maximum(p_binned, 0.0)
+        q_binned = np.maximum(q_binned, 0.0)
+
         # scale it up by the bin width to get actual per-bin probabilities instead of a density
         p_binned *= (binning[1] - binning[0])
         q_binned *= (binning[1] - binning[0])
