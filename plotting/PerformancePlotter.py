@@ -53,9 +53,11 @@ class PerformancePlotter:
         fig.savefig(outfile)
         plt.close()                
 
+    # expect CBA_overlays in the form [{label, ls, dict}]
     @staticmethod
     def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
-                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
+                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = [],
+                                            CBA_overlays = []):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
         
@@ -97,16 +99,27 @@ class PerformancePlotter:
 
         #dark_blue  = (4*1./255, 30*1./255, 66*1./255)
         dark_blue = plt.cm.Blues(1000)
+
+        def bkg_floating_epilog(ax):
+            for cur_overlay in CBA_overlays:
+                ax.axhline(y = cur_overlay["dict"]["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
+                           color = dark_blue, linestyle = cur_overlay["ls"], label = cur_overlay["label"])
+
+        def bkg_fixed_epilog(ax):
+            for cur_overlay in CBA_overlays:
+                ax.axhline(y = cur_overlay["dict"]["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
+                           color = "indianred", linestyle = cur_overlay["ls"], label = cur_overlay["label"])
+
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
                                              unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
                                              label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = dark_blue, title = "",
-                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, color = dark_blue, linestyle = "--", label = "cut-based analysis"),
+                                             epilog = bkg_floating_epilog,
                                              plotlabel = plotlabel)
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
                                              unc_down = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean, 
                                              label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'indianred', title = "background fixed",
-                                             epilog = lambda ax: ax.axhline(y = hypodict["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, color = 'indianred', linestyle = "--", label = "cut-based analysis"),
+                                             epilog = bkg_fixed_epilog,
                                              plotlabel = plotlabel)
 
     @staticmethod
@@ -124,7 +137,7 @@ class PerformancePlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
-        ax.margins(x = 0.0)
+        ax.margins(x = 0.0, y = 0.2)
 
         if plotlabel:
             text = "\n".join(plotlabel)
@@ -133,7 +146,7 @@ class PerformancePlotter:
         if show_legend:
             leg = ax.legend(loc = 'lower right')
             leg.get_frame().set_linewidth(0.0)
-        
+
         fig.savefig(outfile)
         plt.close()
 

@@ -95,8 +95,7 @@ def GetCBASignalEfficiencies(outdir):
                                                                      process_aux_events = aux_test,
                                                                      process_weights = weights_test,
                                                                      process_names = samples,
-                                                                     nJ = cur_nJ,
-                                                                     cuts = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}
+                                                                     nJ = cur_nJ
                                                                  )
 
         low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
@@ -113,8 +112,7 @@ def GetCBASignalEfficiencies(outdir):
                                                                        process_aux_events = aux_test,
                                                                        process_weights = weights_test,
                                                                        process_names = samples,
-                                                                       nJ = cur_nJ,
-                                                                       cuts = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}
+                                                                       nJ = cur_nJ
                                                                    )
 
         high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
