@@ -181,17 +181,17 @@ def OptimizeCBASensitivity(infile_path, outdir, do_plots = True):
     costfunc_bayes = lambda MET_cut, dRBB_highMET_cut, dRBB_lowMET_cut: -costfunc({"MET_cut": MET_cut, "dRBB_highMET_cut": dRBB_highMET_cut, "dRBB_lowMET_cut": dRBB_lowMET_cut})
     
     # then, try a global search strategy
-    ranges_bayes = {"MET_cut": (150, 250), "dRBB_highMET_cut": (0.5, 4.0), "dRBB_lowMET_cut": (0.5, 4.0)}
+    ranges_bayes = {"MET_cut": (150, 250), "dRBB_highMET_cut": (0.5, 5.0), "dRBB_lowMET_cut": (0.5, 5.0)}
     gp_params = {'kernel': 1.0 * Matern(length_scale = 0.05, length_scale_bounds = (1e-1, 1e2), nu = 1.5)}
     optimizer = BayesianOptimization(
         f = costfunc_bayes,
         pbounds = ranges_bayes,
-        random_state = 1
+        random_state = None
     )
     optimizer.maximize(init_points = 20, n_iter = 1, acq = 'poi', kappa = 3, **gp_params)
 
-    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.008 * iteration)
-    for it in range(200):
+    xi_scheduler = lambda iteration: 0.01 + 0.19 * np.exp(-0.004 * iteration)
+    for it in range(400):
         cur_xi = xi_scheduler(it)
         print("using xi = {}".format(cur_xi))
         optimizer.maximize(init_points = 0, n_iter = 1, acq = 'poi', kappa = 3, xi = cur_xi, **gp_params)
