@@ -15,7 +15,8 @@ class TrainingConfig:
     test_slice = [0.33, 0.66]
     validation_slice = [0.66, 1.0]
 
-    data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-ATLAS.h5"
+    data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-ATLAS-filtered.h5"
+    #data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-ATLAS.h5"
     #data_path = "/home/windischhofer/datasmall/Hbb/training-mc16d.h5"
 
     sig_samples = ["Hbb"]
