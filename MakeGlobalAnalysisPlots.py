@@ -19,6 +19,8 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.0", "anadict.pkl"), "rb") as infile:
         overlaydict = pickle.load(infile)
 
+    dicts = sorted(dicts, key = lambda cur: cur["lambda"])
+
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2, overlaydict = overlaydict)
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3, overlaydict = overlaydict)
 
@@ -93,10 +95,10 @@ if __name__ == "__main__":
                 overlay_CBA_original = os.path.join(args["model_dirs"][0], "original_dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
                 overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.0", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
 
-                overlay_paths = [overlay_inclusive, overlay_CBA_optimized, overlay_CBA_original, overlay_PCA]
-                overlay_labels = ["inclusive", "cut-based\n"+"analysis (optimised)", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']
+                overlay_paths = [overlay_inclusive, overlay_CBA_original, overlay_CBA_optimized, overlay_PCA]
+                overlay_labels = ["inclusive", "cut-based analysis", "cut-based analysis\n(optimised)", 'pivotal classifier\n' + r'($\lambda = 1.4$)']
                 overlay_colors = ["black", "firebrick", "firebrick", "salmon"]
-                overlay_lss = ["-", ":", "-", "-"]
+                overlay_lss = ["-", "-", ":", "-"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))

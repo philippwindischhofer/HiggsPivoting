@@ -572,6 +572,7 @@ class PerformancePlotter:
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
+        fig.subplots_adjust(left = 0.15)
 
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
@@ -584,7 +585,7 @@ class PerformancePlotter:
 
             ax.plot(x, y, **opts)
             #leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.5, 1.05), ncol = 2)
-            leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.79, 1.0), ncol = 1, framealpha = 0.0)
+            leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.74, 1.0), ncol = 1, framealpha = 0.0)
             for t in leg.texts:
                 t.set_multialignment('left')
             leg.get_frame().set_linewidth(0.0)
@@ -593,7 +594,7 @@ class PerformancePlotter:
         ax.set_ylabel(ylabel_r)
         #ax.margins(0.0)
         ax.set_title(plot_title)
-        ax.set_ylim((0, 2.0 * ax.get_ylim()[1])) # add some more margin on top
+        ax.set_ylim((0, 3.0 * ax.get_ylim()[1])) # add some more margin on top
 
         if epilog:
             epilog(ax)
