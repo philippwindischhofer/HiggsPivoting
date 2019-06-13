@@ -550,15 +550,6 @@ class PerformancePlotter:
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
             ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.1)
-
-        ax.set_xlabel(xlabel_r)
-        ax.set_ylabel(ylabel_r)
-        ax.margins(0.0)
-        ax.set_title(plot_title)
-        ax.set_ylim((0, 1.2 * ax.get_ylim()[1])) # add some more margin on top
-
-        if epilog:
-            epilog(ax)
         
         # plot the overlays
         for (x, y, opts) in overlays:
@@ -571,6 +562,15 @@ class PerformancePlotter:
             for t in leg.texts:
                 t.set_multialignment('left')
             leg.get_frame().set_linewidth(0.0)
+
+        ax.set_xlabel(xlabel_r)
+        ax.set_ylabel(ylabel_r)
+        #ax.margins(0.0)
+        ax.set_title(plot_title)
+        ax.set_ylim((0, 2.0 * ax.get_ylim()[1])) # add some more margin on top
+
+        if epilog:
+            epilog(ax)
 
         # make colorbar for the range of encountered legended values
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])

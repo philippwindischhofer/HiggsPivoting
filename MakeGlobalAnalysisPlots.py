@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 filename = "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR)
                 overlay_inclusive = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet.pkl".format(process, cur_nJ))
                 overlay_CBA = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
-                overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.4", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
+                overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.0", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
 
                 overlay_paths = [overlay_inclusive, overlay_CBA, overlay_PCA]
                 overlay_labels = ["inclusive", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']

@@ -44,6 +44,8 @@ def main():
     sig_data_test_2j = []
     sig_data_test_3j = []
     sig_aux_test = []
+    sig_aux_test_2j = []
+    sig_aux_test_3j = []
     sig_mBB_test = []
     sig_mBB_test_2j = []
     sig_mBB_test_3j = []
@@ -69,6 +71,8 @@ def main():
         cut_3j = (cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 3)
         
         sig_aux_test.append(cur_aux_data)
+        sig_aux_test_2j.append(cur_aux_data[cut_2j])
+        sig_aux_test_3j.append(cur_aux_data[cut_3j])
         sig_data_test.append(cur_testdata)
         sig_data_test_2j.append(cur_testdata[cut_2j])
         sig_data_test_3j.append(cur_testdata[cut_3j])
@@ -88,6 +92,8 @@ def main():
     bkg_data_test_2j = []
     bkg_data_test_3j = []
     bkg_aux_test = []
+    bkg_aux_test_2j = []
+    bkg_aux_test_3j = []
     bkg_mBB_test = []
     bkg_mBB_test_2j = []
     bkg_mBB_test_3j = []
@@ -113,6 +119,8 @@ def main():
         cut_3j = cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 3
 
         bkg_aux_test.append(cur_aux_data)
+        bkg_aux_test_2j.append(cur_aux_data[cut_2j])
+        bkg_aux_test_3j.append(cur_aux_data[cut_3j])
         bkg_data_test.append(cur_testdata)
         bkg_data_test_2j.append(cur_testdata[cut_2j])
         bkg_data_test_3j.append(cur_testdata[cut_3j])
@@ -149,21 +157,26 @@ def main():
         tsp.plot(outdir = plots_outdir)
 
         # plot the ROC curve as performance measure
-        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test)
+        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test)
 
         # generate distortion plots
-        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, var_sig = sig_mBB_test_2j, var_bkg = bkg_mBB_test_2j, 
+        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, aux_sig = sig_aux_test_2j, aux_bkg = bkg_aux_test_2j,
+                           var_sig = sig_mBB_test_2j, var_bkg = bkg_mBB_test_2j, 
                            weights_sig = sig_weights_test_2j, weights_bkg = bkg_weights_test_2j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
                            labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB_2j")
-        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, var_sig = sig_mBB_test_3j, var_bkg = bkg_mBB_test_3j, 
+        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, aux_sig = sig_aux_test_3j, aux_bkg = bkg_aux_test_3j,
+                           var_sig = sig_mBB_test_3j, var_bkg = bkg_mBB_test_3j, 
                            weights_sig = sig_weights_test_3j, weights_bkg = bkg_weights_test_3j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
                            labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB_3j")
-        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, var_sig = sig_dRBB_test_2j, var_bkg = bkg_dRBB_test_2j, 
+        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, aux_sig = sig_aux_test_2j, aux_bkg = bkg_aux_test_2j,
+                           var_sig = sig_dRBB_test_2j, var_bkg = bkg_dRBB_test_2j, 
                            weights_sig = sig_weights_test_2j, weights_bkg = bkg_weights_test_2j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
                            labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB_2j", histrange = (0, 5))
-        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, var_sig = sig_dRBB_test_3j, var_bkg = bkg_dRBB_test_3j, 
+        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, aux_sig = sig_aux_test_3j, aux_bkg = bkg_aux_test_3j,
+                           var_sig = sig_dRBB_test_3j, var_bkg = bkg_dRBB_test_3j, 
                            weights_sig = sig_weights_test_3j, weights_bkg = bkg_weights_test_3j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
                            labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB_3j", histrange = (0, 5))
+
         # ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB1_test, var_bkg = bkg_pTB1_test, 
         #                    weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
         #                    labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(1)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB1")
@@ -177,40 +190,40 @@ def main():
         # plot correlation plots of the classifier with m_BB
         #ev.plot_clf_correlations(varname = "mBB", data_sig = sig_data_test, weights_sig = sig_weights_test, labels_sig = sig_samples, data_bkg = bkg_data_test, weights_bkg = bkg_weights_test, labels_bkg = bkg_samples, outpath = plots_outdir)
 
-        # get inclusive performance metrics and save them
-        perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_mBB_test, bkg_mBB_test, sig_weights_test, 
-                                              bkg_weights_test, labels_sig = sig_samples, labels_bkg = bkg_samples)
-        print("got inclusive perfdict = " + str(perfdict))
+        # # get inclusive performance metrics and save them
+        # perfdict = ev.get_performance_metrics(sig_data_test, bkg_data_test, sig_mBB_test, bkg_mBB_test, sig_weights_test, 
+        #                                       bkg_weights_test, labels_sig = sig_samples, labels_bkg = bkg_samples)
+        # print("got inclusive perfdict = " + str(perfdict))
 
-        # get performance metrics for the SR mass range only (from 30 GeV < mBB < 210 GeV)
-        sig_data_test_SR = []
-        bkg_data_test_SR = []
-        sig_mBB_test_SR = []
-        bkg_mBB_test_SR = []
-        sig_weights_test_SR = []
-        bkg_weights_test_SR = []
+        # # get performance metrics for the SR mass range only (from 30 GeV < mBB < 210 GeV)
+        # sig_data_test_SR = []
+        # bkg_data_test_SR = []
+        # sig_mBB_test_SR = []
+        # bkg_mBB_test_SR = []
+        # sig_weights_test_SR = []
+        # bkg_weights_test_SR = []
 
-        for cur_data, cur_mBB, cur_weights in zip(sig_data_test, sig_mBB_test, sig_weights_test):
-            cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
-            sig_data_test_SR.append(cur_data[cut_pass])
-            sig_mBB_test_SR.append(cur_mBB[cut_pass])
-            sig_weights_test_SR.append(cur_weights[cut_pass])
+        # for cur_data, cur_mBB, cur_weights in zip(sig_data_test, sig_mBB_test, sig_weights_test):
+        #     cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
+        #     sig_data_test_SR.append(cur_data[cut_pass])
+        #     sig_mBB_test_SR.append(cur_mBB[cut_pass])
+        #     sig_weights_test_SR.append(cur_weights[cut_pass])
 
-        for cur_data, cur_mBB, cur_weights in zip(bkg_data_test, bkg_mBB_test, bkg_weights_test):
-            cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
-            bkg_data_test_SR.append(cur_data[cut_pass])
-            bkg_mBB_test_SR.append(cur_mBB[cut_pass])
-            bkg_weights_test_SR.append(cur_weights[cut_pass])
+        # for cur_data, cur_mBB, cur_weights in zip(bkg_data_test, bkg_mBB_test, bkg_weights_test):
+        #     cut_pass = np.logical_and.reduce((cur_mBB > 30, cur_mBB < 210)).flatten()
+        #     bkg_data_test_SR.append(cur_data[cut_pass])
+        #     bkg_mBB_test_SR.append(cur_mBB[cut_pass])
+        #     bkg_weights_test_SR.append(cur_weights[cut_pass])
 
-        perfdict_SR = ev.get_performance_metrics(sig_data_test_SR, bkg_data_test_SR, sig_mBB_test_SR, bkg_mBB_test_SR, sig_weights_test_SR, 
-                                                 bkg_weights_test_SR, labels_sig = sig_samples, labels_bkg = bkg_samples, prefix = "SR_")
-        print("got SR perfdict = " + str(perfdict_SR))
+        # perfdict_SR = ev.get_performance_metrics(sig_data_test_SR, bkg_data_test_SR, sig_mBB_test_SR, bkg_mBB_test_SR, sig_weights_test_SR, 
+        #                                          bkg_weights_test_SR, labels_sig = sig_samples, labels_bkg = bkg_samples, prefix = "SR_")
+        # print("got SR perfdict = " + str(perfdict_SR))
 
-        perfdict.update(perfdict_SR)
+        # perfdict.update(perfdict_SR)
 
-        # save the combined perfdict
-        with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
-           pickle.dump(perfdict, outfile)
+        # # save the combined perfdict
+        # with open(os.path.join(plots_outdir, "perfdict.pkl"), "wb") as outfile:
+        #    pickle.dump(perfdict, outfile)
 
 if __name__ == "__main__":
     main()

@@ -17,7 +17,7 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
 
     for model_dir in model_dirs:
         try:
-            with open(os.path.join(model_dir, "hypodict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "perfdict.pkl"), "rb") as sens_infile:
+            with open(os.path.join(model_dir, "hypodict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "anadict.pkl"), "rb") as sens_infile:
                 hypodict = pickle.load(fit_infile)
                 sensdict = pickle.load(sens_infile)
                 hypodicts.append(hypodict)

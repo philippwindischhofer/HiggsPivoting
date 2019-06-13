@@ -137,7 +137,7 @@ class ModelEvaluator:
 
     # computes a series of performance measures and saves them to a file
     # currently, computes AUROC as robust performance measure, KL as robust fairness measure
-    def get_performance_metrics(self, data_sig, data_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25], prefix = ""):
+    def get_performance_metrics(self, data_sig, data_bkg, aux_sig, aux_bkg, nuis_sig, nuis_bkg, sig_weights, bkg_weights, labels_sig, labels_bkg, sigeffs = [0.5, 0.25], prefix = ""):
         perfdict = {}
 
         # for performance evaluations that require a binning of the nuisance
@@ -164,7 +164,8 @@ class ModelEvaluator:
         perfdict[prefix + "AUROC"] = auroc
 
         # get the ROC curve
-        fpr, tpr, _ = self.get_roc(np.concatenate(data_sig, axis = 0), np.concatenate(data_bkg, axis = 0), 
+        fpr, tpr, _ = self.get_roc(np.concatenate(data_sig, axis = 0), np.concatenate(data_bkg, axis = 0),
+                                   np.concatenate(aux_sig, axis = 0), np.concatenate(aux_bkg, axis = 0),
                                    np.concatenate(sig_weights, axis = 0), np.concatenate(bkg_weights, axis = 0))
 
         # to get the fairness metrics, need to compute the cut values for the given signal efficiencies
@@ -221,9 +222,9 @@ class ModelEvaluator:
         return perfdict
         
     # compute fpr / tpr of the given data
-    def get_roc(self, data_sig, data_bkg, sig_weights, bkg_weights):
-        pred_sig = self.env.predict(data = data_sig)[:,1]
-        pred_bkg = self.env.predict(data = data_bkg)[:,1]
+    def get_roc(self, data_sig, data_bkg, aux_sig, aux_bkg, sig_weights, bkg_weights):
+        pred_sig = self.env.predict(data = data_sig, auxdat = aux_sig)[:,1]
+        pred_bkg = self.env.predict(data = data_bkg, auxdat = aux_bkg)[:,1]
 
         pred = np.concatenate([pred_sig, pred_bkg], axis = 0)
         weights = np.concatenate([sig_weights, bkg_weights], axis = 0)
@@ -235,7 +236,7 @@ class ModelEvaluator:
         return fpr, tpr, auc
 
     # plot the ROC of the classifier
-    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath, aux_sig, aux_bkg):
+    def plot_roc(self, data_sig, data_bkg, aux_sig, aux_bkg, sig_weights, bkg_weights, outpath):
         # need to merge all signal- and background samples for the inclusive ROC
         data_sig_inclusive = np.concatenate(data_sig, axis = 0)
         data_bkg_inclusive = np.concatenate(data_bkg, axis = 0)
@@ -252,6 +253,8 @@ class ModelEvaluator:
         cut_bkg_central = np.logical_and(mBB_bkg > 100.0, mBB_bkg < 150.0)
         data_sig_central = data_sig_inclusive[cut_sig_central]
         data_bkg_central = data_bkg_inclusive[cut_bkg_central]
+        aux_sig_central = aux_sig_inclusive[cut_sig_central]
+        aux_bkg_central = aux_bkg_inclusive[cut_bkg_central]
         sig_weights_central = sig_weights_inclusive[cut_sig_central]
         bkg_weights_central = bkg_weights_inclusive[cut_bkg_central]
 
@@ -260,6 +263,8 @@ class ModelEvaluator:
         cut_bkg_high = mBB_bkg > 150.0
         data_sig_high = data_sig_inclusive[cut_sig_high]
         data_bkg_high = data_bkg_inclusive[cut_bkg_high]
+        aux_sig_high = aux_sig_inclusive[cut_sig_high]
+        aux_bkg_high = aux_bkg_inclusive[cut_bkg_high]
         sig_weights_high = sig_weights_inclusive[cut_sig_high]
         bkg_weights_high = bkg_weights_inclusive[cut_bkg_high]
 
@@ -268,6 +273,8 @@ class ModelEvaluator:
         cut_bkg_low = mBB_bkg < 100.0
         data_sig_low = data_sig_inclusive[cut_sig_low]
         data_bkg_low = data_bkg_inclusive[cut_bkg_low]
+        aux_sig_low = aux_sig_inclusive[cut_sig_low]
+        aux_bkg_low = aux_bkg_inclusive[cut_bkg_low]
         sig_weights_low = sig_weights_inclusive[cut_sig_low]
         bkg_weights_low = bkg_weights_inclusive[cut_bkg_low]
 
@@ -288,10 +295,11 @@ class ModelEvaluator:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        for cur_data_sig, cur_data_bkg, cur_sig_weights, cur_bkg_weights, color, label_base in zip([data_sig_inclusive, data_sig_central, data_sig_high, data_sig_low], [data_bkg_inclusive, data_bkg_central, data_bkg_high, data_bkg_low],
+        for cur_data_sig, cur_data_bkg, cur_aux_sig, cur_aux_bkg, cur_sig_weights, cur_bkg_weights, color, label_base in zip([data_sig_inclusive, data_sig_central, data_sig_high, data_sig_low], [data_bkg_inclusive, data_bkg_central, data_bkg_high, data_bkg_low],
+                                                                                                                             [aux_sig_inclusive, aux_sig_central, aux_sig_high, aux_sig_low], [aux_bkg_inclusive, aux_bkg_central, aux_bkg_high, aux_bkg_low],
                                                                                                    [sig_weights_inclusive, sig_weights_central, sig_weights_high, sig_weights_low], [bkg_weights_inclusive, bkg_weights_central, bkg_weights_high, bkg_weights_low],
                                                                                                    colors, label_bases):
-            fpr, tpr, auc = self.get_roc(cur_data_sig, cur_data_bkg, cur_sig_weights, cur_bkg_weights)
+            fpr, tpr, auc = self.get_roc(cur_data_sig, cur_data_bkg, cur_aux_sig, cur_aux_bkg, cur_sig_weights, cur_bkg_weights)
             ax.plot(tpr, fpr, color = color, label = label_base + r' (AUC = {:.3f})'.format(auc))
 
         ax.set_xlabel("signal efficiency")
@@ -422,9 +430,9 @@ class ModelEvaluator:
         fig.savefig(outpath)
         plt.close()
 
-    def plot_distortion(self, data_sig, data_bkg, var_sig, var_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', path_prefix = "dist_mBB", histrange = (0, 500)):
-        pred_bkg = [self.env.predict(data = sample)[:,1] for sample in data_bkg]
-        pred_sig = [self.env.predict(data = sample)[:,1] for sample in data_sig]
+    def plot_distortion(self, data_sig, data_bkg, aux_sig, aux_bkg, var_sig, var_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', path_prefix = "dist_mBB", histrange = (0, 500)):
+        pred_bkg = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_bkg, aux)]
+        pred_sig = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_sig, aux)]
         
         # create the output directory if it doesn't already exist and save the figure(s)
         if not os.path.exists(outpath):

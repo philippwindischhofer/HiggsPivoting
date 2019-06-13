@@ -159,27 +159,36 @@ class Category:
 
         outfile.Close()
 
+    # def _get_SB_binning(self, binning, signal_processes, background_processes, var_name):
+    #     # first, bin all participating processes
+    #     binned_signal = []
+    #     binned_background = []
+
+    #     for process_name, events in self.aux_content.items():
+    #         cur_var_values = events[:, TrainingConfig.auxiliary_branches.index(var_name)]
+    #         cur_weights = self.weight_content[process_name]
+
+    #         cur_bin_contents, _ = np.histogram(np.clip(cur_var_values, binning[0], binning[-1]), bins = binning, weights = cur_weights.flatten())
+
+    #         if process_name in signal_processes:
+    #             binned_signal.append(cur_bin_contents)
+    #         elif process_name in background_processes:
+    #             binned_background.append(cur_bin_contents)
+
+    #     # get the total sum of signal- and background events in each bin
+    #     total_binned_signal = np.sum(binned_signal, axis = 0)
+    #     total_binned_background = np.sum(binned_background, axis = 0)
+
+    #     return total_binned_signal, total_binned_background
+
     def _get_SB_binning(self, binning, signal_processes, background_processes, var_name):
-        # first, bin all participating processes
-        binned_signal = []
-        binned_background = []
+        sigvar, sigweights = self.get_event_variable(signal_processes, var_name)
+        bkgvar, bkgweights = self.get_event_variable(background_processes, var_name)
 
-        for process_name, events in self.aux_content.items():
-            cur_var_values = events[:, TrainingConfig.auxiliary_branches.index(var_name)]
-            cur_weights = self.weight_content[process_name]
+        binned_signal, _ = np.histogram(np.clip(sigvar, binning[0], binning[-1]), bins = binning, weights = sigweights.flatten())
+        binned_background, _ = np.histogram(np.clip(bkgvar, binning[0], binning[-1]), bins = binning, weights = bkgweights.flatten())
 
-            cur_bin_contents, _ = np.histogram(np.clip(cur_var_values, binning[0], binning[-1]), bins = binning, weights = cur_weights.flatten())
-
-            if process_name in signal_processes:
-                binned_signal.append(cur_bin_contents)
-            elif process_name in background_processes:
-                binned_background.append(cur_bin_contents)
-
-        # get the total sum of signal- and background events in each bin
-        total_binned_signal = np.sum(binned_signal, axis = 0)
-        total_binned_background = np.sum(binned_background, axis = 0)
-
-        return total_binned_signal, total_binned_background
+        return binned_signal, binned_background
 
     # compute the binned significance of the 'var' distribution of this category to the separation of the 
     # given signal- and background components
