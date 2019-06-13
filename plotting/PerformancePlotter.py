@@ -402,7 +402,7 @@ class PerformancePlotter:
 
         fig = plt.figure(figsize = (9,6))
         ax = fig.add_subplot(111)
-        ax.margins(0.15)
+        ax.margins(left = 0.45)
 
         for ind, anadict in enumerate(anadicts):
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
@@ -445,36 +445,59 @@ class PerformancePlotter:
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
 
+        # now start putting the labels
+        ax.text(x = 0.05, y = 0.85, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+
         legend_elems_PCA = [
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
+            #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "loose"),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "combined"),
-            (Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+        ]
+        legend_elems_PCA_lambda = [
+            (Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
              Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
         ]
         legend_elems_CBA = [
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "high MET"),
+            #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
             Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "low MET"),
+            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "high MET"),
             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "combined")
         ]
-        leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
-        leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
-        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.22, 1.0))
+        legend_elems_CBA_optimized = [
+            (Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick"),
+             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick"),
+             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick", label = "optimized"))
+         ]
+        leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
+        leg_labels_CBA = [r'low $E_{\mathrm{T}}^{\mathrm{miss}}$', r'high $E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
+
+        # leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
+        # leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
+        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 3.0, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.35))
+        leg_PCA_lambda = ax.legend(handles = legend_elems_PCA_lambda, labels = [r'$\lambda = 1.4$'], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.28))
         leg_PCA.get_frame().set_linewidth(0.0)
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.62, 1.0))
+        leg_PCA_lambda.get_frame().set_linewidth(0.0)
+
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 2.75, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.18))
+        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
+        leg_CBA_optimized.get_frame().set_linewidth(0.0)
         ax.add_artist(leg_PCA)
+        ax.add_artist(leg_PCA_lambda)
+        ax.add_artist(leg_CBA)
+        ax.add_artist(leg_CBA_optimized)
 
-        ax.text(x = 0.35, y = 0.58, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+        ax.text(x = 0.03, y = 0.23, s = "  pivotal\nclassifier", transform = ax.transAxes)
+        ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
+        ax.text(x = 0.55, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
 
-        ax.set_xlim(right = ax.get_xlim()[1] * 1.05)
+        ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
         ax.set_yscale("log")
         ax.set_xlabel(r'binned significance [$\sigma$]')
-        ax.set_ylabel(r'1/JSD$_i$')
-        ax.set_ylim(bottom = 0.5, top = 1e4)
+        ax.set_ylabel(r'1/JSD')
+        ax.set_ylim(bottom = 5e-3, top = 5e3)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
         fig.savefig(outfile)
         plt.close()
