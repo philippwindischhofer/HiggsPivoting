@@ -412,6 +412,8 @@ class PerformancePlotter:
                 ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = 'none', linewidths = 1, label = None, marker = '^', alpha = 1.0)
 
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+                if anadict["tight_{}jet_inv_JS_bkg".format(nJ)] < 1:
+                    print(anadict["tight_{}jet_inv_JS_bkg".format(nJ)])
                 ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = 'none', edgecolors = color, label = None, marker = 's', alpha = 1.0)
             except KeyError:
                 print(anadict)
