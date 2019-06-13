@@ -157,7 +157,7 @@ def main():
         tsp.plot(outdir = plots_outdir)
 
         # plot the ROC curve as performance measure
-        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test)
+        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
 
         # generate distortion plots
         ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, aux_sig = sig_aux_test_2j, aux_bkg = bkg_aux_test_2j,

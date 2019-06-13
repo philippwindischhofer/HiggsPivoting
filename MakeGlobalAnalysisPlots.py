@@ -25,7 +25,7 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2, overlaydict = overlaydict)
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3, overlaydict = overlaydict)
 
-def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
+def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
     
     dicts = []
     plot_data = []
@@ -54,7 +54,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     try:
         overlays = []
 
-        for overlay_path, overlay_label, overlay_color in zip(overlay_paths, overlay_labels, overlay_colors):
+        for overlay_path, overlay_label, overlay_color, overlay_ls in zip(overlay_paths, overlay_labels, overlay_colors, overlay_lss):
             print("trying to load from {}".format(overlay_path))
 
             with open(overlay_path, "rb") as overlay_infile:
@@ -64,7 +64,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
                 high_edges = bins[1:]
                 centers = 0.5 * (low_edges + high_edges)
 
-                overlays.append((centers, n, {'color': overlay_color, 'lw': 1.5, 'label': overlay_label}))
+                overlays.append((centers, n, {'color': overlay_color, 'lw': 1.5, 'label': overlay_label, 'ls': overlay_ls}))
     except:
         overlays = []
 
@@ -92,15 +92,17 @@ if __name__ == "__main__":
             for cur_SR, cur_CBA_SR in zip(SRs, CBA_SRs):
                 filename = "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR)
                 overlay_inclusive = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet.pkl".format(process, cur_nJ))
-                overlay_CBA = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
+                overlay_CBA_optimized = os.path.join(args["model_dirs"][0], "optimized_dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
+                overlay_CBA_original = os.path.join(args["model_dirs"][0], "original_dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
                 overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.0", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
 
-                overlay_paths = [overlay_inclusive, overlay_CBA, overlay_PCA]
-                overlay_labels = ["inclusive", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']
-                overlay_colors = ["black", "firebrick", "salmon"]
+                overlay_paths = [overlay_inclusive, overlay_CBA_optimized, overlay_CBA_original, overlay_PCA]
+                overlay_labels = ["inclusive", "cut-based\n"+"analysis (optimised)", "cut-based\n"+"analysis", 'pivotal\n'+'classifier\n' + r'($\lambda = 1.4$)']
+                overlay_colors = ["black", "firebrick", "firebrick", "salmon"]
+                overlay_lss = ["-", ":", "-", "-"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))
 
-                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
-                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)], smoothing = True)
+                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
+                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)], smoothing = True)

@@ -19,7 +19,7 @@ configMgr.calculatorType = 2
 configMgr.testStatType = 2
 configMgr.nPoints = 20
 
-configMgr.analysisName = "ShapeFitHighLowMETBackgroundFloatingOptimized"
+configMgr.analysisName = "ShapeFitHighLowMETBackgroundFixedOriginal"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
 
 # signal regions that are to be used for this fit
@@ -28,18 +28,20 @@ region_names = ["twojethighMET", "twojetlowMET",
 
 # names of the individual input files for the above regions
 # Note: these must exist in the directory 'indir' passed above
-region_infiles = ["optimized_2jet_high_MET.root", "optimized_2jet_low_MET.root",
-                  "optimized_3jet_high_MET.root", "optimized_3jet_low_MET.root"]
+region_infiles = ["original_2jet_high_MET.root", "original_2jet_low_MET.root",
+                  "original_3jet_high_MET.root", "original_3jet_low_MET.root"]
 
 # names of the individual signal templates available in each region
 #sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]
-#sample_names = ["ttbar", "Zjets", "Wjets", "Hbb"]
 sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "Hbb"]
+#sample_names = ["ttbar", "Zjets", "Wjets", "Hbb"]
 #sample_names = TrainingConfigs.bkg_samples + TrainingConfigs.sig_samples
-normalization_floating = [True, True, True, True, True]
+#normalization_floating = [False, False, False, True]
+normalization_floating = [False, False, False, False, True]
+#signal_samples = [False, False, False, True]
 signal_samples = [False, False, False, False, True]
-#template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
 template_names = [sample_name + "_mBB" for sample_name in sample_names]
+#template_names = ["ttbar_mBB", "Zjets_mBB", "Wjets_mBB", "diboson_mBB", "singletop_mBB", "Hbb_mBB"]
 template_colors = [TColor.GetColor(255, 204, 0), TColor.GetColor(204, 151, 0), TColor.GetColor(0, 99, 0), 
                    TColor.GetColor(0, 99, 204), TColor.GetColor(204, 204, 204), TColor.GetColor(255, 0, 0)]
 

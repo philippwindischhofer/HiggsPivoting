@@ -19,7 +19,7 @@ configMgr.calculatorType = 2
 configMgr.testStatType = 2
 configMgr.nPoints = 20
 
-configMgr.analysisName = "ShapeFitHighLowMETBackgroundFloatingOptimized"
+configMgr.analysisName = "ShapeFitHighLowMETBackgroundFloatingOriginal"
 configMgr.outputFileName = "results/{}.root".format(configMgr.analysisName)
 
 # signal regions that are to be used for this fit
@@ -28,8 +28,8 @@ region_names = ["twojethighMET", "twojetlowMET",
 
 # names of the individual input files for the above regions
 # Note: these must exist in the directory 'indir' passed above
-region_infiles = ["optimized_2jet_high_MET.root", "optimized_2jet_low_MET.root",
-                  "optimized_3jet_high_MET.root", "optimized_3jet_low_MET.root"]
+region_infiles = ["original_2jet_high_MET.root", "original_2jet_low_MET.root",
+                  "original_3jet_high_MET.root", "original_3jet_low_MET.root"]
 
 # names of the individual signal templates available in each region
 #sample_names = ["ttbar", "Zjets", "Wjets", "diboson", "singletop", "Hbb"]

@@ -431,8 +431,8 @@ class ModelEvaluator:
         plt.close()
 
     def plot_distortion(self, data_sig, data_bkg, aux_sig, aux_bkg, var_sig, var_bkg, weights_sig, weights_bkg, sigeffs, outpath, labels_sig = None, labels_bkg = None, num_cols = 2, xlabel = r'$m_{bb}$ [GeV]', ylabel = 'a.u.', path_prefix = "dist_mBB", histrange = (0, 500)):
-        pred_bkg = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_bkg, aux)]
-        pred_sig = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_sig, aux)]
+        pred_bkg = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_bkg, aux_bkg)]
+        pred_sig = [self.env.predict(data = sample, auxdat = aux)[:,1] for sample, aux in zip(data_sig, aux_sig)]
         
         # create the output directory if it doesn't already exist and save the figure(s)
         if not os.path.exists(outpath):

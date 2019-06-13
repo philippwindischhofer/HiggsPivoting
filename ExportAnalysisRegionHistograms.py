@@ -144,10 +144,13 @@ def main():
     #         3: [0.0, 0.32230881360286623, 0.8215582540701756]}
 
     # for ATLAS MC (with optimized CBA)
-    cuts = {2: [0.0, 0.40980884408751117, 0.9060291803032521],
-            3: [0.0, 0.3726996799444123, 0.8493024023704923]}
+    cuts = {2: [0.0, 0.4176270076174703, 0.9484673946077271],
+            3: [0.0, 0.39042834934304477, 0.9007551742165589]}
 
     cut_labels = ["tight", "loose"]
+
+    CBA_original = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}
+    CBA_optimized = {"MET_cut": 192, "dRBB_highMET_cut": 1.3, "dRBB_lowMET_cut": 5.0}
     
     print("using the following cuts:")
     print(cuts)
@@ -176,70 +179,73 @@ def main():
     anadict = {}
     
     for cur_nJ, cur_inclusive_cat, cur_signal_events, cur_signal_weights, cur_signal_aux_events in zip([2, 3], [inclusive_2J, inclusive_3J], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j], [sig_aux_data_test_2j, sig_aux_data_test_3j]):
-        # first, export the categories of the cut-based analysis: high / low MET
-        print("filling {} jet low_MET category".format(cur_nJ))
-        low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
-                                                                     process_aux_events = aux_test,
-                                                                     process_weights = weights_test,
-                                                                     process_names = samples,
-                                                                     nJ = cur_nJ)
-        print("filled {} signal events".format(low_MET_cat.get_number_events("Hbb")))
+        for cur_cuts, prefix in zip([CBA_original, CBA_optimized], ["original_", "optimized_"]):
+            # first, export the categories of the cut-based analysis: high / low MET, using the optimized cuts
+            print("filling {} jet low_MET category".format(cur_nJ))
+            low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
+                                                                         process_aux_events = aux_test,
+                                                                         process_weights = weights_test,
+                                                                         process_names = samples,
+                                                                         nJ = cur_nJ,
+                                                                         cuts = cur_cuts)
+            print("filled {} signal events".format(low_MET_cat.get_number_events("Hbb")))
+            
+            low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
+                                              outfile_path = os.path.join(outdir, prefix + "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
+            
+            anadict[prefix + "low_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, sig_samples)
+            anadict[prefix + "low_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, bkg_samples)
+            
+            anadict[prefix + "low_MET_{}jet_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(low_MET_cat, cur_inclusive_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
+            anadict[prefix + "low_MET_{}jet_binned_sig".format(cur_nJ)] = low_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+            
+            CBA_used_events += low_MET_cat.get_total_events()
+            
+            for cur_process in samples:
+                low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
-        low_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
-                                          outfile_path = os.path.join(outdir, "{}jet_low_MET.root".format(cur_nJ)), clipping = True, density = False)
+            CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+                                                      plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "150 GeV < MET < {MET_cut} GeV".format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_lowMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {})
+            
+            CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_low_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
+                                                      plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "150 GeV < MET < {MET_cut} GeV".format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_lowMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+            
+            print("filling {} jet high_MET category".format(cur_nJ))
+            high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
+                                                                           process_aux_events = aux_test,
+                                                                           process_weights = weights_test,
+                                                                           process_names = samples,
+                                                                           nJ = cur_nJ,
+                                                                           cuts = cur_cuts)
+            print("filled {} signal events".format(high_MET_cat.get_number_events("Hbb")))
+            
+            high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
+                                               outfile_path = os.path.join(outdir, prefix + "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)
+            
+            anadict[prefix + "high_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, sig_samples)
+            anadict[prefix + "high_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, bkg_samples)
+            
+            anadict[prefix + "high_MET_{}jet_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(high_MET_cat, cur_inclusive_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
+            anadict[prefix + "high_MET_{}jet_binned_sig".format(cur_nJ)] = high_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
+            
+            # compute JSD between the high-MET and low-MET categories
+            anadict[prefix + "{}jet_high_low_MET_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(high_MET_cat, low_MET_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
+            anadict[prefix + "{}jet_binned_sig_CBA".format(cur_nJ)] = (anadict[prefix + "low_MET_{}jet_binned_sig".format(cur_nJ)]**2 + anadict[prefix + "high_MET_{}jet_binned_sig".format(cur_nJ)]**2)**0.5
+            
+            CBA_used_events += high_MET_cat.get_total_events()
+            
+            for cur_process in samples:
+                high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
-        anadict["low_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, sig_samples)
-        anadict["low_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, bkg_samples)
-
-        anadict["low_MET_{}jet_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(low_MET_cat, cur_inclusive_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
-        anadict["low_MET_{}jet_binned_sig".format(cur_nJ)] = low_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
-
-        CBA_used_events += low_MET_cat.get_total_events()
-
-        for cur_process in samples:
-            low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
-
-        CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
-
-        CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_low_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'150 GeV < MET < 200 GeV', r'$\Delta R_{bb} < 1.8$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
-
-        print("filling {} jet high_MET category".format(cur_nJ))
-        high_MET_cat = CutBasedCategoryFiller.create_high_MET_category(process_events = data_test,
-                                                                       process_aux_events = aux_test,
-                                                                       process_weights = weights_test,
-                                                                       process_names = samples,
-                                                                       nJ = cur_nJ)
-        print("filled {} signal events".format(high_MET_cat.get_number_events("Hbb")))
-
-        high_MET_cat.export_ROOT_histogram(binning = SR_binning, processes = sig_samples + bkg_samples, var_names = "mBB",
-                                          outfile_path = os.path.join(outdir, "{}jet_high_MET.root".format(cur_nJ)), clipping = True, density = False)
-
-        anadict["high_MET_{}jet_sig_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, sig_samples)
-        anadict["high_MET_{}jet_bkg_eff".format(cur_nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, bkg_samples)
-
-        anadict["high_MET_{}jet_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(high_MET_cat, cur_inclusive_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
-        anadict["high_MET_{}jet_binned_sig".format(cur_nJ)] = high_MET_cat.get_binned_significance(binning = SR_binning, signal_processes = sig_samples, background_processes = bkg_samples, var_name = "mBB")
-
-        # compute JSD between the high-MET and low-MET categories
-        anadict["{}jet_high_low_MET_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(high_MET_cat, low_MET_cat, binning = SR_binning, var = "mBB", processes = bkg_samples)
-        anadict["{}jet_binned_sig_CBA".format(cur_nJ)] = (anadict["low_MET_{}jet_binned_sig".format(cur_nJ)]**2 + anadict["high_MET_{}jet_binned_sig".format(cur_nJ)]**2)**0.5
-
-        CBA_used_events += high_MET_cat.get_total_events()
-
-        for cur_process in samples:
-            high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
-
-        CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
-                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {})
-
-        CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, "{}jet_high_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
-                                                  plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > 200 GeV", r'$\Delta R_{bb} < 1.2$', r'$n_J$ = {}'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
-
+            CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
+                                                      plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > {MET_cut} GeV".format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_highMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {})
+            
+            CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_high_MET_nostack.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.",
+                                                      plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', "MET > {MET_cut} GeV".format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_highMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {}, stacked = False, histtype = 'step', density = True)
+            
         # keep track of the tight and loose categories for later
         classifier_categories = {}
-
+            
         # prepare N categories along the classifier output dimension
         for cut_end, cut_start, cut_label in zip(cuts[cur_nJ][0:-1], cuts[cur_nJ][1:], cut_labels):
             print("exporting {}J region with sigeff range {} - {}".format(cur_nJ, cut_start, cut_end))
@@ -271,10 +277,10 @@ def main():
                 cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label, r'$n_J$ = {}'.format(cur_nJ)])
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ)])
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}_nostack.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label, r'$n_J$ = {}'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
 
             print("filled {} signal events".format(cur_cat.get_number_events("Hbb")))
 
