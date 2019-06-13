@@ -19,9 +19,6 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.0", "anadict.pkl"), "rb") as infile:
         overlaydict = pickle.load(infile)
 
-    PerformancePlotter.plot_significance_fairness_exclusive(dicts, plotdir)
-    PerformancePlotter.plot_significance_fairness_inclusive(dicts, plotdir)
-
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2, overlaydict = overlaydict)
     PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3, overlaydict = overlaydict)
 

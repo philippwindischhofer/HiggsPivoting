@@ -56,8 +56,7 @@ class PerformancePlotter:
     # expect CBA_overlays in the form [{label, ls, dict}]
     @staticmethod
     def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
-                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = [],
-                                            CBA_overlays = []):
+                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
 
         assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
         
@@ -101,15 +100,17 @@ class PerformancePlotter:
         dark_blue = plt.cm.Blues(1000)
 
         def bkg_floating_epilog(ax):
-            for cur_overlay in CBA_overlays:
-                ax.axhline(y = cur_overlay["dict"]["asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
-                           color = dark_blue, linestyle = cur_overlay["ls"], label = cur_overlay["label"])
-
+            ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
+                       color = dark_blue, linestyle = ":", label = "cut-based analysis (optimised)")
+            ax.axhline(y = hypodict["original_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
+                       color = dark_blue, linestyle = "-", label = "cut-based analysis")
+            
         def bkg_fixed_epilog(ax):
-            for cur_overlay in CBA_overlays:
-                ax.axhline(y = cur_overlay["dict"]["asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
-                           color = "indianred", linestyle = cur_overlay["ls"], label = cur_overlay["label"])
-
+            ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
+                       color = "indianred", linestyle = ":", label = "cut-based analysis (optimised)")
+            ax.axhline(y = hypodict["original_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
+                       color = "indianred", linestyle = "-", label = "cut-based analysis")
+            
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
                                              unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
                                              label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = dark_blue, title = "",
@@ -399,8 +400,9 @@ class PerformancePlotter:
         colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
         norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
-        fig = plt.figure()
+        fig = plt.figure(figsize = (9,6))
         ax = fig.add_subplot(111)
+        ax.margins(0.15)
 
         for ind, anadict in enumerate(anadicts):
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
@@ -421,19 +423,20 @@ class PerformancePlotter:
             combined_sig = np.sqrt(overlaydict["loose_{}jet_binned_sig".format(nJ)] ** 2 + overlaydict["tight_{}jet_binned_sig".format(nJ)] ** 2)
             ax.scatter(combined_sig, overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = 's', alpha = 1.0)
 
-        ax.scatter(anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)], 
-                   anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "firebrick", label = "cut-based analysis", marker = 'o')
-
-        ax.scatter(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)],
-                   anadicts[0]["low_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "firebrick", label = "cut-based analysis", marker = '^')
-
-        combined_sig = np.sqrt(anadicts[0]["low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0]["high_MET_{}jet_binned_sig".format(nJ)] ** 2)
-
-        ax.scatter(combined_sig,
-                   anadicts[0]["high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                   color = "firebrick", label = "cut-based analysis", marker = 's')
+        for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["firebrick", "white"], ["firebrick", "white"], ["firebrick", "firebrick"]):
+            ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
+                       anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
+            
+            ax.scatter(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
+                       anadicts[0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec)
+            
+            combined_sig = np.sqrt(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
+            
+            ax.scatter(combined_sig,
+                       anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
 
         cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
         fig.subplots_adjust(right = 0.8)

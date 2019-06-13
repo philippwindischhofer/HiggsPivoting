@@ -4,10 +4,6 @@ from argparse import ArgumentParser
 from plotting.PerformancePlotter import PerformancePlotter
 
 def MakeGlobalAsimovPlots(model_dirs, plot_dir):
-    # load the pre-optimization CBA values
-    CBA_pre_opt_path = "/home/windischhofer/datasmall/Hbb_adv_madgraph_2019_06_10/MINERandomizedClassifierATLAS/Master_slice_0.0"
-    with open(os.path.join(CBA_pre_opt_path, "hypodict.pkl"), "rb") as fit_infile:
-        CBA_pre_opt = pickle.load(fit_infile)
 
     # load the HistFitter output and also the corresponding sensdicts
     hypodicts = []
@@ -34,12 +30,11 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
     for (name, sig) in sorted_model_performance:
         print("{}: {} sigma".format(name, sig))
 
-    print("CBA: {} sigma".format(hypodict["asimov_sig_high_low_MET_background_floating"]))
+    print("CBA original: {} sigma".format(hypodict["original_asimov_sig_high_low_MET_background_floating"]))
+    print("CBA optimized: {} sigma".format(hypodict["optimized_asimov_sig_high_low_MET_background_floating"]))
 
     # now have all the data, just need to plot it
-    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'],
-                                                           CBA_overlays = [{"label": "cut-based analysis", "ls": "--", "dict": CBA_pre_opt},
-                                                                           {"label": "cut-based analysis (re-optimized)", "ls": ":", "dict": hypodict}])
+    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'])
 
 def main():
     parser = ArgumentParser(description = "create global summary plots for Asimov sensitivities")
