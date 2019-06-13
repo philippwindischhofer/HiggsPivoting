@@ -180,7 +180,7 @@ class AdversarialEnvironment(TFEnvironment):
         lambda_cur = self.lambda_final
 
         with self.graph.as_default():
-            #self.sess.run(self.train_classifier_adv_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
+            self.sess.run(self.train_classifier_adv_2j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
             self.sess.run(self.train_classifier_adv_3j, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [lambda_cur], self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
 
     def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum, auxdat_step):
@@ -195,7 +195,7 @@ class AdversarialEnvironment(TFEnvironment):
 
         with self.graph.as_default():
             print("train 2j")
-            #self.sess.run([self.train_adversary_standalone_2j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.adversary_2j_lr: adversary_lr, self.adversary_3j_lr: adversary_lr})
+            self.sess.run([self.train_adversary_standalone_2j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.adversary_2j_lr: adversary_lr, self.adversary_3j_lr: adversary_lr})
             print("train 3j")
             self.sess.run([self.train_adversary_standalone_3j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.adversary_2j_lr: adversary_lr, self.adversary_3j_lr: adversary_lr})
 
@@ -209,7 +209,7 @@ class AdversarialEnvironment(TFEnvironment):
                                           batchnum = batchnum)
 
         with self.graph.as_default():
-            #self.sess.run(self.train_classifier_standalone_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
+            self.sess.run(self.train_classifier_standalone_2j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
             self.sess.run(self.train_classifier_standalone_3j, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.classifier_2j_lr: classifier_lr, self.classifier_3j_lr: classifier_lr})
 
     def evaluate_classifier_loss(self, data, labels, weights_step, auxdat_step):
