@@ -52,7 +52,7 @@ class ClassifierBasedCategoryFiller:
             if cur_pred is None:
                 cur_pred = env.predict(data = cur_events, auxdat = cur_aux_events)[:,1]
 
-            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+            cur_nJ = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("nJ")]
 
             if nJ:
                 # a cut on the number of jets was requested
@@ -63,10 +63,15 @@ class ClassifierBasedCategoryFiller:
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
+            passed_aux = cur_aux_events[cut]
+            passed_pred = np.expand_dims(cur_pred[cut], axis = 1)
 
             # also store some auxiliary information in this category
-            aux_content = np.expand_dims(cur_pred[cut], axis = 1)
-            aux_variables = ["clf"]
+            aux_content = np.concatenate([passed_pred, passed_aux], axis = 1)
+            aux_variables = ["clf"] + TrainingConfig.auxiliary_branches
+
+            #aux_content = cur_aux_events[cut]
+            #aux_variables = TrainingConfig.auxiliary_branches
 
             retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches,
                               aux_content = aux_content, aux_variables = aux_variables)

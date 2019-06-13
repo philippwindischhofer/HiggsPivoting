@@ -3,10 +3,11 @@ import os
 
 class TrainingConfig:
     # branches to use for the training
-    training_branches = ["mBB", "dRBB", "pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
+    #training_branches = ["mBB", "dRBB", "pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
+    training_branches = ["pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
     nuisance_branches = ["mBB"]
-    auxiliary_branches = ["EventWeight"]
-    other_branches = ["nJ"]  # any other branches that might be necessary for purposes other than training and evaluating a classifier
+    auxiliary_branches = ["EventWeight", "mBB", "dRBB", "nJ"]
+    #other_branches = ["nJ"]  # any other branches that might be necessary for purposes other than training and evaluating a classifier
 
     training_pars = {"pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
 
@@ -20,8 +21,11 @@ class TrainingConfig:
     sig_samples = ["Hbb"]
     sig_sampling_lengths = [1.0]
 
-    bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
-    bkg_sampling_lengths = [0.33, 0.33, 0.0, 0.34]
+    # bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
+    # bkg_sampling_lengths = [1.0, 1.0, 1.0, 1.0]
+
+    bkg_samples = ["ttbar"]
+    bkg_sampling_lengths = [1.0]
 
     sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
 

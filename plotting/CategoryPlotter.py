@@ -68,7 +68,9 @@ class CategoryPlotter:
 
         for cur_data, cur_weights in zip(data, weights):
 
+            print(cur_weights)
             cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten(), density = density)
+            print(cur_bin_contents)
             bins = np.digitize(cur_data, bins = binning) - 1 # subtract 1 to get back a 0-indexed array
 
             # compute sum-of-weights-squared for each bin to get the uncertainties correct
@@ -91,7 +93,10 @@ class CategoryPlotter:
         sow_total = np.sqrt(sow_squared_total)
         
         #n, bins, patches = ax.hist(data, weights = weights, histtype = 'stepfilled', stacked = True, color = colors, label = labels, bins = binning, **args)
-        n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = histtype, stacked = stacked, color = colors, edgecolor = 'black', label = labels, bins = cur_bin_edges, **args)
+        if stacked:
+            n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = histtype, stacked = stacked, color = colors, edgecolor = 'black', label = labels, bins = cur_bin_edges, **args)
+        else:
+            n, bins, patches = ax.hist(centers, weights = bin_contents, histtype = 'step', stacked = stacked, fill = False, color = colors, label = labels, bins = cur_bin_edges, **args)
 
         if stacked:
             error_centers = centers[0]

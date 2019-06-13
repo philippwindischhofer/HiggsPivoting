@@ -51,7 +51,7 @@ def main():
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         sig_data_test.append(cur_testdata)
         sig_weights_test.append(cur_weights / slice_size)
         sig_aux_data_test.append(cur_aux_data)
@@ -72,7 +72,7 @@ def main():
         cur_test = cur_test[cur_test["nJ"] == 2]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         sig_data_test_2j.append(cur_testdata)
         sig_weights_test_2j.append(cur_weights / slice_size)
         sig_aux_data_test_2j.append(cur_aux_data)
@@ -84,7 +84,7 @@ def main():
         cur_test = cur_test[cur_test["nJ"] == 3]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         sig_data_test_3j.append(cur_testdata)
         sig_weights_test_3j.append(cur_weights / slice_size)
         sig_aux_data_test_3j.append(cur_aux_data)
@@ -99,7 +99,7 @@ def main():
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         bkg_data_test.append(cur_testdata)
         bkg_weights_test.append(cur_weights / slice_size)
         bkg_aux_data_test.append(cur_aux_data)
@@ -115,7 +115,8 @@ def main():
 
     # prepare the common mBB binning for all signal regions
     SR_low = 30
-    SR_up = 210
+    #SR_up = 210
+    SR_up = 600
     SR_binwidth = 10
     SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 

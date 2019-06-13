@@ -84,10 +84,14 @@ class Category:
             if var in event_vars:
                 event_retval.append(self.event_content[process][:, event_vars.index(var)])
             elif var in aux_vars:
+                print(var)
+                print(aux_vars)
+                print(aux_vars.index(var))
+                print(np.shape(self.aux_content[process]))
+                print(np.shape(self.weight_content[process]))
                 event_retval.append(self.aux_content[process][:, aux_vars.index(var)])
             else:
                 raise KeyError("Error: unknown variable '{}'".format(var))                                    
-
             weight_retval.append(self.weight_content[process])
 
         event_retval = np.concatenate(event_retval)
@@ -103,7 +107,11 @@ class Category:
         # perform the histogramming
         if clipping:
             data = np.clip(data, binning[0], binning[-1])
-        
+
+        print("data / weights")
+        print(np.shape(data))
+        print(np.shape(weights.flatten()))
+
         n, bins = np.histogram(data, bins = binning, weights = weights.flatten(), density = density)
 
         with open(outfile, "wb") as outfile:
@@ -156,8 +164,8 @@ class Category:
         binned_signal = []
         binned_background = []
 
-        for process_name, events in self.event_content.items():
-            cur_var_values = events[:, TrainingConfig.training_branches.index(var_name)]
+        for process_name, events in self.aux_content.items():
+            cur_var_values = events[:, TrainingConfig.auxiliary_branches.index(var_name)]
             cur_weights = self.weight_content[process_name]
 
             cur_bin_contents, _ = np.histogram(np.clip(cur_var_values, binning[0], binning[-1]), bins = binning, weights = cur_weights.flatten())

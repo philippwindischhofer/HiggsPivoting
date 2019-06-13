@@ -72,7 +72,9 @@ class AdversarialTrainer(Trainer):
 
         # # ... and normalize them such that their SOWs are in the correct relation to each other
         for cur, cur_SOW in enumerate(SOWs):
-            sampled_weights[cur] *= cur_SOW / np.sum(sampled_weights[cur]) # each batch will have a total SOW of 1
+            cur_sum = np.sum(sampled_weights[cur])
+            if cur_sum > 0:
+                sampled_weights[cur] *= cur_SOW / cur_sum # each batch will have a total SOW of 1
 
         # just normalize them to have the same SOW as the signal
         # for cur, cur_SOW in enumerate(SOWs):

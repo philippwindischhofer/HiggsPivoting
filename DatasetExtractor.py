@@ -8,7 +8,7 @@ from base.SimplePreprocessor import SimplePreprocessor
 from base.Configs import TrainingConfig
 
 def TrainNuisAuxSplit(indat):
-    return indat[TrainingConfig.training_branches].values, indat[TrainingConfig.nuisance_branches].values, indat[TrainingConfig.auxiliary_branches].values
+    return indat[TrainingConfig.training_branches].values, indat[TrainingConfig.nuisance_branches].values, indat[["EventWeight"]].values
 
 def PrepareDataset():
     infile_path = "/home/windischhofer/datasmall/Hbb/hist-all-mc16a.root"

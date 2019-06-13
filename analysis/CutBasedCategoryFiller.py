@@ -14,13 +14,18 @@ class CutBasedCategoryFiller:
 
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # extract the branches that are needed for the cut
-            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+            cur_nJ = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("nJ")]
             cut = (cur_nJ == nJ)
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
+            passed_aux = cur_aux_events[cut]
+            
+            print("XXXXXX")
+            print("adding aux with shape: {}".format(np.shape(passed_aux)))
+            print("adding weights with shape: {}".format(np.shape(passed_weights)))
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches, aux_content = passed_aux, aux_variables = TrainingConfig.auxiliary_branches)
 
         return retcat
     
@@ -34,16 +39,17 @@ class CutBasedCategoryFiller:
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # extract the branches that are needed for the cut
             cur_MET = cur_events[:, TrainingConfig.training_branches.index("MET")]
-            cur_dRBB = cur_events[:, TrainingConfig.training_branches.index("dRBB")]
+            cur_dRBB = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("dRBB")]
 
-            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+            cur_nJ = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("nJ")]
 
             cut = np.logical_and.reduce((cur_MET > 150, cur_MET < cuts["MET_cut"], cur_dRBB < cuts["dRBB_lowMET_cut"], cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
+            passed_aux = cur_aux_events[cut]
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches, aux_content = passed_aux, aux_variables = TrainingConfig.auxiliary_branches)
 
         return retcat
 
@@ -57,15 +63,16 @@ class CutBasedCategoryFiller:
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
             # extract the branches that are needed for the cut
             cur_MET = cur_events[:, TrainingConfig.training_branches.index("MET")]
-            cur_dRBB = cur_events[:, TrainingConfig.training_branches.index("dRBB")]
+            cur_dRBB = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("dRBB")]
 
-            cur_nJ = cur_aux_events[:, TrainingConfig.other_branches.index("nJ")]
+            cur_nJ = cur_aux_events[:, TrainingConfig.auxiliary_branches.index("nJ")]
 
             cut = np.logical_and.reduce((cur_MET > cuts["MET_cut"], cur_dRBB < cuts["dRBB_highMET_cut"], cur_nJ == nJ))
 
             passed_events = cur_events[cut]
             passed_weights = cur_weights[cut]
+            passed_aux = cur_aux_events[cut]
 
-            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches)
+            retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches, aux_content = passed_aux, aux_variables = TrainingConfig.auxiliary_branches)
 
         return retcat
