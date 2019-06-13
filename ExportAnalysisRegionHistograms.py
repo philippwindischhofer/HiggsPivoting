@@ -115,8 +115,8 @@ def main():
 
     # prepare the common mBB binning for all signal regions
     SR_low = 30
-    #SR_up = 210
-    SR_up = 600
+    SR_up = 210
+    #SR_up = 600
     SR_binwidth = 10
     SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
@@ -144,8 +144,8 @@ def main():
     #         3: [0.0, 0.32230881360286623, 0.8215582540701756]}
 
     # for ATLAS MC (with optimized CBA)
-    cuts = {2: [0.0, 0.48292271447653023, 0.9515851878011691],
-            3: [0.0, 0.45242440329433675, 0.9019498861149849]}
+    cuts = {2: [0.0, 0.40980884408751117, 0.9060291803032521],
+            3: [0.0, 0.3726996799444123, 0.8493024023704923]}
 
     cut_labels = ["tight", "loose"]
     

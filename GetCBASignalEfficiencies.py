@@ -34,7 +34,7 @@ def GetCBASignalEfficiencies(outdir):
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         sig_data_test.append(cur_testdata)
         sig_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         sig_aux_data_test.append(cur_aux_data)
@@ -49,7 +49,7 @@ def GetCBASignalEfficiencies(outdir):
         cur_test = sample[int(data_slice[0] * cur_length) : int(data_slice[1] * cur_length)]
         cur_testdata, cur_nuisdata, cur_weights = TrainNuisAuxSplit(cur_test) # load the standard classifier input, nuisances and weights
 
-        cur_aux_data = cur_test[TrainingConfig.other_branches].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
         bkg_data_test.append(cur_testdata)
         bkg_weights_test.append(cur_weights / slice_size * TrainingConfig.sample_reweighting[sample_name])
         bkg_aux_data_test.append(cur_aux_data)

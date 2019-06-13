@@ -33,7 +33,7 @@ class CutBasedCategoryFiller:
     # MET > 150 GeV && MET < 200 GeV
     # dRBB < 1.8
     @staticmethod
-    def create_low_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 185, "dRBB_highMET_cut": 1.375, "dRBB_lowMET_cut": 4.0}):
+    def create_low_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 188, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 3.8}):
         retcat = Category("low_MET")
 
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
@@ -57,7 +57,7 @@ class CutBasedCategoryFiller:
     # MET > 200 GeV
     # dRBB < 1.2
     @staticmethod
-    def create_high_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 185, "dRBB_highMET_cut": 1.375, "dRBB_lowMET_cut": 4.0}):
+    def create_high_MET_category(process_events, process_aux_events, process_weights, process_names, nJ = 2, cuts = {"MET_cut": 188, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 3.8}):
         retcat = Category("high_MET")
 
         for cur_events, cur_aux_events, cur_weights, process_name in zip(process_events, process_aux_events, process_weights, process_names):
