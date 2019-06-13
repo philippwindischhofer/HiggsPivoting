@@ -41,11 +41,20 @@ def main():
         data_slice = TrainingConfig.validation_slice
 
     sig_data_test = []
+    sig_data_test_2j = []
+    sig_data_test_3j = []
+    sig_aux_test = []
     sig_mBB_test = []
+    sig_mBB_test_2j = []
+    sig_mBB_test_3j = []
     sig_dRBB_test = []
+    sig_dRBB_test_2j = []
+    sig_dRBB_test_3j = []
     sig_pTB1_test = []
     sig_pTB2_test = []
     sig_weights_test = []
+    sig_weights_test_2j = []
+    sig_weights_test_3j = []
     for sample, sample_name in zip(sig_data, sig_samples):
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
@@ -54,19 +63,42 @@ def main():
         cur_dRBBdata = cur_test[["dRBB"]].values
         cur_pTB1data = cur_test[["pTB1"]].values
         cur_pTB2data = cur_test[["pTB2"]].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
+
+        cut_2j = (cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 2)
+        cut_3j = (cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 3)
+        
+        sig_aux_test.append(cur_aux_data)
         sig_data_test.append(cur_testdata)
+        sig_data_test_2j.append(cur_testdata[cut_2j])
+        sig_data_test_3j.append(cur_testdata[cut_3j])
         sig_mBB_test.append(cur_nuisdata)
+        sig_mBB_test_2j.append(cur_nuisdata[cut_2j])
+        sig_mBB_test_3j.append(cur_nuisdata[cut_3j])
         sig_weights_test.append(cur_weights)
+        sig_weights_test_2j.append(cur_weights[cut_2j])
+        sig_weights_test_3j.append(cur_weights[cut_3j])
         sig_dRBB_test.append(cur_dRBBdata)
+        sig_dRBB_test_2j.append(cur_dRBBdata[cut_2j])
+        sig_dRBB_test_3j.append(cur_dRBBdata[cut_3j])
         sig_pTB1_test.append(cur_pTB1data)
         sig_pTB2_test.append(cur_pTB2data)
 
     bkg_data_test = []
+    bkg_data_test_2j = []
+    bkg_data_test_3j = []
+    bkg_aux_test = []
     bkg_mBB_test = []
+    bkg_mBB_test_2j = []
+    bkg_mBB_test_3j = []
     bkg_dRBB_test = []
+    bkg_dRBB_test_2j = []
+    bkg_dRBB_test_3j = []
     bkg_pTB1_test = []
     bkg_pTB2_test = []
     bkg_weights_test = []
+    bkg_weights_test_2j = []
+    bkg_weights_test_3j = []
     for sample, sample_name in zip(bkg_data, bkg_samples):
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
@@ -75,10 +107,24 @@ def main():
         cur_dRBBdata = cur_test[["dRBB"]].values
         cur_pTB1data = cur_test[["pTB1"]].values
         cur_pTB2data = cur_test[["pTB2"]].values
+        cur_aux_data = cur_test[TrainingConfig.auxiliary_branches].values
+
+        cut_2j = cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 2
+        cut_3j = cur_aux_data[:, TrainingConfig.auxiliary_branches.index("nJ")] == 3
+
+        bkg_aux_test.append(cur_aux_data)
         bkg_data_test.append(cur_testdata)
+        bkg_data_test_2j.append(cur_testdata[cut_2j])
+        bkg_data_test_3j.append(cur_testdata[cut_3j])
         bkg_mBB_test.append(cur_nuisdata)
+        bkg_mBB_test_2j.append(cur_nuisdata[cut_2j])
+        bkg_mBB_test_3j.append(cur_nuisdata[cut_3j])
         bkg_weights_test.append(cur_weights)
+        bkg_weights_test_2j.append(cur_weights[cut_2j])
+        bkg_weights_test_3j.append(cur_weights[cut_3j])
         bkg_dRBB_test.append(cur_dRBBdata)
+        bkg_dRBB_test_2j.append(cur_dRBBdata[cut_2j])
+        bkg_dRBB_test_3j.append(cur_dRBBdata[cut_3j])
         bkg_pTB1_test.append(cur_pTB1data)
         bkg_pTB2_test.append(cur_pTB2data)
 
@@ -103,15 +149,21 @@ def main():
         tsp.plot(outdir = plots_outdir)
 
         # plot the ROC curve as performance measure
-        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir)
+        ev.plot_roc(data_sig = sig_data_test, data_bkg = bkg_data_test, sig_weights = sig_weights_test, bkg_weights = bkg_weights_test, outpath = plots_outdir, aux_sig = sig_aux_test, aux_bkg = bkg_aux_test)
 
         # generate distortion plots
-        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_mBB_test, var_bkg = bkg_mBB_test, 
-                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
-                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB")
-        ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_dRBB_test, var_bkg = bkg_dRBB_test, 
-                           weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
-                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB", histrange = (0, 5))
+        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, var_sig = sig_mBB_test_2j, var_bkg = bkg_mBB_test_2j, 
+                           weights_sig = sig_weights_test_2j, weights_bkg = bkg_weights_test_2j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB_2j")
+        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, var_sig = sig_mBB_test_3j, var_bkg = bkg_mBB_test_3j, 
+                           weights_sig = sig_weights_test_3j, weights_bkg = bkg_weights_test_3j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_mBB_3j")
+        ev.plot_distortion(data_sig = sig_data_test_2j, data_bkg = bkg_data_test_2j, var_sig = sig_dRBB_test_2j, var_bkg = bkg_dRBB_test_2j, 
+                           weights_sig = sig_weights_test_2j, weights_bkg = bkg_weights_test_2j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB_2j", histrange = (0, 5))
+        ev.plot_distortion(data_sig = sig_data_test_3j, data_bkg = bkg_data_test_3j, var_sig = sig_dRBB_test_3j, var_bkg = bkg_dRBB_test_3j, 
+                           weights_sig = sig_weights_test_3j, weights_bkg = bkg_weights_test_3j, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
+                           labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$\Delta R_{bb}$', ylabel = "a.u.", path_prefix = "dist_dRBB_3j", histrange = (0, 5))
         # ev.plot_distortion(data_sig = sig_data_test, data_bkg = bkg_data_test, var_sig = sig_pTB1_test, var_bkg = bkg_pTB1_test, 
         #                    weights_sig = sig_weights_test, weights_bkg = bkg_weights_test, sigeffs = [1.0, 0.5, 0.25], outpath = plots_outdir, 
         #                    labels_sig = sig_samples, labels_bkg = bkg_samples, xlabel = r'$p_{T, b(1)}$ [GeV]', ylabel = "a.u.", path_prefix = "dist_pTB1")

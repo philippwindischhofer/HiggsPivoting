@@ -235,15 +235,17 @@ class ModelEvaluator:
         return fpr, tpr, auc
 
     # plot the ROC of the classifier
-    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath):
+    def plot_roc(self, data_sig, data_bkg, sig_weights, bkg_weights, outpath, aux_sig, aux_bkg):
         # need to merge all signal- and background samples for the inclusive ROC
         data_sig_inclusive = np.concatenate(data_sig, axis = 0)
         data_bkg_inclusive = np.concatenate(data_bkg, axis = 0)
         sig_weights_inclusive = np.concatenate(sig_weights, axis = 0)
         bkg_weights_inclusive = np.concatenate(bkg_weights, axis = 0)
+        aux_sig_inclusive = np.concatenate(aux_sig, axis = 0)
+        aux_bkg_inclusive = np.concatenate(aux_bkg, axis = 0)
 
-        mBB_sig = data_sig_inclusive[:, TrainingConfig.training_branches.index("mBB")]
-        mBB_bkg = data_bkg_inclusive[:, TrainingConfig.training_branches.index("mBB")]
+        mBB_sig = aux_sig_inclusive[:, TrainingConfig.auxiliary_branches.index("mBB")]
+        mBB_bkg = aux_bkg_inclusive[:, TrainingConfig.auxiliary_branches.index("mBB")]
 
         # extract only events close to the Higgs peak
         cut_sig_central = np.logical_and(mBB_sig > 100.0, mBB_sig < 150.0)

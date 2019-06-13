@@ -42,7 +42,7 @@ def main():
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        auxdat_sig.append(cur_train[TrainingConfig.other_branches].values)
+        auxdat_sig.append(cur_train[TrainingConfig.auxiliary_branches].values)
         sig_data_train.append(cur_train)
 
     bkg_data_train = []
@@ -50,7 +50,7 @@ def main():
         cur_length = len(sample)
         sample = sample.sample(frac = 1, random_state = 12345).reset_index(drop = True) # shuffle the sample
         cur_train = sample[int(training_slice[0] * cur_length) : int(training_slice[1] * cur_length)]
-        auxdat_bkg.append(cur_train[TrainingConfig.other_branches].values)
+        auxdat_bkg.append(cur_train[TrainingConfig.auxiliary_branches].values)
         bkg_data_train.append(cur_train)
 
     print("got " + str(len(sig_data)) + " signal datasets")

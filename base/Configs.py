@@ -4,7 +4,7 @@ import os
 class TrainingConfig:
     # branches to use for the training
     #training_branches = ["mBB", "dRBB", "pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
-    training_branches = ["pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
+    training_branches = ["dRBB", "pTB1", "pTB2", "MET", "dEtaBB", "dPhiMETdijet", "SumPtJet", "nJ"]
     nuisance_branches = ["mBB"]
     auxiliary_branches = ["EventWeight", "mBB", "dRBB", "nJ"]
     #other_branches = ["nJ"]  # any other branches that might be necessary for purposes other than training and evaluating a classifier

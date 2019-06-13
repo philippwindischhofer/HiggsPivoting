@@ -168,7 +168,7 @@ class AdversarialTrainer(Trainer):
     def _get_nJ_component(self, inlist, auxlist, nJ = 2):
         outlist = []
         for sample, aux_sample in zip(inlist, auxlist):
-            nJ_cut = (aux_sample[:, TrainingConfig.other_branches.index("nJ")] == nJ)
+            nJ_cut = (aux_sample[:, TrainingConfig.auxiliary_branches.index("nJ")] == nJ)
             outlist.append(sample[nJ_cut])
 
         return outlist
