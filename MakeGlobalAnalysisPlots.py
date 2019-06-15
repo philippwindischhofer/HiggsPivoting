@@ -1,5 +1,6 @@
 import os, pickle
 from argparse import ArgumentParser
+import numpy as np
 
 from plotting.PerformancePlotter import PerformancePlotter
 from plotting.CategoryPlotter import CategoryPlotter
@@ -12,17 +13,16 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
+                # if float(anadict["lambda"]) > 1.0:
+                #     continue
                 dicts.append(anadict)
         except:
             print("no information found for model '{}'".format(model_dir))
 
-    with open(os.path.join(os.path.dirname(model_dirs[0]), "Master_slice_28.0", "anadict.pkl"), "rb") as infile:
-        overlaydict = pickle.load(infile)
-
     dicts = sorted(dicts, key = lambda cur: cur["lambda"])
 
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2, overlaydict = overlaydict)
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3, overlaydict = overlaydict)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3)
 
 def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
     
@@ -39,7 +39,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                # if float(anadict["lambda"]) > 1.0:
+                # if float(anadict["lambda"]) < 0.3:
                 #     continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)
@@ -67,6 +67,11 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     except:
         overlays = []
 
+    lambdas = [cur["lambda"] for cur in dicts] 
+    lambsort = np.argsort(lambdas)
+    dicts = [dicts[cur_ind] for cur_ind in lambsort]
+    plot_data = [plot_data[cur_ind] for cur_ind in lambsort]
+
     PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing)
 
 if __name__ == "__main__":
@@ -93,12 +98,11 @@ if __name__ == "__main__":
                 overlay_inclusive = os.path.join(args["model_dirs"][0], "dist_mBB_{}_{}jet.pkl".format(process, cur_nJ))
                 overlay_CBA_optimized = os.path.join(args["model_dirs"][0], "optimized_dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
                 overlay_CBA_original = os.path.join(args["model_dirs"][0], "original_dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_CBA_SR))
-                overlay_PCA = os.path.join(os.path.dirname(args["model_dirs"][0]), "Master_slice_28.0", "dist_mBB_{}_{}jet_{}.pkl".format(process, cur_nJ, cur_SR))
 
-                overlay_paths = [overlay_inclusive, overlay_CBA_original, overlay_CBA_optimized, overlay_PCA]
-                overlay_labels = ["inclusive", "cut-based analysis", "cut-based analysis\n(optimised)", 'pivotal classifier\n' + r'($\lambda = 1.4$)']
-                overlay_colors = ["black", "firebrick", "firebrick", "salmon"]
-                overlay_lss = ["-", "-", ":", "-"]
+                overlay_paths = [overlay_inclusive, overlay_CBA_original, overlay_CBA_optimized]
+                overlay_labels = ["inclusive", "cut-based analysis", "cut-based analysis\n(optimised)"]
+                overlay_colors = ["black", "salmon", "salmon"]
+                overlay_lss = ["-", "-", ":"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))

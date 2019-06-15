@@ -392,7 +392,7 @@ class PerformancePlotter:
 
     # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
     @staticmethod
-    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2, overlaydict = None):
+    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2):
         cmap = plt.cm.Blues
         colorquant = "lambda"
 
@@ -400,7 +400,7 @@ class PerformancePlotter:
         colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
         norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
-        fig = plt.figure(figsize = (9,6))
+        fig = plt.figure(figsize = (12,6))
         ax = fig.add_subplot(111)
         ax.margins(left = 0.45)
 
@@ -408,24 +408,18 @@ class PerformancePlotter:
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
 
             try:
-                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = 'none', linewidths = 1, label = None, marker = 'o', alpha = 1.0)
-                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = 'none', linewidths = 1, label = None, marker = '^', alpha = 1.0)
+                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = 'o', alpha = 1.0)
+                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = '^', alpha = 1.0)
 
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
                 if anadict["tight_{}jet_inv_JS_bkg".format(nJ)] < 1:
                     print(anadict["tight_{}jet_inv_JS_bkg".format(nJ)])
-                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = 'none', edgecolors = color, label = None, marker = 's', alpha = 1.0)
+                    anadict["tight_{}jet_inv_JS_bkg".format(nJ)] = 1.0
+                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = color, edgecolors = color, label = None, marker = 's', alpha = 1.0)
             except KeyError:
                 print(anadict)
 
-        if overlaydict:
-            ax.scatter(overlaydict["tight_{}jet_binned_sig".format(nJ)], overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = 'o', alpha = 1.0)
-            ax.scatter(overlaydict["loose_{}jet_binned_sig".format(nJ)], overlaydict["loose_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = '^', alpha = 1.0)
-            
-            combined_sig = np.sqrt(overlaydict["loose_{}jet_binned_sig".format(nJ)] ** 2 + overlaydict["tight_{}jet_binned_sig".format(nJ)] ** 2)
-            ax.scatter(combined_sig, overlaydict["tight_{}jet_inv_JS_bkg".format(nJ)], color = 'salmon', label = None, marker = 's', alpha = 1.0)
-
-        for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["firebrick", "white"], ["firebrick", "white"], ["firebrick", "firebrick"]):
+        for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
             ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
                        anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                        label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
@@ -447,51 +441,48 @@ class PerformancePlotter:
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
 
-        # now start putting the labels
-        ax.text(x = 0.05, y = 0.85, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-
         legend_elems_PCA = [
             #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
-            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "loose"),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "tight"),
-            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "gray", label = "combined"),
+            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "loose"),
+            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "tight"),
+            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "combined"),
         ]
         legend_elems_PCA_lambda = [
-            (Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
+            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
         ]
         legend_elems_CBA = [
             #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
-            Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "low MET"),
-            Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "high MET"),
-            Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "firebrick", markeredgecolor = "firebrick", label = "combined")
+            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
+            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
+            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "combined")
         ]
         legend_elems_CBA_optimized = [
-            (Line2D([0], [0], marker = '^', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick"),
-             Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick"),
-             Line2D([0], [0], marker = 's', color = 'white', markerfacecolor = "white", markeredgecolor = "firebrick", label = "optimized"))
+            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
          ]
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = [r'low $E_{\mathrm{T}}^{\mathrm{miss}}$', r'high $E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
 
         # leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
         # leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
-        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 3.0, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.35))
-        leg_PCA_lambda = ax.legend(handles = legend_elems_PCA_lambda, labels = [r'$\lambda = 1.4$'], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.28))
+        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 7.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.30))
+        #leg_PCA_lambda = ax.legend(handles = legend_elems_PCA_lambda, labels = [r'$\lambda = 1.4$'], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.28))
         leg_PCA.get_frame().set_linewidth(0.0)
-        leg_PCA_lambda.get_frame().set_linewidth(0.0)
+        #leg_PCA_lambda.get_frame().set_linewidth(0.0)
 
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 2.75, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.18))
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 7.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.18))
         leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
         leg_CBA_optimized.get_frame().set_linewidth(0.0)
         ax.add_artist(leg_PCA)
-        ax.add_artist(leg_PCA_lambda)
+        #ax.add_artist(leg_PCA_lambda)
         ax.add_artist(leg_CBA)
         ax.add_artist(leg_CBA_optimized)
 
-        ax.text(x = 0.03, y = 0.23, s = "  pivotal\nclassifier", transform = ax.transAxes)
+        ax.text(x = 0.03, y = 0.22, s = "  pivotal\nclassifier", transform = ax.transAxes)
         ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
         ax.text(x = 0.55, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
 
@@ -499,8 +490,16 @@ class PerformancePlotter:
         ax.set_yscale("log")
         ax.set_xlabel(r'binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD')
-        ax.set_ylim(bottom = 5e-3, top = 5e3)
+        ax.set_ylim(bottom = 2e-2, top = 1e3)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
+
+        ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
+        ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.1)
+
+        # now start putting the labels
+        ax.text(x = 0.05, y = 0.9, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+        ax.text(x = 0.35, y = 0.31, s = r'$\leftarrow$ maximal sculpting $\rightarrow$', transform = ax.transAxes, rotation = 0, color = "gray")
+
         fig.savefig(outfile)
         plt.close()
                 
@@ -594,9 +593,9 @@ class PerformancePlotter:
 
         ax.set_xlabel(xlabel_r)
         ax.set_ylabel(ylabel_r)
-        #ax.margins(0.0)
+        ax.margins(0.0)
         ax.set_title(plot_title)
-        ax.set_ylim((0, 3.0 * ax.get_ylim()[1])) # add some more margin on top
+        ax.set_ylim((0, 2.1 * ax.get_ylim()[1])) # add some more margin on top
 
         if epilog:
             epilog(ax)

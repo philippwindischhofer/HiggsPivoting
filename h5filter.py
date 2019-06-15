@@ -3,7 +3,7 @@ import pandas as pd
 from argparse import ArgumentParser
 
 def filter_callback(table):
-    return table[table["mBB"] < 210.0]
+    return table[table["mBB"] < 250.0]
 
 def h5filter(outfile, infile):
     tables = {}
