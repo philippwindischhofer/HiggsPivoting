@@ -13,8 +13,8 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
-                # if float(anadict["lambda"]) > 1.0:
-                #     continue
+                if float(anadict["lambda"]) > 1.4:
+                    continue
                 dicts.append(anadict)
         except:
             print("no information found for model '{}'".format(model_dir))
@@ -39,8 +39,8 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                # if float(anadict["lambda"]) < 0.3:
-                #     continue
+                if float(anadict["lambda"]) > 1.4:
+                    continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)
 
@@ -63,7 +63,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
                 high_edges = bins[1:]
                 centers = 0.5 * (low_edges + high_edges)
 
-                overlays.append((centers, n, {'color': overlay_color, 'lw': 1.5, 'label': overlay_label, 'ls': overlay_ls}))
+                overlays.append((centers, n, {'color': overlay_color, 'lw': 2.5, 'label': overlay_label, 'ls': overlay_ls}))
     except:
         overlays = []
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 overlay_paths = [overlay_inclusive, overlay_CBA_original, overlay_CBA_optimized]
                 overlay_labels = ["inclusive", "cut-based analysis", "cut-based analysis\n(optimised)"]
                 overlay_colors = ["black", "salmon", "salmon"]
-                overlay_lss = ["-", "-", ":"]
+                overlay_lss = ["-", "-", "--"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))

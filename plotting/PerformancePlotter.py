@@ -101,9 +101,9 @@ class PerformancePlotter:
 
         def bkg_floating_epilog(ax):
             ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
-                       color = dark_blue, linestyle = ":", label = "cut-based analysis (optimised)")
+                       color = "salmon", linestyle = "--", label = "cut-based analysis (optimised)", zorder = 1)
             ax.axhline(y = hypodict["original_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
-                       color = dark_blue, linestyle = "-", label = "cut-based analysis")
+                       color = "salmon", linestyle = "-", label = "cut-based analysis", zorder = 1)
             
         def bkg_fixed_epilog(ax):
             ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
@@ -128,12 +128,12 @@ class PerformancePlotter:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        # first, plot the central value
-        ax.plot(x, y, marker = 'o', label = label, color = color)
-        ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.4)
-
         if epilog is not None:
             epilog(ax)
+
+        # first, plot the central value
+        ax.plot(x, y, marker = 'o', label = label, color = color)
+        ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -400,9 +400,10 @@ class PerformancePlotter:
         colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
         norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
-        fig = plt.figure(figsize = (12,6))
+        fig = plt.figure(figsize = (10, 5))
+        fig.subplots_adjust(right = 0.9, left = 0.08)
         ax = fig.add_subplot(111)
-        ax.margins(left = 0.45)
+        #ax.margins(left = 0.45)
 
         for ind, anadict in enumerate(anadicts):
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
@@ -434,8 +435,7 @@ class PerformancePlotter:
                        anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                        label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
 
-        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
-        fig.subplots_adjust(right = 0.8)
+        cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
         cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
                                        norm = norm,
                                        orientation = 'vertical')
@@ -468,13 +468,13 @@ class PerformancePlotter:
 
         # leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
         # leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
-        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 7.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.30))
+        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 8.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.31))
         #leg_PCA_lambda = ax.legend(handles = legend_elems_PCA_lambda, labels = [r'$\lambda = 1.4$'], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.28))
         leg_PCA.get_frame().set_linewidth(0.0)
         #leg_PCA_lambda.get_frame().set_linewidth(0.0)
 
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 7.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.18))
-        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.11))
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
+        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
         leg_CBA_optimized.get_frame().set_linewidth(0.0)
         ax.add_artist(leg_PCA)
@@ -484,21 +484,21 @@ class PerformancePlotter:
 
         ax.text(x = 0.03, y = 0.22, s = "  pivotal\nclassifier", transform = ax.transAxes)
         ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
-        ax.text(x = 0.55, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+        ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
 
         ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
         ax.set_yscale("log")
-        ax.set_xlabel(r'binned significance [$\sigma$]')
+        ax.set_xlabel(r'Binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD')
         ax.set_ylim(bottom = 2e-2, top = 1e3)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
 
         ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
-        ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.1)
+        ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.04)
 
         # now start putting the labels
-        ax.text(x = 0.05, y = 0.9, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-        ax.text(x = 0.35, y = 0.31, s = r'$\leftarrow$ maximal sculpting $\rightarrow$', transform = ax.transAxes, rotation = 0, color = "gray")
+        ax.text(x = 0.02, y = 0.6, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+        #ax.text(x = 0.35, y = 0.31, s = r'$\leftarrow$ maximal sculpting $\rightarrow$', transform = ax.transAxes, rotation = 0, color = "gray")
 
         fig.savefig(outfile)
         plt.close()
@@ -595,7 +595,7 @@ class PerformancePlotter:
         ax.set_ylabel(ylabel_r)
         ax.margins(0.0)
         ax.set_title(plot_title)
-        ax.set_ylim((0, 2.1 * ax.get_ylim()[1])) # add some more margin on top
+        ax.set_ylim((0, 1.8 * ax.get_ylim()[1])) # add some more margin on top
 
         if epilog:
             epilog(ax)
