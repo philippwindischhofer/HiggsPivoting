@@ -170,7 +170,7 @@ def main():
                                                              process_names = samples,
                                                              nJ = 3)
     for cur_process in samples:
-        inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_3jet.pkl".format(cur_process)), density = True)
+        inclusive_3J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_3jet.pkl".format(cur_process)), density = True)
 
     total_events = inclusive_2J.get_total_events() + inclusive_3J.get_total_events()
     CBA_used_events = 0

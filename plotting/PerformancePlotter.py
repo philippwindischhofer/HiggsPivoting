@@ -464,7 +464,7 @@ class PerformancePlotter:
              Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
          ]
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
-        leg_labels_CBA = [r'low $E_{\mathrm{T}}^{\mathrm{miss}}$', r'high $E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
+        leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
 
         # leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
         # leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
@@ -473,7 +473,7 @@ class PerformancePlotter:
         leg_PCA.get_frame().set_linewidth(0.0)
         #leg_PCA_lambda.get_frame().set_linewidth(0.0)
 
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.25, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
         leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
         leg_CBA_optimized.get_frame().set_linewidth(0.0)
@@ -497,7 +497,7 @@ class PerformancePlotter:
         ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.04)
 
         # now start putting the labels
-        ax.text(x = 0.02, y = 0.6, s = r'less sculpting $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+        ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
         #ax.text(x = 0.35, y = 0.31, s = r'$\leftarrow$ maximal sculpting $\rightarrow$', transform = ax.transAxes, rotation = 0, color = "gray")
 
         fig.savefig(outfile)
@@ -542,7 +542,10 @@ class PerformancePlotter:
         cmap = plt.cm.Blues
 
         # find the proper normalization of the color map
-        colorrange = [float(perfdict[colorquant]) for perfdict in perfdicts if colorquant in perfdict]
+        if len(perfdicts) > 0:
+            colorrange = [float(perfdict[colorquant]) for perfdict in perfdicts if colorquant in perfdict]
+        else:
+            colorrange = [0]
         norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
         if len(perfdicts) != len(hist_data):
