@@ -18,7 +18,7 @@ def create_job_script(model_dir, script_dir, training_data_path, rootdir = "", h
         outfile.write("export ALRB_rootVersion=6.14.04-x86_64-slc6-gcc62-opt" + "\n")
         outfile.write("source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh" + "\n")
         outfile.write("lsetup root" + "\n")
-        outfile.write("source /home/windischhofer/HistFitter/v0.61.0/setup.sh" + "\n")
+        outfile.write("source " + os.path.join(histfitter_rootdir, "setup.sh") + "\n")
 
         # and launch the Asimov fits
         outfile.write("cd " + model_dir + "\n")

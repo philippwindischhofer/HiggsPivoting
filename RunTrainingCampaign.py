@@ -8,16 +8,16 @@ from utils.CondorJobSubmitter import CondorJobSubmitter
 from utils.LocalJobSubmitter import LocalJobSubmitter
 from base.Configs import TrainingConfig
 
-def create_job_script(training_data_path, run_dir, script_dir):
+def create_job_script(training_data_path, run_dir, script_dir, rootdir):
     script_name = str(uuid.uuid4()) + ".sh"
     script_path = os.path.join(script_dir, script_name)
 
     with open(script_path, "w") as outfile:
         outfile.write("#!/bin/bash\n")
-        outfile.write("source /home/windischhofer/HiggsPivoting/bin/activate\n")
-        outfile.write("source /home/windischhofer/HiggsPivoting/setup_env.sh\n")
+        outfile.write("source " + os.path.join(rootdir, "bin", "activate") + "\n")
+        outfile.write("source " + os.path.join(rootdir, "setup_env.sh") + "\n")
 
-        outfile.write("python /home/windischhofer/HiggsPivoting/TrainAdversarialModel.py --data " + training_data_path + " --outdir " + run_dir + " > " + os.path.join(run_dir, "job.log\n"))
+        outfile.write("python " + os.path.join(rootdir, "TrainAdversarialModel.py") + " --data " + training_data_path + " --outdir " + run_dir + " > " + os.path.join(run_dir, "job.log\n"))
 
         outfile.write("deactivate\n")
 
@@ -56,6 +56,9 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
         os.remove(config_file)
 
 if __name__ == "__main__":
+    if not os.environ["ROOTDIR"]:
+        raise Exception("Error: 'ROOTDIR' not defined. Please do 'source setup_env.sh'.")
+
     parser = ArgumentParser(description = "launch training campaign")
     parser.add_argument("--confpath", action = "store", dest = "master_confpath")
     parser.add_argument("--nrep", action = "store", dest = "nrep")
