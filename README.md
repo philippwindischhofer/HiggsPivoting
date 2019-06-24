@@ -1,3 +1,10 @@
+Code to generate the results presented in "Preseving physically important variables in optimal event selections: A case study in Higgs physics"
+
+A full run consists of:
+* training the model
+* applying the model for inference
+* evaluating its performance
+
 To set up the environment (on a CentOS machine):
 ```
 source bin/activate
