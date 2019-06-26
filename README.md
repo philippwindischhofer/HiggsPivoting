@@ -66,14 +66,14 @@ python RunPrepareHistFitterCampaign.py $TRAIN_DIR/Master_slice_*
 
 To perform an Asimov fit:
 
+```
+python RunHistFitterCampaign.py $TRAIN_DIR/Master_slice_*
+```
+
 Note: for this step, you need to have a local installation of HistFitter available!
 Installation instructions are available at http://histfitter.web.cern.ch/histfitter/Software/Install/index.html
 Once the installation has completed, you need to correctly set the path to your local HistFitter installation directory
 in `setup_env.sh`.
-
-```
-python RunHistFitterCampaign.py $TRAIN_DIR/Master_slice_*
-```
 
 ## Visualisation / Plotting
 
