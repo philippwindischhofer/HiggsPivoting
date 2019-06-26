@@ -4,10 +4,6 @@ import pickle
 import numpy as np
 from array import array
 
-# for exporting ROOT histograms
-import ROOT
-from ROOT import TH1F, TFile
-
 class Category:
 
     # need to store all the events in this category, depending on the process from which they came
@@ -119,6 +115,11 @@ class Category:
 
     # similar to 'export_histogram', but instead writes a *.root file
     def export_ROOT_histogram(self, binning, processes, var_names, outfile_path, clipping = False, density = False, ignore_binning = False):
+
+        # for exporting ROOT histograms
+        import ROOT
+        from ROOT import TH1F, TFile
+
         if isinstance(var_names, list):
             if len(var_names) > 1:
                 raise NotImplementedError("Error: can only export TH1 up to now - please call for a single variable at a time!")
