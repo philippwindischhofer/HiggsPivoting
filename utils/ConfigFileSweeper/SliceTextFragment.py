@@ -8,7 +8,7 @@ class SliceTextFragment(TextFragment):
     def __init__(self, pos, lines_in, options_line):
 
         def chunks(inlist, per_slice):
-            splits = range(0, len(inlist), per_slice)
+            splits = list(range(0, len(inlist), per_slice))
             if splits[-1] != len(inlist):
                 splits.append(len(inlist))
 
