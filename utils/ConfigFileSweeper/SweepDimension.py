@@ -15,6 +15,9 @@ class SweepDimension:
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         # for each block in the itlist, return the next element
         retval = [block.next() for block in self.itlist]
