@@ -57,8 +57,5 @@ if __name__ == "__main__":
     if not os.environ["ROOTDIR"] or not os.environ["HISTFITTER_ROOTDIR"]:
         raise Exception("Error: 'ROOTDIR' or 'HISTFITTER_ROOTDIR' not defined. Please do 'source setup_env.sh'.")
 
-    rootdir = os.environ["ROOTDIR"]
-    histfitter_rootdir = os.environ["HISTFITTER_ROOTDIR"]
-
     model_dirs = sys.argv[1:]
-    RunHistFitterCampaign(model_dirs, rootdir, histfitter_rootdir)
+    RunHistFitterCampaign(model_dirs)
