@@ -1,10 +1,13 @@
+# HiggsPivoting
+
 Code to generate the results presented in "Preserving physically important variables in optimal event selections: A case study in Higgs physics" (ADD ARXIV LINK)
 
-A full run consists of:
-* training the model
-* applying the model for inference
-* evaluating its performance
+With this repository, you can do the following:
+* train a pivotal classifier
+* apply it to define signal regions
+* evaluate the performance of the analysis
 
+## Setup
 Make sure you have a local installation of ROOT (including pyROOT) available before continuing!
 As we require `python3` and the `pyROOT` bindings, building ROOT from source is probably the best option.
 ```
@@ -17,7 +20,7 @@ cmake ../root -DPYTHON_EXECUTABLE=$PATH_TO_PYTHON_3
 cmake --build . -- -j8
 ```
 
-To get started:
+Then, clone this repository, create a virtual python3 environment and install dependencies
 ```
 git clone -b master https://github.com/philippwindischhofer/HiggsPivoting.git
 cd higgspivoting
@@ -31,6 +34,8 @@ Make sure to add `rootbuild/lib` to your `PYTHONPATH` to allow `pyroot` to be im
 This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5`. This should be enough to play
 with it, but not enough for any substantial training. A larger dataset is available from the authors upon request.
 
+## Training
+
 To run a training campaign (assuming you want to locate the output at $TRAIN_DIR):
 ```
 mkdir $TRAIN_DIR
@@ -38,6 +43,8 @@ cp examples/Master.conf $TRAIN_DIR
 python RunTrainingCampaign.py --confpath $TRAIN_DIR/Master.conf --nrep 1
 ```
 Here, `nrep` is the number of trainings that should be carried out for each parameter point.
+
+## Evaluation
 
 To evaluate the classifier and generate the output for an Asimov fit:
 ```
@@ -58,6 +65,8 @@ source bin/activate
 source setup_env.sh
 python RunHistFitterCampaign.py $TRAIN_DIR/Master_slice_*
 ```
+
+## Visualisation / Plotting
 
 To produce the summary plots:
 ```
