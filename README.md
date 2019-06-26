@@ -17,17 +17,19 @@ cmake ../root -DPYTHON_EXECUTABLE=$PATH_TO_PYTHON_3
 cmake --build . -- -j8
 ```
 
-Make sure to add `rootbuild/lib` to your `PYTHONPATH` to allow `pyroot` to be imported! You can use e.g. `setup_env.sh` to do that.
-
 To get started:
 ```
-git clone -b master PUT_FINAL_PATH_HERE
+git clone -b master https://github.com/philippwindischhofer/HiggsPivoting.git
 cd higgspivoting
 python3 -m venv .
 source bin/activate
 pip install -r requirements.txt
 source setup_env.sh
 ```
+
+Make sure to add `rootbuild/lib` to your `PYTHONPATH` to allow `pyroot` to be imported! You can use e.g. `setup_env.sh` to do that.
+This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5`. This should be enough to play
+with it, but not enough for any substantial training. A larger dataset is available from the authors upon request.
 
 To run a training campaign (assuming you want to locate the output at $TRAIN_DIR):
 ```
