@@ -1,9 +1,8 @@
 import sys, os, glob, uuid
-sys.path.append("/home/windischhofer/ConfigFileSweeper/ConfigFileSweeper/")
 from argparse import ArgumentParser
 from shutil import copyfile
 
-from ConfigFileSweeper import ConfigFileSweeper
+from utils.ConfigFileSweeper.ConfigFileSweeper import ConfigFileSweeper
 from utils.CondorJobSubmitter import CondorJobSubmitter
 from utils.LocalJobSubmitter import LocalJobSubmitter
 from base.Configs import TrainingConfig
