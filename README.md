@@ -32,9 +32,6 @@ source setup_env.sh
 
 Make sure to add `rootbuild/lib` to your `PYTHONPATH` to allow `pyroot` to be imported! You can use e.g. `setup_env.sh` to do that.
 
-This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5`. This should be enough to play
-with it, but not enough for any substantial training. A larger dataset is available from the authors upon request.
-
 ## Training
 
 To run a training campaign (assuming you want to locate the output at $TRAIN_DIR):
@@ -44,6 +41,9 @@ cp examples/Master.conf $TRAIN_DIR
 python RunTrainingCampaign.py --confpath $TRAIN_DIR/Master.conf --nrep 1
 ```
 Here, `nrep` is the number of trainings that should be carried out for each parameter point.
+
+This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5` (used by default). This should be enough to play
+with the method, but not enough to reach good performance. A larger dataset is available from the authors upon request.
 
 ## Evaluation
 
