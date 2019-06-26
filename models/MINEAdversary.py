@@ -28,12 +28,6 @@ class MINEAdversary(AdversaryModel):
             self.T_x_y = tf.squeeze(self.T_x_y)
 
             self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1.0) * weights, axis = 0))
-            #self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.math.log(tf.reduce_mean(tf.math.exp(self.T_x_y) * weights, axis = 0)))
-            #self.MINE_lossval = self.MINE_lossval / tf.reduce_mean(weights)
-            #self.MINE_lossval_unrolled = tf.math.multiply(-(self.T_xy - tf.math.exp(self.T_x_y - 1)), weights)
-            #self.MINE_lossval = tf.reduce_mean(self.MINE_lossval_unrolled)
-            #self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1) * weights, axis = 0))
-            #self.MINE_lossval = self.MINE_lossval[0]
 
         return self.MINE_lossval, self.these_vars
 

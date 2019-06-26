@@ -38,15 +38,12 @@ class AdversarialTrainer(Trainer):
             sampling_pars["sampling_fractions"] /= np.sum(sampling_pars["sampling_fractions"])
 
             # pretend that each component came with an equal SOW to start with
-            # SOWs = [1 / len(weights) for cur in weights]
             SOWs = np.array(sampling_pars["sampling_fractions"])
-            #print("using explicit sampling fractions: {}".format(SOWs))
         else:
             # keep the original proportions
             SOWs = [np.sum(cur) for cur in weights]
             total_SOW = np.sum(SOWs)
             SOWs /= total_SOW # normalize total SOW to 1
-            #print("using original sampling fractions: {}".format(SOWs))
 
         total_SOW = 0
 
@@ -60,29 +57,16 @@ class AdversarialTrainer(Trainer):
         sampled_data = []
         sampled_weights = []
         for cur_source, cur_weights, cur_nevents, cur_samplinglength in zip(sources, weights, nevents, samplinglengths):
-            #cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(batch_size * cur_nevents / total_nevents))
             cur_sampled_data, cur_sampled_weights = self.sample_from(cur_source, cur_weights, req = int(cur_samplinglength * batch_size / len(sources)))
             sampled_data.append(cur_sampled_data)
             sampled_weights.append(cur_sampled_weights)
             total_SOW += np.sum(cur_sampled_weights)
         
-        # print("---")
-        # print("fractions before rescaling")
-        # print([np.sum(cur) / total_SOW for cur in sampled_weights])
-
-        # # ... and normalize them such that their SOWs are in the correct relation to each other
+        # ... and normalize them such that their SOWs are in the correct relation to each other
         for cur, cur_SOW in enumerate(SOWs):
             cur_sum = np.sum(sampled_weights[cur])
             if cur_sum > 0:
                 sampled_weights[cur] *= cur_SOW / cur_sum # each batch will have a total SOW of 1
-
-        # just normalize them to have the same SOW as the signal
-        # for cur, cur_SOW in enumerate(SOWs):
-        #     sampled_weights[cur] /= total_SOW
-
-        # print("fractions after rescaling")
-        # print([np.sum(cur) for cur in sampled_weights])
-        # print("---")
 
         # transpose them back for easy concatenation
         sampled_sources = list(map(list, zip(*sampled_data)))
@@ -98,10 +82,8 @@ class AdversarialTrainer(Trainer):
         # sample a halfbatch size full of events from signal, and from background, individually normalized to unit SOW
         # and keeping their relative proportions fixed
         sig_sampled, sig_weights = self.sample_from_components(sources_sig, weights_sig, batch_size = size // 2, sampling_pars = sig_sampling_pars)
-        #print("sampled {} events from signal components with total SOW = {}".format(len(sig_weights), np.sum(sig_weights)))
 
         bkg_sampled, bkg_weights = self.sample_from_components(sources_bkg, weights_bkg, batch_size = size // 2, sampling_pars = bkg_sampling_pars)
-        #print("sampled {} events from background components with total SOW = {}".format(len(bkg_weights), np.sum(bkg_weights)))
 
         # concatenate the individual components
         data_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
@@ -183,6 +165,7 @@ class AdversarialTrainer(Trainer):
         labels_bkg = [np.zeros(len(cur_data_bkg)) for cur_data_bkg in data_bkg]
 
         # separate them into their 2j/3j components
+        # Note: this is a *very* verbose way of doing things, but also very explicit (and hopefully clear) ...
         data_sig_2j = self._get_nJ_component(data_sig, auxdat_sig, nJ = 2)
         data_sig_3j = self._get_nJ_component(data_sig, auxdat_sig, nJ = 3)
 
@@ -315,8 +298,6 @@ class AdversarialTrainer(Trainer):
             auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
 
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
-
-            #######################
 
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
 

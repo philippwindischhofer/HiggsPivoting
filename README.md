@@ -1,4 +1,4 @@
-Code to generate the results presented in "Preseving physically important variables in optimal event selections: A case study in Higgs physics"
+Code to generate the results presented in "Preserving physically important variables in optimal event selections: A case study in Higgs physics" (ADD ARXIV LINK)
 
 A full run consists of:
 * training the model

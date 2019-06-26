@@ -48,7 +48,6 @@ class PerformancePlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(asimov_sig_name)
-        #ax.set_ylim([1.3, 2.8])
         
         fig.savefig(outfile)
         plt.close()                
@@ -403,7 +402,6 @@ class PerformancePlotter:
         fig = plt.figure(figsize = (10, 5))
         fig.subplots_adjust(right = 0.9, left = 0.08)
         ax = fig.add_subplot(111)
-        #ax.margins(left = 0.45)
 
         for ind, anadict in enumerate(anadicts):
             color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
@@ -413,9 +411,12 @@ class PerformancePlotter:
                 ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = '^', alpha = 1.0)
 
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+
+                # avoid falling out of the allowed range of the JSD, which can happen sometimes
+                # due to numerical problems for very strong shaping
                 if anadict["tight_{}jet_inv_JS_bkg".format(nJ)] < 1:
-                    print(anadict["tight_{}jet_inv_JS_bkg".format(nJ)])
                     anadict["tight_{}jet_inv_JS_bkg".format(nJ)] = 1.0
+
                 ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = color, edgecolors = color, label = None, marker = 's', alpha = 1.0)
             except KeyError:
                 print(anadict)
@@ -442,7 +443,6 @@ class PerformancePlotter:
         cb.set_label(r'$\lambda$')
 
         legend_elems_PCA = [
-            #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "pivotal classifier:"),
             Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "loose"),
             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "tight"),
             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "combined"),
@@ -453,7 +453,6 @@ class PerformancePlotter:
              Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
         ]
         legend_elems_CBA = [
-            #Line2D([0], [0], marker = 'o', color = 'white', markerfacecolor = "white", markeredgecolor = "white", label = "cut-based:", alpha = 0.0),
             Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "combined")
@@ -466,19 +465,14 @@ class PerformancePlotter:
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
 
-        # leg_labels_PCA = ["pivotal classifier:", "tight", "loose", "combined", r'$\lambda = 1.4$']
-        # leg_labels_CBA = ["cut-based:", "high MET", "low MET", "combined"]
         leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 8.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.31))
-        #leg_PCA_lambda = ax.legend(handles = legend_elems_PCA_lambda, labels = [r'$\lambda = 1.4$'], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.19, 0.28))
         leg_PCA.get_frame().set_linewidth(0.0)
-        #leg_PCA_lambda.get_frame().set_linewidth(0.0)
 
         leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.25, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
         leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
         leg_CBA_optimized.get_frame().set_linewidth(0.0)
         ax.add_artist(leg_PCA)
-        #ax.add_artist(leg_PCA_lambda)
         ax.add_artist(leg_CBA)
         ax.add_artist(leg_CBA_optimized)
 
@@ -498,7 +492,6 @@ class PerformancePlotter:
 
         # now start putting the labels
         ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-        #ax.text(x = 0.35, y = 0.31, s = r'$\leftarrow$ maximal sculpting $\rightarrow$', transform = ax.transAxes, rotation = 0, color = "gray")
 
         fig.savefig(outfile)
         plt.close()

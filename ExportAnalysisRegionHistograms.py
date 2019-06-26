@@ -116,34 +116,16 @@ def main():
     # prepare the common mBB binning for all signal regions
     SR_low = 30
     SR_up = 210
-    #SR_up = 600
     SR_binwidth = 10
     SR_binning = np.linspace(SR_low, SR_up, num = 1 + int((SR_up - SR_low) / SR_binwidth), endpoint = True)
 
     # also prepare the binning along the MVA dimension
     sigeff_binning = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.70, 0.75, 0.80, 0.85, 0.9, 0.92, 0.94, 0.96, 0.98, 0.99, 1.0]
 
-    # now convert the binning in terms of signal efficiency into the actual binning
-    # in terms of the classifier output value
-    #MVA_binning = [ClassifierBasedCategoryFiller._sigeff_to_score(env = env, signal_events = sig_data_test, signal_weights = sig_weights_test, sigeff = sigeff) for sigeff in sigeff_binning[::-1]]
-
     print("signal efficiency binning: {}".format(sigeff_binning))
-    #print("classifier output binning: {}".format(MVA_binning))
     print("mBB binning: {}".format(SR_binning))
 
-    # the cuts on the classifier (in terms of signal efficiency, separately for 2- and 3-jet events)
-    # cuts = {2: [0.0, 0.3609901582980384, 0.8797635831120305], 
-    #         3: [0.0, 0.32613469848310933, 0.7895892560956852]}
-
-    # for CMS MC
-    # cuts = {2: [0.0, 0.36099122139989426, 0.8802990977284879],
-    #         3: [0.0, 0.326514026005491, 0.7917872994832997]}
-
-    # for ATLAS MC
-    # cuts = {2: [0.0, 0.34669408038894933, 0.9073610781343515],
-    #         3: [0.0, 0.32230881360286623, 0.8215582540701756]}
-
-    # for ATLAS MC (with optimized CBA)
+    # for MadGraph ATLAS MC (with optimized CBA)
     cuts = {2: [0.0, 0.4176270076174703, 0.9484673946077271],
             3: [0.0, 0.39042834934304477, 0.9007551742165589]}
 
@@ -287,27 +269,6 @@ def main():
         # compute JSD between the tight and loose categories
         anadict["{}jet_tight_loose_inv_JS_bkg".format(cur_nJ)] = 1.0 / ModelEvaluator.get_JS_categories(classifier_categories["tight"], classifier_categories["loose"], binning = SR_binning, var = "mBB", processes = bkg_samples)
         anadict["{}jet_binned_sig_PCA".format(cur_nJ)] = (anadict["tight_{}jet_binned_sig".format(cur_nJ)]**2 + anadict["loose_{}jet_binned_sig".format(cur_nJ)]**2)**0.5
-
-        # # now, also export the classifier categories for each jet split
-        # class_cat_inclusive = ClassifierBasedCategoryFiller.create_classifier_category(env, 
-        #                                                                                process_events = data_test,
-        #                                                                                process_aux_events = aux_test,
-        #                                                                                process_weights = weights_test,
-        #                                                                                process_names = samples,
-        #                                                                                signal_events = sig_data_test,
-        #                                                                                signal_weights = sig_weights_test,
-        #                                                                                signal_aux_events = sig_aux_data_test,
-        #                                                                                classifier_sigeff_range = (1.0, 0.0),
-        #                                                                                nJ = cur_nJ)
-
-        # class_cat_inclusive.export_ROOT_histogram(binning = MVA_binning, processes = sig_samples + bkg_samples, var_names = "clf", 
-        #                                           outfile_path = os.path.join(outdir, "{}jet_MVA.root".format(cur_nJ)), clipping = True, density = False, ignore_binning = True)
-
-        # CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', 
-        #                                           plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True, ignore_binning = True)
-
-        # CategoryPlotter.plot_category_composition(class_cat_inclusive, binning = MVA_binning, outpath = os.path.join(outdir, "dist_MVA_{}J_nostack.pdf".format(cur_nJ)), var = "clf", xlabel = r'MVA', ylabel = "a.u.",
-        #                                           plotlabel = ["MC16d", "MVA", "nJ = {}".format(cur_nJ)], logscale = True, ignore_binning = True, stacked = False, histtype = 'step', density = True)
 
     print("event statistics:")
     print("have a total of {} events, CBA used {} events, ({}%)".format(total_events, CBA_used_events, CBA_used_events / total_events))
