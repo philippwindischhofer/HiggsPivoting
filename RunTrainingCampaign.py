@@ -46,11 +46,10 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
             #os.rename(config_file, os.path.join(run_dir, "meta.conf"))
         
             # create the job scripts
-            job_script = create_job_script(training_data_path, run_dir, run_dir)
+            job_script = create_job_script(training_data_path, run_dir, run_dir, rootdir = os.environ["ROOTDIR"])
             
-            # submit them to the condor batch system
-            #CondorJobSubmitter.submit_job(job_script)
-            LocalJobSubmitter.submit_job(job_script)
+            # submit them
+            TrainingConfig.submitter.submit_job(job_script)
 
         os.remove(config_file)
 

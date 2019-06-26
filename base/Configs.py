@@ -1,4 +1,6 @@
 from configparser import ConfigParser
+from utils.CondorJobSubmitter import CondorJobSubmitter
+from utils.LocalJobSubmitter import LocalJobSubmitter
 import os
 
 class TrainingConfig:
@@ -14,6 +16,7 @@ class TrainingConfig:
     validation_slice = [0.66, 1.0]
 
     data_path = "/home/windischhofer/datasmall/Hbb/training-MadGraphPy8-ATLAS.h5"
+    submitter = LocalJobSubmitter # "CondorJobSubmitter" also works
 
     sig_samples = ["Hbb"]
     sig_sampling_lengths = [1.0]
