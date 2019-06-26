@@ -11,8 +11,8 @@ With this repository, you can do the following:
 
 Clone this repository, create a virtual python3 environment and install dependencies
 ```
-git clone -b master https://github.com/philippwindischhofer/HiggsPivoting.git $SRC_DIR
-cd higgspivoting
+git clone -b paper https://github.com/philippwindischhofer/HiggsPivoting.git $SRC_DIR
+cd $SRC_DIR
 python3 -m venv .
 ```
 `$SRC_DIR` is some local directory where you want to keep the code.
@@ -35,8 +35,8 @@ Then, activate the virtual environment and install the remaining dependencies.
 ```
 cd $SRC_DIR
 source bin/activate
-pip install -r requirements.txt
 source setup_env.sh
+pip install -r requirements.txt
 ```
 
 ## Training
@@ -49,7 +49,10 @@ cp examples/Master.conf $TRAIN_DIR
 python RunTrainingCampaign.py --confpath $TRAIN_DIR/Master.conf --nrep 1
 ```
 Here, `nrep` is the number of trainings that should be carried out for each parameter point. `Master.conf` is a configuration file that specifies the settings that are to be used for the training.
-It allows performing sweeps over an arbitrary number of these parameters (in the example used, the Lagrange multiplier lambda is swept). Refer to `utils/ConfigFileSweeper/README.md` for more details.
+You may want to have a look at it and play with the settings. The default values are such as to guarantee a quick completion of the training, but will not achieve competitive sensitivity.
+
+The config file also allows performing sweeps over an arbitrary number of these parameters (in the example used, the Lagrange multiplier lambda is swept). Refer to `utils/ConfigFileSweeper/README.md` for more details.
+Warning: the above command will spin up many processes on your local machine. If you have a Condor batch system available, change `submitter` in `base/Configs.py` accordingly.
 
 This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5`, which is used by default. This should be enough to play
 with the method, but not enough to reach optimum performance. A larger dataset is available from the authors upon request.
