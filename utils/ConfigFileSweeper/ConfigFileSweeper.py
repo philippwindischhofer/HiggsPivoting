@@ -1,9 +1,9 @@
 # this is a script that converts a range of configuration files into individual configuration files that specify a single point in configuration space
 
 import sys, os, itertools, copy
-from TextFragment import TextFragment
-from SweepDimension import SweepDimension
-from FragmentParser import FragmentParser
+from utils.ConfigFileSweeper.TextFragment import TextFragment
+from utils.ConfigFileSweeper.SweepDimension import SweepDimension
+from utils.ConfigFileSweeper.FragmentParser import FragmentParser
 
 def ConfigFileSweeper(infile_path, output_dir):
 

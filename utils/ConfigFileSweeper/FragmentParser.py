@@ -1,5 +1,5 @@
-from SliceTextFragment import SliceTextFragment
-from TextFragment import TextFragment
+from utils.ConfigFileSweeper.SliceTextFragment import SliceTextFragment
+from utils.ConfigFileSweeper.TextFragment import TextFragment
 import re
 
 class FragmentParser:
