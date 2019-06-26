@@ -9,6 +9,9 @@ class SweepDimension:
     def add_iterable(self, it):
         self.itlist.append(it)
 
+    def iter(self):
+        return self.__iter__()
+
     def __iter__(self):
         return self
 
