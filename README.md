@@ -31,6 +31,7 @@ source setup_env.sh
 ```
 
 Make sure to add `rootbuild/lib` to your `PYTHONPATH` to allow `pyroot` to be imported! You can use e.g. `setup_env.sh` to do that.
+
 This repository contains a small training dataset (100000 events per signal and background process) in `examples/training-MadGraphPy8-ATLAS-small.h5`. This should be enough to play
 with it, but not enough for any substantial training. A larger dataset is available from the authors upon request.
 
