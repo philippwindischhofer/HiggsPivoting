@@ -1,5 +1,5 @@
 # this is a more special kind of text fragment, namely a text fragment that can slice itself into several lines per slice
-from TextFragment import TextFragment
+from utils.ConfigFileSweeper.TextFragment import TextFragment
 import re
 
 class SliceTextFragment(TextFragment):
