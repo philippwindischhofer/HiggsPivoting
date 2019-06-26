@@ -75,6 +75,9 @@ Installation instructions are available at http://histfitter.web.cern.ch/histfit
 Once the installation has completed, you need to correctly set the path to your local HistFitter installation directory
 in `setup_env.sh`.
 
+In case you do not want to evaluate Asimov sensitivities, you can skip this step. You will then be unable to run
+`MakeGlobalAsimovPlots.py` below.
+
 ## Visualisation / Plotting
 
 To produce the summary plots:
@@ -82,7 +85,7 @@ To produce the summary plots:
 python MakeGlobalAnalysisPlots.py --plotdir $PLOT_DIR $TRAIN_DIR/Master_slice_* 
 python MakeGlobalAsimovPlots.py --plotdir $PLOT_DIR $TRAIN_DIR/Master_slice_* 
 ```
-Here, `$PLOT_DIR` is the directory where the plots should be stored.
+Here, `$PLOT_DIR` is the directory where the plots should be stored. `MakeGlobalAnalysisPlots` generates generic performance plots, based on the binned significance. `MakeGlobalAsimovPlots` takes the results from the Asimov fit and visualises them.
 
 ## A brief guide to the code
 The training is done by the modules `training` and `models`. You may especially want to look at `AdversarialEnvironment` (which builds the `TensorFlow` model) and `AdversarialTrainer` which does the actual training. The `plotting` module does exactly what it is supposed to. `dataprep` and `utils` contain code that is used to prepare and preprocess the MC training dataset, and is included here for completeness. The main configuration file is `base/Configs.py`.
