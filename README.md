@@ -8,6 +8,7 @@ With this repository, you can do the following:
 * evaluate the performance of the analysis
 
 ## Setup
+Disclaimer: these instructions have been tested on `CentOS 7` with kernel `3.10`.
 
 Clone this repository, create a virtual python3 environment and install dependencies
 ```
