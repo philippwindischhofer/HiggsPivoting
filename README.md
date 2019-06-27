@@ -15,14 +15,19 @@ git clone -b paper https://github.com/philippwindischhofer/HiggsPivoting.git $SR
 cd $SRC_DIR
 python3 -m venv .
 ```
-`$SRC_DIR` is some local directory where you want to keep the code.
+`$SRC_DIR` is some local directory where you want to keep the code. [`$SRC_DIR` is meant to reference the source directory you want to use. You can either define an environment variable to keep track of it (`export SRC_DIR="/path/to/source"`), or just keep the path explicit.]
 
 Some of the dependencies require a local installation of ROOT (including pyROOT). As we require `python3` and the `pyROOT` bindings, building ROOT from source is probably the best option.
 
+Download the ROOT source and store it in the local directory `$ROOT_SRC_DIR`:
 ```
 git clone http://github.com/root-project/root.git $ROOT_SRC_DIR
 cd $ROOT_SRC_DIR
 git checkout -b v6-18-00 v6-18-00
+```
+
+We are going to install ROOT in the directory `$ROOT_INSTALL_DIR`. The installation will be completely self-contained and not mess with any other local installation of ROOT you may have. To undo the installation, it is sufficient to just do `rm -rf $ROOT_INSTALL_DIR $ROOT_SRC_DIR`.
+```
 mkdir $ROOT_INSTALL_DIR
 cd $ROOT_INSTALL_DIR
 cmake $ROOT_SRC_DIR -DPYTHON_EXECUTABLE=$PATH_TO_PYTHON_3
