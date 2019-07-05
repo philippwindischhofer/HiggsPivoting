@@ -1,6 +1,6 @@
 # HiggsPivoting
 
-Code to generate the results presented in "Windischhofer, Zgubic, Bortoletto: Preserving physically important variables in optimal event selections: A case study in Higgs physics" (ADD ARXIV LINK)
+Code to generate the results presented in "Windischhofer, Zgubic, Bortoletto: Preserving physically important variables in optimal event selections: A case study in Higgs physics" [arXiv:1907.02098](https://arxiv.org/abs/1907.02098)
 
 With this repository, you can do the following:
 * train a pivotal classifier
