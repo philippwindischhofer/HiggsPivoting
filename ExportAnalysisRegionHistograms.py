@@ -126,13 +126,13 @@ def main():
     print("mBB binning: {}".format(SR_binning))
 
     # for MadGraph ATLAS MC (with optimized CBA)
-    cuts = {2: [0.0, 0.4176270076174703, 0.9484673946077271],
-            3: [0.0, 0.39042834934304477, 0.9007551742165589]}
+    cuts = {2: [0.0, 0.3936688696975736, 0.9162186612913272],
+            3: [0.0, 0.35975037002858584, 0.861855992060236]}
 
     cut_labels = ["tight", "loose"]
 
     CBA_original = {"MET_cut": 200, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 1.8}
-    CBA_optimized = {"MET_cut": 192, "dRBB_highMET_cut": 1.3, "dRBB_lowMET_cut": 5.0}
+    CBA_optimized = {"MET_cut": 191, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 5.0}
     
     print("using the following cuts:")
     print(cuts)
