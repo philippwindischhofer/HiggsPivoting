@@ -10,6 +10,7 @@ from models.SimpleProbabilisticClassifier import SimpleProbabilisticClassifier
 from models.GMMAdversary import GMMAdversary
 from models.MINEAdversary import MINEAdversary
 from models.JSAdversary import JSAdversary
+from models.DisCoAdversary import DisCoAdversary
 from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from base.Configs import TrainingConfig
 
