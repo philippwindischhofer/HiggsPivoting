@@ -11,6 +11,7 @@ from models.GMMAdversary import GMMAdversary
 from models.MINEAdversary import MINEAdversary
 from models.JSAdversary import JSAdversary
 from models.DisCoAdversary import DisCoAdversary
+from models.PtEstAdversary import PtEstAdversary
 from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from base.Configs import TrainingConfig
 
