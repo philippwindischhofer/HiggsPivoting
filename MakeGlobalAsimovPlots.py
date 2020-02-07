@@ -1,11 +1,9 @@
 import os, argparse, pickle
 from argparse import ArgumentParser
-
+import matplotlib.pyplot as plt
 from plotting.PerformancePlotter import PerformancePlotter
 
-def MakeGlobalAsimovPlots(model_dirs, plot_dir):
-
-    # load the HistFitter output and also the corresponding sensdicts
+def load_plotdata(model_dirs):
     hypodicts = []
     sensdicts = []
 
@@ -36,8 +34,15 @@ def MakeGlobalAsimovPlots(model_dirs, plot_dir):
     print("CBA original: {} sigma".format(hypodict["original_asimov_sig_high_low_MET_background_floating"]))
     print("CBA optimized: {} sigma".format(hypodict["optimized_asimov_sig_high_low_MET_background_floating"]))
 
+    return hypodicts, sensdicts
+
+def MakeGlobalAsimovPlots(model_dirs, plot_dir):
+
+    hypodicts, sensdicts = load_plotdata(model_dirs)
+
     # now have all the data, just need to plot it
-    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, outdir = plot_dir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'])
+    dark_blue = plt.cm.Blues(1000)
+    PerformancePlotter.plot_asimov_significance_comparison([hypodicts], [sensdicts], colors = [dark_blue], labels = ["pivotal classifier"], outdir = plot_dir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'])
 
 def main():
     parser = ArgumentParser(description = "create global summary plots for Asimov sensitivities")

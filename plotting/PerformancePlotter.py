@@ -54,85 +54,110 @@ class PerformancePlotter:
 
     # expect CBA_overlays in the form [{label, ls, dict}]
     @staticmethod
-    def plot_asimov_significance_comparison(hypodicts, sensdicts, outdir, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
+    def plot_asimov_significance_comparison(hypodicts_runs, sensdicts_runs, outdir, labels, colors, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
                                             model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
 
-        assert len(hypodicts) == len(sensdicts) # make sure are given corresponding information
+        assert len(hypodicts_runs) == len(sensdicts_runs) # make sure are given corresponding information
+
+        def assemble_plotdata(hypodicts, sensdicts):
+            asimov_sigs_ncat_background_fixed = {}
+            asimov_sigs_ncat_background_floating = {}
+
+            # prepare the individual datasets to plot
+            for sensdict, hypodict in zip(sensdicts, hypodicts):
+                asimov_sig_ncat_background_fixed = hypodict["asimov_sig_ncat_background_fixed"]
+                asimov_sig_ncat_background_floating = hypodict["asimov_sig_ncat_background_floating"]
+                                
+                cur_lambda = float(sensdict["lambda"])
+                
+                if cur_lambda not in asimov_sigs_ncat_background_fixed:
+                    asimov_sigs_ncat_background_fixed[cur_lambda] = []
+                asimov_sigs_ncat_background_fixed[cur_lambda].append(asimov_sig_ncat_background_fixed)
+
+                if cur_lambda not in asimov_sigs_ncat_background_floating:
+                    asimov_sigs_ncat_background_floating[cur_lambda] = []
+                asimov_sigs_ncat_background_floating[cur_lambda].append(asimov_sig_ncat_background_floating)
+
+            # compute the size of the error bars (show the mean as central value, and the standard deviation as uncertainty measure)
+            lambdas = np.array(list(asimov_sigs_ncat_background_fixed.keys()))
+            sortind = np.argsort(lambdas)
+            lambdas = lambdas[sortind]
+
+            asimov_sigs_ncat_background_fixed_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+            asimov_sigs_ncat_background_fixed_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+            asimov_sigs_ncat_background_fixed_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+            asimov_sigs_ncat_background_fixed_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
+
+            asimov_sigs_ncat_background_floating_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+            asimov_sigs_ncat_background_floating_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+            asimov_sigs_ncat_background_floating_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+            asimov_sigs_ncat_background_floating_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
+
+            unc_up_background_floating = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean
+            unc_down_background_floating = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean
+
+            unc_up_background_fixed = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean
+            unc_down_background_fixed = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean
+
+            return lambdas, asimov_sigs_ncat_background_floating_mean, unc_up_background_floating, unc_down_background_floating, asimov_sigs_ncat_background_fixed_mean, unc_up_background_fixed, unc_down_background_fixed
         
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        asimov_sigs_ncat_background_fixed = {}
-        asimov_sigs_ncat_background_floating = {}
+        lambdas = []
+        asimov_sigs_ncat_background_floating_means = []
+        uncs_up_background_floating = []
+        uncs_down_background_floating = []
+        asimov_sigs_ncat_background_fixed_means = []
+        uncs_up_background_fixed = []
+        uncs_down_background_fixed = []
 
-        # prepare the individual datasets to plot
-        for sensdict, hypodict in zip(sensdicts, hypodicts):
-            asimov_sig_ncat_background_fixed = hypodict["asimov_sig_ncat_background_fixed"]
-            asimov_sig_ncat_background_floating = hypodict["asimov_sig_ncat_background_floating"]
-                                
-            cur_lambda = float(sensdict["lambda"])
-                
-            if cur_lambda not in asimov_sigs_ncat_background_fixed:
-                asimov_sigs_ncat_background_fixed[cur_lambda] = []
-            asimov_sigs_ncat_background_fixed[cur_lambda].append(asimov_sig_ncat_background_fixed)
+        for hypodicts, sensdicts in zip(hypodicts_runs, sensdicts_runs):
+            cur_lambdas, cur_asimov_sigs_ncat_background_floating_mean, cur_unc_up_background_floating, cur_unc_down_background_floating, cur_asimov_sigs_ncat_background_fixed_mean, cur_unc_up_background_fixed, cur_unc_down_background_fixed = assemble_plotdata(hypodicts, sensdicts)
 
-            if cur_lambda not in asimov_sigs_ncat_background_floating:
-                asimov_sigs_ncat_background_floating[cur_lambda] = []
-            asimov_sigs_ncat_background_floating[cur_lambda].append(asimov_sig_ncat_background_floating)
+            lambdas.append(cur_lambdas)
+            asimov_sigs_ncat_background_floating_means.append(cur_asimov_sigs_ncat_background_floating_mean)
+            uncs_up_background_floating.append(cur_unc_up_background_floating)
+            uncs_down_background_floating.append(cur_unc_up_background_floating)
+            asimov_sigs_ncat_background_fixed_means.append(cur_asimov_sigs_ncat_background_fixed_mean)
+            uncs_up_background_fixed.append(cur_unc_up_background_fixed)            
+            uncs_down_background_fixed.append(cur_unc_down_background_fixed)
 
-        # compute the size of the error bars (show the mean as central value, and the standard deviation as uncertainty measure)
-        lambdas = np.array(list(asimov_sigs_ncat_background_fixed.keys()))
-        sortind = np.argsort(lambdas)
-        lambdas = lambdas[sortind]
-
-        asimov_sigs_ncat_background_fixed_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
-        asimov_sigs_ncat_background_fixed_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
-        asimov_sigs_ncat_background_fixed_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
-        asimov_sigs_ncat_background_fixed_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_fixed.values()])[sortind]
-
-        asimov_sigs_ncat_background_floating_mean = np.array([np.mean(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
-        asimov_sigs_ncat_background_floating_std = np.array([np.std(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
-        asimov_sigs_ncat_background_floating_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
-        asimov_sigs_ncat_background_floating_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
-
-        #dark_blue  = (4*1./255, 30*1./255, 66*1./255)
-        dark_blue = plt.cm.Blues(1000)
 
         def bkg_floating_epilog(ax):
-            ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
+            ax.axhline(y = hypodicts_runs[0][0]["optimized_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
                        color = "salmon", linestyle = "--", label = "cut-based analysis (optimised)", zorder = 1)
-            ax.axhline(y = hypodict["original_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
+            ax.axhline(y = hypodicts_runs[0][0]["original_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
                        color = "salmon", linestyle = "-", label = "cut-based analysis", zorder = 1)
             
         def bkg_fixed_epilog(ax):
-            ax.axhline(y = hypodict["optimized_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
+            ax.axhline(y = hypodicts_runs[0][0]["optimized_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
                        color = "indianred", linestyle = ":", label = "cut-based analysis (optimised)")
-            ax.axhline(y = hypodict["original_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
+            ax.axhline(y = hypodicts_runs[0][0]["original_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
                        color = "indianred", linestyle = "-", label = "cut-based analysis")
             
-        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_mean, unc_up = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean, 
-                                             unc_down = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean, 
-                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, color = dark_blue, title = "",
+        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_means, uncs_up = uncs_up_background_floating, uncs_down = uncs_down_background_floating, 
+                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, colors = colors, title = "",
                                              epilog = bkg_floating_epilog,
                                              plotlabel = plotlabel)
 
-        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_mean, unc_up = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean, 
-                                             unc_down = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean, 
-                                             label = "pivotal classifier", outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, color = 'indianred', title = "background fixed",
+        PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_means, uncs_up = uncs_up_background_fixed, uncs_down = uncs_down_background_fixed, 
+                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, colors = colors, title = "background fixed",
                                              epilog = bkg_fixed_epilog,
                                              plotlabel = plotlabel)
 
     @staticmethod
-    def _uncertainty_plot(x, y, unc_up, unc_down, label, outfile, xlabel, ylabel, color, show_legend = True, epilog = None, title = "", plotlabel = []):
+    def _uncertainty_plot(xs, ys, uncs_up, uncs_down, labels, outfile, xlabel, ylabel, colors, show_legend = True, epilog = None, title = "", plotlabel = []):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
         if epilog is not None:
             epilog(ax)
 
-        # first, plot the central value
-        ax.plot(x, y, marker = 'o', label = label, color = color)
-        ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
+        for x, y, unc_up, unc_down, label, color in zip(xs, ys, uncs_up, uncs_down, labels, colors):
+            # first, plot the central value
+            ax.plot(x, y, marker = 'o', label = label, color = color)
+            ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
