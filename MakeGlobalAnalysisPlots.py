@@ -74,12 +74,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
 
     PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing)
 
-if __name__ == "__main__":
-    parser = ArgumentParser(description = "create global comparison plots")
-    parser.add_argument("--plotdir")
-    parser.add_argument("model_dirs", nargs = '+', action = "store")
-    args = vars(parser.parse_args())
-
+def MakeAllGlobalAnalysisPlots(args):
     processes = ["Hbb", "Wjets", "Zjets", "diboson", "ttbar"]
     nJ = [2, 3]
     SRs = ["tight", "loose"]
@@ -109,3 +104,12 @@ if __name__ == "__main__":
 
                 MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
                 MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)], smoothing = True)
+    
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description = "create global comparison plots")
+    parser.add_argument("--plotdir")
+    parser.add_argument("model_dirs", nargs = '+', action = "store")
+    args = vars(parser.parse_args())
+
+    MakeAllGlobalAnalysisPlots(args)
