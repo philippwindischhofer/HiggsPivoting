@@ -1,4 +1,4 @@
-import os
+import os, re
 import subprocess as sp
 
 class CondorJobSubmitter:
@@ -26,3 +26,20 @@ class CondorJobSubmitter:
         # call the job submitter
         sp.check_output(["condor_submit", submit_file_path])
         print("submitted '" + submit_file_path + "'")
+
+    @staticmethod
+    def get_running_cluster_IDs():
+        running = sp.check_output(["condor_q", "-alluser", "-long", "-af", "JOB_IDS"]).decode("utf-8").split('\n')
+       
+        def cluster_extractor(instring):
+            job_id_finder = re.compile("ClusterId\\s*=\\s*(.+)")
+            m = job_id_finder.match(instring)
+            if m:
+                return m.group(1)
+            else:
+                return None
+
+        cluster_IDs = set(map(cluster_extractor, running))
+        cluster_IDs.remove(None)
+
+        return cluster_IDs
