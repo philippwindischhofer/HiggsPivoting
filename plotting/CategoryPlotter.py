@@ -111,7 +111,7 @@ class CategoryPlotter:
         ax.margins(0.0)
 
         # add some margin on top of the figures
-        ax.set_ylim([0, 1.3 * ax.get_ylim()[1]])
+        ax.set_ylim([0, 1.45 * ax.get_ylim()[1]])
 
         if logscale:
             plt.yscale('log')
