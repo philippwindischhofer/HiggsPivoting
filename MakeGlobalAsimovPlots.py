@@ -14,8 +14,8 @@ def load_plotdata(model_dirs):
             with open(os.path.join(model_dir, "hypodict.pkl"), "rb") as fit_infile, open(os.path.join(model_dir, "anadict.pkl"), "rb") as sens_infile:
                 hypodict = pickle.load(fit_infile)
                 sensdict = pickle.load(sens_infile)
-                if float(sensdict["lambda"]) > 1.4:
-                    continue
+                # if float(sensdict["lambda"]) > 1.4:
+                #     continue
 
                 hypodicts.append(hypodict)
                 sensdicts.append(sensdict)
