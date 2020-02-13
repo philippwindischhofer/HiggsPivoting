@@ -234,7 +234,7 @@ class AdversarialTrainer(Trainer):
             data_batch = np.concatenate([data_batch_2j, data_batch_3j])
             nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
             labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
-            weights_batch = np.concatenate([weights_batch_2j, weights_batch_3j])
+            weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
             auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
 
             env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
@@ -255,7 +255,7 @@ class AdversarialTrainer(Trainer):
             data_batch = np.concatenate([data_batch_2j, data_batch_3j])
             nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
             labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
-            weights_batch = np.concatenate([weights_batch_2j, weights_batch_3j])
+            weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
             auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
 
             env.train_classifier(data_step = data_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
@@ -265,7 +265,7 @@ class AdversarialTrainer(Trainer):
         # start the actual adversarial training
         print("starting adversarial training:")
         for batch in range(int(number_batches)):
-            for cur in range(1):
+            for cur in range(5):
                 # sample coherently from (data, nuisance, label) tuples
                 (data_batch_2j, nuisances_batch_2j, labels_batch_2j, auxdata_batch_2j), weights_batch_2j = sampling_callback([data_sig_2j, nuisances_sig_2j, labels_sig_2j, auxdat_sig_2j], weights_sig_2j, 
                                                                                                                              [data_bkg_2j, nuisances_bkg_2j, labels_bkg_2j, auxdat_bkg_2j], weights_bkg_2j, 
@@ -277,7 +277,7 @@ class AdversarialTrainer(Trainer):
                 data_batch = np.concatenate([data_batch_2j, data_batch_3j])
                 nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
                 labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
-                weights_batch = np.concatenate([weights_batch_2j, weights_batch_3j])
+                weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
                 auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
                 
                 env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
@@ -294,7 +294,7 @@ class AdversarialTrainer(Trainer):
             data_batch = np.concatenate([data_batch_2j, data_batch_3j])
             nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
             labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
-            weights_batch = np.concatenate([weights_batch_2j, weights_batch_3j])
+            weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
             auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
 
             env.train_step(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
