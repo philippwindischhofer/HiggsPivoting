@@ -13,11 +13,11 @@ class CondorJobSubmitter:
         with open(submit_file_path, 'w') as submit_file:
             submit_file.write("executable = " + job_script_path + "\n")
             submit_file.write("universe = vanilla\n")
-            submit_file.write("output = " + os.path.join(job_dir, "output.$(Process)\n"))
-            submit_file.write("error = " + os.path.join(job_dir, "error.$(Process)\n"))
-            submit_file.write("log = " + os.path.join(job_dir, "log.$(Process)\n"))
+            submit_file.write("output = output.$(Process)\n")
+            submit_file.write("error = error.$(Process)\n")
+            submit_file.write("log = log.$(Process)\n")
             submit_file.write("notification = never\n")
-            submit_file.write("request_cpus = 1\n")
+            submit_file.write("request_cpus = 16\n")
             submit_file.write("request_memory = 10000\n") # in MB
             # submit_file.write("should_transfer_files = Yes\n")
             # submit_file.write("when_to_transfer_output = ON_EXIT\n")
