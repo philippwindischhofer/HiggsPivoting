@@ -223,7 +223,7 @@ class AdversarialTrainer(Trainer):
 
         # pre-train the adversary
         print("pretraining adversarial network for {} batches".format(self.training_pars["adversary_pretrain_batches"]))
-        for batch in range(int(self.training_pars["pretrain_batches"])):
+        for batch in range(int(self.training_pars["adversary_pretrain_batches"])):
             # sample coherently from (data, nuisance, label) tuples
             (data_batch_2j, nuisances_batch_2j, labels_batch_2j, auxdata_batch_2j), weights_batch_2j = sampling_callback([data_sig_2j, nuisances_sig_2j, labels_sig_2j, auxdat_sig_2j], weights_sig_2j, 
                                                                                                                          [data_bkg_2j, nuisances_bkg_2j, labels_bkg_2j, auxdat_bkg_2j], weights_bkg_2j,
