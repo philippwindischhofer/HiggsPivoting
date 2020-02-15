@@ -13,8 +13,7 @@ class PtEstAdversary(AdversaryModel):
     def build_loss(self, pred, nuisance, is_training, weights = 1.0, eps = 1e-6, batchnum = 0):
         with tf.variable_scope(self.name):
             self.regressed_nuisance, self.these_vars = self._adversary_model(pred, is_training)
-
-            self.loss = tf.reduce_mean(tf.math.square(self.regressed_nuisance - nuisance))
+            self.loss = tf.reduce_mean(weights * tf.squeeze(tf.math.square(self.regressed_nuisance - nuisance), axis = 1))
 
         return self.loss, self.these_vars
 
