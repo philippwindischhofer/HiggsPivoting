@@ -38,7 +38,7 @@ class CondorJobSubmitter:
 
         while True:
             try:
-                running = sp.check_output(["condor_q", "-alluser", "-long", "-af", "JOB_IDS"]).decode("utf-8").split('\n')
+                running = sp.check_output(["condor_q", "-long", "-af", "JOB_IDS"]).decode("utf-8").split('\n')
                 break
             except:
                 print("problem with job lister -- retrying")
