@@ -17,7 +17,7 @@ class CondorJobSubmitter:
             submit_file.write("error = error.$(Process)\n")
             submit_file.write("log = log.$(Process)\n")
             submit_file.write("notification = never\n")
-            submit_file.write("request_cpus = 16\n")
+            submit_file.write("request_cpus = 6\n")
             submit_file.write("request_memory = 10000\n") # in MB
             # submit_file.write("should_transfer_files = Yes\n")
             # submit_file.write("when_to_transfer_output = ON_EXIT\n")
