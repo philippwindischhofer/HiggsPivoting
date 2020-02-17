@@ -255,7 +255,7 @@ class AdversarialEnvironment(TFEnvironment):
         retvals = []
         for chunk, nJ_chunk in zip(chunks, nJ_chunks):
             with self.graph.as_default():
-                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: use_dropout, self.nJ_in: nJ_chunk})
+                retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False, self.nJ_in: nJ_chunk})
                 retvals.append(retval_cur)
 
         return np.concatenate(retvals, axis = 0)
