@@ -25,7 +25,7 @@ class SimpleClassifier(ClassifierModel):
 
         these_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = self.name)
     
-        return outputs, these_vars, pre_output
+        return outputs, these_vars
 
     def build_loss(self, pred, labels_one_hot, weights = 1.0, batchnum = 0):
         with tf.variable_scope(self.name):
