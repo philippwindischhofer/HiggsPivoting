@@ -1,5 +1,4 @@
 import tensorflow as tf
-#import tensorflow_probability as tfp
 import tensorflow.contrib.layers as layers
 
 from models.BaseModels import ClassifierModel
