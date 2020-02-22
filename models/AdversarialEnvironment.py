@@ -210,9 +210,7 @@ class AdversarialEnvironment(TFEnvironment):
                                           batchnum = batchnum)
 
         with self.graph.as_default():
-            print("train 2j")
             self.sess.run([self.train_adversary_standalone_2j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.adversary_2j_lr: adversary_lr, self.adversary_3j_lr: adversary_lr})
-            print("train 3j")
             self.sess.run([self.train_adversary_standalone_3j], feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.batchnum: [batchnum], self.is_training: True, self.nJ_in: auxdat_step[:, TrainingConfig.auxiliary_branches.index("nJ")], self.adversary_2j_lr: adversary_lr, self.adversary_3j_lr: adversary_lr})
 
     def train_classifier(self, data_step, labels_step, weights_step, batchnum, auxdat_step):
@@ -285,11 +283,17 @@ class AdversarialEnvironment(TFEnvironment):
         pred = self.predict(data = data, auxdat = aux_data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
 
-        #cur_neural_MI_est = self.neural_MI_est.estimate(self.sess, pred, nuisances_pre, weights.flatten())
-        #retdict["neural_MI"] = cur_neural_MI_est
+        # cur_neural_MI_est = self.neural_MI_est.estimate(self.sess, pred, nuisances_pre, weights.flatten())
+        # retdict["neural_MI"] = cur_neural_MI_est
 
-        cur_binned_MI_est = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten())
-        retdict["binned_MI"] = cur_binned_MI_est
+        cur_binned_MI_est_tukey = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "tukey")
+        cur_binned_MI_est_bendat_piersol = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "bendat_piersol")
+        cur_binned_MI_est_cellucci_approximated = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "cellucci_approximated")
+        cur_binned_MI_est_cellucci = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "cellucci")
+        retdict["binned_MI_tukey"] = cur_binned_MI_est_tukey
+        retdict["binned_MI_bendat_piersol"] = cur_binned_MI_est_bendat_piersol
+        retdict["binned_MI_cellucci_approximated"] = cur_binned_MI_est_cellucci_approximated
+        retdict["binned_MI_cellucci"] = cur_binned_MI_est_cellucci
 
         return retdict
 
