@@ -11,7 +11,7 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
     sensdicts = []
 
     dark_blue = plt.cm.Blues(1000)
-    colors = [dark_blue, "indianred", "limegreen"]
+    colors = [dark_blue, "indianred", "limegreen", "orange"]
 
     for workdir in workdirs:
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
