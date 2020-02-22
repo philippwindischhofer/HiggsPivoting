@@ -10,16 +10,19 @@ class MINEAdversary(AdversaryModel):
         self.name = name
         self.hyperpars = hyperpars
 
-    def build_loss(self, pred, nuisance, is_training, weights = 1.0, eps = 1e-6, batchnum = 0):
+    def build_loss(self, pred, nuisance, is_training, weights, eps = 1e-6, batchnum = 0):
         with tf.variable_scope(self.name):
             self.idx = tf.range(tf.squeeze(tf.shape(weights)))
             self.idx_shuffled = tf.random_shuffle(self.idx)
 
             self.nuisance_shuffled = tf.gather(nuisance, self.idx_shuffled)
             self.weights_shuffled = tf.gather(weights, self.idx_shuffled)
+            self.SOW = tf.reduce_sum(weights, axis = 0)
 
             self.data_xy = tf.concat([pred, nuisance], axis = 1)
             self.data_x_y = tf.concat([pred, self.nuisance_shuffled], axis = 1)
+            self.weights_x_y = self.weights_shuffled * weights
+            self.SOW_x_y = tf.reduce_sum(self.weights_x_y, axis = 0)
             
             self.T_xy, self.these_vars = self._adversary_model(self.data_xy, is_training)
             self.T_x_y, self.these_vars_cc = self._adversary_model(self.data_x_y, is_training)
@@ -27,7 +30,8 @@ class MINEAdversary(AdversaryModel):
             self.T_xy = tf.squeeze(self.T_xy)
             self.T_x_y = tf.squeeze(self.T_x_y)
 
-            self.MINE_lossval = -(tf.reduce_mean(self.T_xy * weights, axis = 0) - tf.reduce_mean(tf.math.exp(self.T_x_y - 1.0) * weights, axis = 0))
+            #self.MINE_lossval = -(1.0 / self.SOW * tf.reduce_sum(self.T_xy * weights, axis = 0) - 1.0 / self.SOW_x_y * tf.reduce_sum(tf.math.exp(self.T_x_y - 1.0) * self.weights_x_y, axis = 0))  # MINE-f
+            self.MINE_lossval = -(1.0 / self.SOW * tf.reduce_sum(self.T_xy * weights, axis = 0) - tf.math.log(1e-6 + 1.0 / self.SOW_x_y * tf.reduce_sum(tf.math.exp(self.T_x_y) * self.weights_x_y, axis = 0)))
 
         return self.MINE_lossval, self.these_vars
 
