@@ -416,56 +416,57 @@ class PerformancePlotter:
 
     # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
     @staticmethod
-    def plot_significance_fairness_combined(anadicts, outdir, nJ = 2):
-        cmap = plt.cm.Blues
+    def plot_significance_fairness_combined(series_anadicts, series_cmaps, outdir, nJ = 2):
         colorquant = "lambda"
 
-        # find the proper normalization of the color map
-        colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
-        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+        for anadicts, cmap in zip(series_anadicts, series_cmaps):
 
-        fig = plt.figure(figsize = (10, 5))
-        fig.subplots_adjust(right = 0.9, left = 0.08)
-        ax = fig.add_subplot(111)
+            # find the proper normalization of the color map
+            colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
+            norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
-        for ind, anadict in enumerate(anadicts):
-            color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
+            fig = plt.figure(figsize = (10, 5))
+            fig.subplots_adjust(right = 0.9, left = 0.08)
+            ax = fig.add_subplot(111)
 
-            try:
-                ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = 'o', alpha = 1.0)
-                ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = '^', alpha = 1.0)
+            for ind, anadict in enumerate(anadicts):
+                color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
 
-                combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+                try:
+                    ax.scatter(anadict["tight_{}jet_binned_sig".format(nJ)], anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = 'o', alpha = 1.0)
+                    ax.scatter(anadict["loose_{}jet_binned_sig".format(nJ)], anadict["loose_{}jet_inv_JS_bkg".format(nJ)], color = color, edgecolors = color, facecolors = color, linewidths = 1, label = None, marker = '^', alpha = 1.0)
 
-                # avoid falling out of the allowed range of the JSD, which can happen sometimes
-                # due to numerical problems for very strong shaping
-                if anadict["tight_{}jet_inv_JS_bkg".format(nJ)] < 1:
-                    anadict["tight_{}jet_inv_JS_bkg".format(nJ)] = 1.0
+                    combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
 
-                ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = color, edgecolors = color, label = None, marker = 's', alpha = 1.0)
-            except KeyError:
-                print(anadict)
+                    # avoid falling out of the allowed range of the JSD, which can happen sometimes
+                    # due to numerical problems for very strong shaping
+                    if anadict["tight_{}jet_inv_JS_bkg".format(nJ)] < 1:
+                        anadict["tight_{}jet_inv_JS_bkg".format(nJ)] = 1.0
 
-        for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
-            ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
-                       anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                       label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
+                    ax.scatter(combined_sig, anadict["tight_{}jet_inv_JS_bkg".format(nJ)], color = color, facecolors = color, edgecolors = color, label = None, marker = 's', alpha = 1.0)
+                except KeyError:
+                    print(anadict)
+
+            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
+                ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
+                           anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
             
-            ax.scatter(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
-                       anadicts[0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                       label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec)
+                ax.scatter(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
+                           anadicts[0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec)
             
-            combined_sig = np.sqrt(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
+                combined_sig = np.sqrt(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
             
-            ax.scatter(combined_sig,
-                       anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                       label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
+                ax.scatter(combined_sig,
+                           anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
 
-        cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-        cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
-                                       norm = norm,
-                                       orientation = 'vertical')
-        cb.set_label(r'$\lambda$')
+            cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+            cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                           norm = norm,
+                                           orientation = 'vertical')
+            cb.set_label(r'$\lambda$')
 
         legend_elems_PCA = [
             Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "loose"),
@@ -486,13 +487,13 @@ class PerformancePlotter:
             (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
              Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
              Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
-         ]
+        ]
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
-
+        
         leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 8.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.31))
         leg_PCA.get_frame().set_linewidth(0.0)
-
+        
         leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.25, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
         leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
@@ -500,24 +501,24 @@ class PerformancePlotter:
         ax.add_artist(leg_PCA)
         ax.add_artist(leg_CBA)
         ax.add_artist(leg_CBA_optimized)
-
+        
         ax.text(x = 0.03, y = 0.22, s = "  pivotal\nclassifier", transform = ax.transAxes)
         ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
         ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
-
+            
         ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
         ax.set_yscale("log")
         ax.set_xlabel(r'Binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD')
         ax.set_ylim(bottom = 2e-2, top = 1e3)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
-
+        
         ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
         ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.04)
-
+        
         # now start putting the labels
         ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-
+        
         fig.savefig(outfile)
         plt.close()
                 

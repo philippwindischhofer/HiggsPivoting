@@ -1,6 +1,7 @@
 import os, pickle
 from argparse import ArgumentParser
 import numpy as np
+import matplotlib.pyplot as plt
 
 from plotting.PerformancePlotter import PerformancePlotter
 from plotting.CategoryPlotter import CategoryPlotter
@@ -21,8 +22,8 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
 
     dicts = sorted(dicts, key = lambda cur: cur["lambda"])
 
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined(dicts, plotdir, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 3)
 
 def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
     
