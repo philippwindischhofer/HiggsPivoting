@@ -7,7 +7,7 @@ from utils.CondorJobSubmitter import CondorJobSubmitter
 from utils.LocalJobSubmitter import LocalJobSubmitter
 from base.Configs import TrainingConfig
 
-def create_job_script(training_data_path, run_dir, script_dir, rootdir):
+def create_job_script(training_data_path, run_dir, script_dir, rootdir, statistics):
     script_name = str(uuid.uuid4()) + ".sh"
     script_path = os.path.join(script_dir, script_name)
 
@@ -16,13 +16,13 @@ def create_job_script(training_data_path, run_dir, script_dir, rootdir):
         outfile.write("source " + os.path.join(rootdir, "bin", "activate") + "\n")
         outfile.write("source " + os.path.join(rootdir, "setup_env.sh") + "\n")
 
-        outfile.write("python " + os.path.join(rootdir, "TrainAdversarialModel.py") + " --data " + training_data_path + " --outdir " + run_dir + " | tee " + os.path.join(run_dir, "job.log\n"))
+        outfile.write("python " + os.path.join(rootdir, "TrainAdversarialModel.py") + " --data " + training_data_path + " --outdir " + run_dir + (" --statistics" if statistics else "") + " | tee " + os.path.join(run_dir, "job.log\n"))
 
         outfile.write("deactivate\n")
 
     return script_path
     
-def RunTrainingCampaign(master_confpath, nrep = 1):
+def RunTrainingCampaign(master_confpath, nrep = 1, statistics = False):
     # some global settings
     training_data_path = TrainingConfig.data_path
     
@@ -46,7 +46,7 @@ def RunTrainingCampaign(master_confpath, nrep = 1):
             #os.rename(config_file, os.path.join(run_dir, "meta.conf"))
         
             # create the job scripts
-            job_script = create_job_script(training_data_path, run_dir, run_dir, rootdir = os.environ["ROOTDIR"])
+            job_script = create_job_script(training_data_path, run_dir, run_dir, rootdir = os.environ["ROOTDIR"], statistics = statistics)
             
             # submit them
             TrainingConfig.submitter.submit_job(job_script)
@@ -60,8 +60,10 @@ if __name__ == "__main__":
     parser = ArgumentParser(description = "launch training campaign")
     parser.add_argument("--confpath", action = "store", dest = "master_confpath")
     parser.add_argument("--nrep", action = "store", dest = "nrep")
+    parser.add_argument("--statistics", action = "store_const", const = True, default = False, dest = "statistics")
     args = vars(parser.parse_args())
 
     master_confpath = args["master_confpath"]
     nrep = int(args["nrep"])
-    RunTrainingCampaign(master_confpath, nrep = nrep)
+    statistics = args["statistics"]
+    RunTrainingCampaign(master_confpath, nrep = nrep, statistics = statistics)

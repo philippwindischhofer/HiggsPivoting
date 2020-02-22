@@ -15,6 +15,9 @@ from models.PtEstAdversary import PtEstAdversary
 from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
 from base.Configs import TrainingConfig
 
+from utils.NeuralMIEstimator import NeuralMIEstimator
+from utils.BinnedMIEstimator import BinnedMIEstimator
+
 class AdversarialEnvironment(TFEnvironment):
     
     def __init__(self, classifier_model_2j, classifier_model_3j, adversary_model_2j, adversary_model_3j, global_pars):
@@ -58,6 +61,17 @@ class AdversarialEnvironment(TFEnvironment):
         obj.load(config_dir)        
 
         return obj
+
+    def build_statistics_objects(self):
+        """
+        Build additional objects that can be useful to gather training statistics, but are not central to achieve the required functionality.
+        """
+
+        # set up the neural MI estimator
+        self.neural_MI_est = NeuralMIEstimator("neural_MI_est")
+        self.neural_MI_est.add_to_graph(self.graph, width_X = 2, width_Y = 1)
+
+        self.binned_MI_est = BinnedMIEstimator("binned_MI_est")
 
     def build(self):
 
@@ -264,6 +278,19 @@ class AdversarialEnvironment(TFEnvironment):
         retdict = {}
         retdict["class. loss (2j)"], retdict["class. loss (3j)"] = self.evaluate_classifier_loss(data, labels, weights, auxdat_step)
         retdict["adv. loss (2j)"], retdict["adv. loss (3j)"] = self.evaluate_adversary_loss(data, nuisances, labels, weights, 0, auxdat_step)
+        return retdict
+
+    def get_MI_estimates(self, data, aux_data, nuisances, weights):
+        retdict = {}
+        pred = self.predict(data = data, auxdat = aux_data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+
+        #cur_neural_MI_est = self.neural_MI_est.estimate(self.sess, pred, nuisances_pre, weights.flatten())
+        #retdict["neural_MI"] = cur_neural_MI_est
+
+        cur_binned_MI_est = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten())
+        retdict["binned_MI"] = cur_binned_MI_est
+
         return retdict
 
     # try to load back the environment

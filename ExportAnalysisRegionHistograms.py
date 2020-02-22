@@ -11,6 +11,7 @@ from base.Configs import TrainingConfig
 from plotting.CategoryPlotter import CategoryPlotter
 from plotting.ModelEvaluator import ModelEvaluator
 from DatasetExtractor import TrainNuisAuxSplit
+from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
 
 def main():
     parser = ArgumentParser(description = "populate analysis signal regions and export them to be used with HistFitter")
@@ -33,6 +34,11 @@ def main():
     infile_path = args["infile_path"]
     model_dir = args["model_dir"]
     outdir = args["out_dir"]
+
+    # make plots showing the progress of the training
+    training_dir = os.path.dirname(model_dir)
+    training_plotter = TrainingStatisticsPlotter(model_dir)
+    training_plotter.plot(model_dir)
 
     sig_samples = TrainingConfig.sig_samples
     bkg_samples = TrainingConfig.bkg_samples
@@ -279,6 +285,5 @@ def main():
     with open(os.path.join(outdir, "anadict.pkl"), "wb") as outfile:
         pickle.dump(anadict, outfile)
 
-        
 if __name__ == "__main__":
     main()

@@ -12,6 +12,7 @@ def main():
     parser = ArgumentParser(description = "train adversarial networks")
     parser.add_argument("--data", action = "store", dest = "infile_path")
     parser.add_argument("--outdir", action = "store", dest = "outdir")
+    parser.add_argument("--statistics", action = "store_const", const = True, default = False, dest = "verbose_statistics")
     args = vars(parser.parse_args())
 
     infile_path = args["infile_path"]
@@ -88,7 +89,7 @@ def main():
         print(key + " = " + str(val))
 
     # set up the training
-    train = AdversarialTrainer(training_pars = training_pars)
+    train = AdversarialTrainer(training_pars = training_pars, verbose_statistics = args["verbose_statistics"])
 
     # give the full list of signal / background components to the trainer
     train.train(mce, number_batches = training_pars["training_batches"], traindat_sig = traindat_sig, traindat_bkg = traindat_bkg, 
