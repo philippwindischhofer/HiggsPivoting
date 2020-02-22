@@ -319,7 +319,7 @@ class AdversarialTrainer(Trainer):
 
                 (data_batch_statistics, nuisances_batch_statistics, labels_batch_statistics, auxdata_batch_statistics), weights_batch_statistics = sampling_callback([data_sig, nuisances_sig, labels_sig, auxdat_sig], weights_sig, 
                                                                                                                                                                      [data_bkg, nuisances_bkg, labels_bkg, auxdat_bkg], weights_bkg, 
-                                                                                                                                                                     size = 20000, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
+                                                                                                                                                                     size = 50000, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
                 MI_dict_cur = env.get_MI_estimates(data = data_batch_statistics, aux_data = auxdata_batch_statistics, nuisances = nuisances_batch_statistics, weights = weights_batch_statistics)
                 stat_dict_cur.update(MI_dict_cur)
 
