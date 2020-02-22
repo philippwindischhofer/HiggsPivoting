@@ -17,20 +17,21 @@ class NeuralMIEstimator:
             self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
 
             self.MINE_loss, self.MINE_vars = self.MINE.build_loss(self.X_in, self.Y_in, self.is_training_in, self.weights_in)
-            self.update_estimator = tf.train.AdamOptimizer(learning_rate = 1e-4,
+            self.update_estimator = tf.train.AdamOptimizer(learning_rate = 5e-4,
                                                            beta1 = 0.9,
                                                            beta2 = 0.999,
                                                            epsilon = 1e-8).minimize(self.MINE_loss, var_list = self.MINE_vars)
 
     def estimate(self, sess, X_in, Y_in, weights):
         # first, update the MINE estimator
-        for cur_step in range(500):
+        print("/ / / / / / / / / / / / / /")
+
+        for cur_step in range(2000):
             sess.run(self.update_estimator, feed_dict = {self.X_in: X_in, self.Y_in: Y_in, self.weights_in: weights, self.is_training_in: True})
             cur_loss = sess.run(self.MINE_loss, feed_dict = {self.X_in: X_in, self.Y_in: Y_in, self.weights_in: weights, self.is_training_in: True})
-
-            print("/ / / / / / / / / / / / / /")
             print(" MINE loss = {}".format(cur_loss))
-            print("/ / / / / / / / / / / / / /")
+
+        print("/ / / / / / / / / / / / / /")
 
         # return the best estimate for MI at the end of the optimisation
         return -cur_loss
