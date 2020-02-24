@@ -162,7 +162,7 @@ class PerformancePlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
-        ax.margins(x = 0.0, y = 0.2)
+        ax.margins(x = 0.0, y = 0.1)
 
         if plotlabel:
             text = "\n".join(plotlabel)
@@ -172,6 +172,40 @@ class PerformancePlotter:
             leg = ax.legend(loc = 'lower right')
             leg.get_frame().set_linewidth(0.0)
 
+        fig.savefig(outfile)
+        plt.close()
+
+    @staticmethod
+    def _simple_plot(xs, ys, colors, linestyles, linestyle_labels, color_labels, outfile, xlabel, ylabel):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        for x, y, color, linestyle in zip(xs, ys, colors, linestyles):
+            ax.plot(x, y, color = color, ls = linestyle)
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.margins(x = 0.0, y = 0.1)
+
+        # prepare the legends for the colors ...
+        color_legend_elems = [Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cur_color, markeredgecolor = cur_color, label = cur_color_label) for cur_color, cur_color_label in color_labels.items()]
+        color_legend_labels = color_labels.values()
+        color_legend = ax.legend(handles = color_legend_elems, labels = color_legend_labels, loc = "upper left")
+
+        # ... and for the line styles
+        style_legend_elems = [Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = cur_style_label, ls = cur_style) for cur_style, cur_style_label in linestyle_labels.items()]
+        style_legend_labels = linestyle_labels.values()
+        style_legend = ax.legend(handles = style_legend_elems, labels = style_legend_labels, loc = "upper right", ncol = 2)
+
+        color_legend.get_frame().set_linewidth(0.0)
+        style_legend.get_frame().set_linewidth(0.0)
+
+        ax.add_artist(color_legend)
+        ax.add_artist(style_legend)
+
+        ax.set_ylim([0, 1.25 * ax.get_ylim()[1]])
+
+        plt.tight_layout()
         fig.savefig(outfile)
         plt.close()
 
