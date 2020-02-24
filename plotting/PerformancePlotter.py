@@ -659,7 +659,7 @@ class PerformancePlotter:
             epilog(ax)
 
         # make colorbar for the range of encountered legended values
-        cb_ax = fig.add_axes([0.85, 0.15, 0.02, 0.7])
+        cb_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
         fig.subplots_adjust(right = 0.8)
         cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
                                        norm = norm,
