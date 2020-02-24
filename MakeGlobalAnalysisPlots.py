@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from plotting.PerformancePlotter import PerformancePlotter
 from plotting.CategoryPlotter import CategoryPlotter
+from MakeMIEvolutionPlot import _load_metadata
 
 def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     dicts = []
@@ -25,13 +26,13 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 3)
 
-def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False):
+def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues):
     
     dicts = []
     plot_data = []
 
     def annotation_epilog(ax):
-        ax.text(x = 0.05, y = 0.85, s = "\n".join(inner_label), transform = ax.transAxes,
+        ax.text(x = 0.05, y = 0.85 - 0.05 * (len(inner_label) - 2), s = "\n".join(inner_label), transform = ax.transAxes,
                 horizontalalignment = 'left', verticalalignment = 'bottom')
         ax.set_ylim([0, ax.get_ylim()[1] * 0.5])
     
@@ -73,7 +74,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     dicts = [dicts[cur_ind] for cur_ind in lambsort]
     plot_data = [plot_data[cur_ind] for cur_ind in lambsort]
 
-    PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing)
+    PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing, cmap = cmap)
 
 def MakeAllGlobalAnalysisPlots(args):
     processes = ["Hbb", "Wjets", "Zjets", "diboson", "ttbar"]
@@ -85,6 +86,14 @@ def MakeAllGlobalAnalysisPlots(args):
 
     # plot the shaping / performance metrics in all SRs
     MakeGlobalPerformanceFairnessPlots(**args)
+
+    # get the type of the adversary used in this case
+    adv_model = _load_metadata(os.path.join(args["model_dirs"][0], "meta.conf"), "AdversarialEnvironment")["adversary_model"]
+    adversary_label_library = {"MINEAdversary": "MINE", "DisCoAdversary": "DisCo", "GMMAdversary": "GMM"}
+    cmap_library = {"MINEAdversary": plt.cm.Blues, "DisCoAdversary": plt.cm.Oranges, "GMMAdversary": plt.cm.YlGn}
+
+    adversary_label = adversary_label_library[adv_model]
+    cmap = cmap_library[adv_model]
 
     # make shaping plots for all signal regions
     for process in processes:
@@ -103,8 +112,8 @@ def MakeAllGlobalAnalysisPlots(args):
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))
 
-                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)])
-                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ)], smoothing = True)
+                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], cmap = cmap)
+                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], smoothing = True, cmap = cmap)
     
 
 if __name__ == "__main__":

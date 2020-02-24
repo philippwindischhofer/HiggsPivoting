@@ -450,18 +450,21 @@ class PerformancePlotter:
 
     # all-in-one plotting of significances vs shaping in tight and loose SRs simultaneously, for each jet slice
     @staticmethod
-    def plot_significance_fairness_combined(series_anadicts, series_cmaps, outdir, nJ = 2):
+    def plot_significance_fairness_combined(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False):
         colorquant = "lambda"
+
+        fig = plt.figure(figsize = (10, 5))
+        fig.subplots_adjust(right = 0.9, left = 0.08)
+        ax = fig.add_subplot(111)
+
+        if len(series_labels) != len(series_cmaps):
+            series_labels = ["" for cur in series_cmaps]
 
         for anadicts, cmap in zip(series_anadicts, series_cmaps):
 
             # find the proper normalization of the color map
             colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
             norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
-
-            fig = plt.figure(figsize = (10, 5))
-            fig.subplots_adjust(right = 0.9, left = 0.08)
-            ax = fig.add_subplot(111)
 
             for ind, anadict in enumerate(anadicts):
                 color = cmap(norm(float(anadict[colorquant]))) if colorquant in anadict else "black"
@@ -496,22 +499,14 @@ class PerformancePlotter:
                            anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                            label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
 
-            cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-            cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
-                                           norm = norm,
-                                           orientation = 'vertical')
-            cb.set_label(r'$\lambda$')
+            if show_colorbar:
+                cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+                cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                               norm = norm,
+                                               orientation = 'vertical')
+                cb.set_label(r'$\lambda$')
 
-        legend_elems_PCA = [
-            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "loose"),
-            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "tight"),
-            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "combined"),
-        ]
-        legend_elems_PCA_lambda = [
-            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = r'\lambda = 1.4'))
-        ]
+        # prepare the legends for the CBA points
         legend_elems_CBA = [
             Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
@@ -524,21 +519,29 @@ class PerformancePlotter:
         ]
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
-        
-        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 8.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.31))
-        leg_PCA.get_frame().set_linewidth(0.0)
-        
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.25, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
+
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.24, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
         leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
         leg_CBA.get_frame().set_linewidth(0.0)
         leg_CBA_optimized.get_frame().set_linewidth(0.0)
-        ax.add_artist(leg_PCA)
         ax.add_artist(leg_CBA)
         ax.add_artist(leg_CBA_optimized)
-        
-        ax.text(x = 0.03, y = 0.22, s = "  pivotal\nclassifier", transform = ax.transAxes)
+
         ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
         ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+        
+        # prepare the legends for the individual PCA series
+        for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
+            legend_elems_PCA = [
+                Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "loose"),
+                Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "tight"),
+                Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = "combined"),
+            ]        
+            leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = 3, framealpha = 0.0, columnspacing = 8.5, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, 
+                                loc = "upper left", bbox_to_anchor = (0.17, 0.36 - 0.07 * ind))
+            leg_PCA.get_frame().set_linewidth(0.0)
+            ax.add_artist(leg_PCA)
+            ax.text(x = 0.03, y = 0.27 - 0.07 * ind, s = label, transform = ax.transAxes)
             
         ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
         ax.set_yscale("log")
@@ -591,8 +594,7 @@ class PerformancePlotter:
 
     # combine the passed plots and save them
     @staticmethod
-    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False):
-        cmap = plt.cm.Blues
+    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False, cmap = plt.cm.Blues):
 
         # find the proper normalization of the color map
         if len(perfdicts) > 0:
