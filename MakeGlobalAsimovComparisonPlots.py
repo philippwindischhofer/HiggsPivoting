@@ -16,6 +16,13 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
     for workdir in workdirs:
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
         cur_hypodicts, cur_sensdicts = load_plotdata(cur_model_dirs)
+
+        lambdas = [float(cur_dict["lambda"]) for cur_dict in cur_sensdicts]
+        lambda_max = max(lambdas)
+
+        for cur_sensdict in cur_sensdicts:
+            cur_sensdict["lambda"] = str(float(cur_sensdict["lambda"]) / lambda_max)
+
         hypodicts.append(cur_hypodicts)
         sensdicts.append(cur_sensdicts)
 
