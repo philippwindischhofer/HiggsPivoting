@@ -26,7 +26,8 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
         hypodicts.append(cur_hypodicts)
         sensdicts.append(cur_sensdicts)
 
-    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, colors = colors, labels = labels, outdir = plotdir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'])
+    PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, colors = colors, labels = labels, outdir = plotdir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'],
+                                                           xlabel = r"$\lambda / \lambda_{\mathrm{max}}$")
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "create global comparison plots for Asimov sensitivities")
