@@ -32,7 +32,9 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
         dicts.append(cur_dicts)
         
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "make performance vs. fairness comparison plots")

@@ -558,6 +558,209 @@ class PerformancePlotter:
         
         fig.savefig(outfile)
         plt.close()
+
+    # use a slightly fancier way of plotting things: instead of showing the individual points, draw a smoothened version
+    @staticmethod
+    def plot_significance_fairness_combined_smooth(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False):
+
+        def extract_data(dicts, xquant, yquant, zquant):
+            xvals = []
+            yvals = []
+            zvals = []
+            
+            for cur_dict in dicts:
+                try:
+                    xvals.append(float(cur_dict[xquant]))
+                    yvals.append(float(cur_dict[yquant]))
+                    zvals.append(float(cur_dict[zquant]))
+                except KeyError:
+                    print(cur_dict)
+
+            return np.array(xvals), np.array(yvals), np.array(zvals)
+
+        def kde_smoothing(xvals, yvals, density = 1000, ylog = True):
+            from scipy import stats
+
+            if ylog:
+                yvals = np.log(yvals)
+
+            # fit the KDE
+            vals = np.stack([xvals, yvals])
+            kernel = stats.gaussian_kde(vals)
+
+            # evaluate it on a fine grid
+            xcoords = np.linspace(np.min(xvals) * 0.9, np.max(xvals) * 1.1, num = density)
+            ycoords = np.linspace(np.min(yvals) * 0.9, np.max(yvals) * 1.1, num = 2 * density)
+            xgrid, ygrid = np.meshgrid(xcoords, ycoords)
+            gridpts = np.vstack([xgrid.ravel(), ygrid.ravel()])
+
+            smoothed = kernel(gridpts)
+
+            if ylog:
+                ycoords = np.exp(ycoords)
+
+            return xcoords, ycoords, smoothed.reshape(len(ycoords), len(xcoords))
+
+        def nearest_neighbours_interp(xval, yval, xvals, yvals, zvals, number_neighbours = 4, log_y = True):
+            # compute the euclidean distance from x/y to all the other points
+            if log_y:
+                yvals = np.log(yvals)
+                yval = np.log(yval)
+
+            dists = np.sqrt(np.square(xvals - xval) + np.square(yvals - yval))
+            sorter = np.argsort(dists)
+            zvals_closest = zvals[sorter][0:number_neighbours]
+            dists_closest = dists[sorter][0:number_neighbours]
+            return np.sum(zvals_closest / dists_closest) / np.sum(1.0 / dists_closest)
+
+        def get_smoothed_pareto_frontier(dicts, xquant, yquant, zquant = "lambda"):
+            # find the proper normalization of the color map
+            # perform KDE on the points that are to be plotted ... 
+            # first for the *tight* signal regions
+            x, y, z = extract_data(dicts, xquant, yquant, zquant = "lambda")
+            x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y)
+
+            for ind_x, cur_x in enumerate(x_smoothed):
+                for ind_y, cur_y in enumerate(y_smoothed):
+                    if z_smoothed[ind_y, ind_x] < 0.75:
+                        z_smoothed[ind_y, ind_x] = 0.0
+                    else:
+                        z_smoothed[ind_y, ind_x] = nearest_neighbours_interp(cur_x, cur_y, x, y, z)
+
+            return x_smoothed, y_smoothed, z_smoothed
+
+        def get_label_pos(dicts, xquant, yquant):
+            xvals_combined = np.array([])
+            yvals_combined = np.array([])
+
+            for cur_dicts in dicts:
+                xvals, yvals, _ = extract_data(cur_dicts, xquant, yquant, zquant = "lambda")
+                xvals_combined = np.append(xvals_combined, xvals)
+                yvals_combined = np.append(yvals_combined, yvals)
+
+            xvals_combined = np.array(xvals_combined)
+            #label_x = np.min(xvals_combined) + 0.5 * (np.max(xvals_combined) - np.min(xvals_combined))
+            label_x = np.max(xvals_combined)
+            label_y = np.max(yvals_combined) * 3.0
+            return label_x, label_y
+
+        colorquant = "lambda"
+
+        fig = plt.figure(figsize = (10, 5))
+        fig.subplots_adjust(right = 0.9, left = 0.08)
+        ax = fig.add_subplot(111)
+
+        if len(series_labels) != len(series_cmaps):
+            series_labels = ["" for cur in series_cmaps]
+
+        for anadicts, cmap in zip(series_anadicts, series_cmaps):
+
+            # prepare colormap
+            from matplotlib.colors import ListedColormap
+            cmap = cmap(np.arange(cmap.N))
+            cmap[:,-1] = 0.5
+            cmap[0:20,-1] = 0
+            cmap = ListedColormap(cmap)
+
+            colorrange = [float(anadict[colorquant]) for anadict in anadicts if colorquant in anadict]
+            norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+
+            # compute the combined significance
+            for anadict in anadicts:
+                combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+                anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
+
+            x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+            ax.contourf(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 10, cmap = cmap)
+
+            # then for the *loose* ones
+            x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
+            ax.contourf(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 10, cmap = cmap)
+                
+            # and finally for their combination
+            x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+            ax.contourf(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 10, cmap = cmap)
+
+            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
+                ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
+                           anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
+            
+                ax.scatter(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
+                           anadicts[0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec)
+            
+                combined_sig = np.sqrt(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
+            
+                ax.scatter(combined_sig,
+                           anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                           label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
+
+            if show_colorbar:
+                cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+                cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
+                                               norm = norm,
+                                               orientation = 'vertical')
+                cb.set_label(r'$\lambda$')
+
+        # prepare the legends for the CBA points
+        legend_elems_CBA = [
+            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
+            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
+            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "combined")
+        ]
+        legend_elems_CBA_optimized = [
+            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
+             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
+        ]
+        leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
+
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.24, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
+        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
+        leg_CBA.get_frame().set_linewidth(0.0)
+        leg_CBA_optimized.get_frame().set_linewidth(0.0)
+        ax.add_artist(leg_CBA)
+        ax.add_artist(leg_CBA_optimized)
+
+        ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
+        ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+
+        # put labels next to the pareto towers
+        loose_bbox_x, loose_bbox_y = get_label_pos(series_anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
+        tight_bbox_x, tight_bbox_y = get_label_pos(series_anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+        combined_bbox_x, combined_bbox_y = get_label_pos(series_anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+        ax.text(x = loose_bbox_x, y = loose_bbox_y, s = r'loose', ha = "center")
+        ax.text(x = tight_bbox_x, y = tight_bbox_y, s = r'tight', ha = "center")
+        ax.text(x = combined_bbox_x, y = combined_bbox_y, s = r'combined', ha = "center")
+        
+        # prepare the legends for the individual PCA series
+        legend_elems_PCA = []
+        leg_labels_PCA = []
+        for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
+            legend_elems_PCA.append(Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = label))
+            leg_labels_PCA.append(label)
+
+        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = len(leg_labels_PCA), framealpha = 0.0, columnspacing = 2.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, 
+                            loc = "upper left", bbox_to_anchor = (0.07, 0.30))
+        leg_PCA.get_frame().set_linewidth(0.0)
+        ax.add_artist(leg_PCA)
+            
+        ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
+        ax.set_yscale("log")
+        ax.set_xlabel(r'Binned significance [$\sigma$]')
+        ax.set_ylabel(r'1/JSD')
+        ax.set_ylim(bottom = 1e-2, top = 1e5)
+        outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_smooth.pdf".format(nJ))
+        
+        ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
+        ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.04)
+        
+        # now start putting the labels
+        ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+        
+        fig.savefig(outfile)
+        plt.close()
                 
     # @staticmethod
     # def _smooth_histogram(contents, edges, mode = "hist", npoints = 1000):
