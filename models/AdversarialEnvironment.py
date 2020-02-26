@@ -283,8 +283,8 @@ class AdversarialEnvironment(TFEnvironment):
         pred = self.predict(data = data, auxdat = aux_data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
 
-        # cur_neural_MI_est = self.neural_MI_est.estimate(self.sess, pred, nuisances_pre, weights.flatten())
-        # retdict["neural_MI"] = cur_neural_MI_est
+        cur_neural_MI_est = self.neural_MI_est.estimate(self.sess, pred, nuisances_pre, weights.flatten())
+        retdict["neural_MI"] = cur_neural_MI_est
 
         cur_binned_MI_est_tukey = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "tukey")
         cur_binned_MI_est_bendat_piersol = self.binned_MI_est.estimate(pred[:,1], nuisances_pre, weights.flatten(), bins_heuristic = "bendat_piersol")
