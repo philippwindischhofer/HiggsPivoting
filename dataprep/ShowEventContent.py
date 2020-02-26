@@ -17,7 +17,8 @@ def ShowEventContent(infile_path):
         testdata, nuisdata, weights = TrainNuisAuxSplit(data)
         
         total_events = np.sum(weights)
-        print("{}: total events = {}".format(name, total_events))
+        unweighted_events = len(weights)
+        print("{}: total events = {} ({} unweighted)".format(name, total_events, unweighted_events))
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "show events contained in this file")
