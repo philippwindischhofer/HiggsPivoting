@@ -23,6 +23,15 @@ class BinnedMIEstimator:
         
         return uniform_occupancy_binning
 
+    def _get_bias(self, bins_X, bins_Y, number_samples):
+        if not isinstance(bins_X, int):
+            bins_X = len(bins_X)
+
+        if not isinstance(bins_Y, int):
+            bins_Y = len(bins_Y)
+
+        return (bins_X * bins_Y - 1.0) / (2.0 * number_samples)
+
     def estimate(self, X_in, Y_in, weights, bins_heuristic = ""):
         
         assert len(X_in) == len(Y_in)
@@ -37,10 +46,12 @@ class BinnedMIEstimator:
             bins_X = self._get_cellucci_binning(X_in)
             bins_Y = self._get_cellucci_binning(Y_in)
         else:
-            raise NotImplementedError("Error: selected heuristic not implemented!")
+            raise NotImplementedError("Error: selected heuristic not implemented!")        
 
         bins = [bins_X, bins_Y]
         eps = 1e-6
+
+        print("on strategy {}, bias = {}".format(bins_heuristic, self._get_bias(bins_X, bins_Y, len(weights))))
 
         X_in = X_in.flatten()
         Y_in = Y_in.flatten()
