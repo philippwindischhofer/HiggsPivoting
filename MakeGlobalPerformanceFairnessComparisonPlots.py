@@ -23,7 +23,7 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     # load the full collection of data to be plotted, for each model directory
     dicts = []
     colorschemes = []
-    colorscheme_library = [plt.cm.Blues, plt.cm.YlGn]
+    colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.YlOrRd]
 
     for workdir, cur_colorscheme in zip(workdirs, colorscheme_library):
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
