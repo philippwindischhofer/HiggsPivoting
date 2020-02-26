@@ -28,9 +28,9 @@ def MakeMIEvolutionPlot(plotdir, workdirs):
     plotdata_y = []
     labels = []
 
-    traces_to_plot = ["binned_MI_tukey", "binned_MI_cellucci", "binned_MI_cellucci_approximated", "binned_MI_bendat_piersol"]#, "neural_MI"]
-    trace_labels = ["Tukey", "Cellucci", "Cellucci approx", "Bendat-Piersol"]
-    style_library = ["-", "--", ":", "-."]
+    traces_to_plot = ["binned_MI_tukey", "binned_MI_cellucci", "binned_MI_bendat_piersol", "neural_MI"]
+    trace_labels = ["Tukey", "C-A-R", "Bendat-Piersol", "MINE"]
+    style_library = ["--", "-.", "dotted", "-"]
     style_labels = {}
     styles = []
 
@@ -61,7 +61,7 @@ def MakeMIEvolutionPlot(plotdir, workdirs):
         color_labels[cur_color] = '$\lambda = {}$'.format(cur_lambda)
 
     outfile_path = os.path.join(plotdir, "MI_evolution.pdf")
-    PerformancePlotter._simple_plot(plotdata_x, plotdata_y, colors, styles, style_labels, color_labels, outfile_path, xlabel = "minibatch", ylabel = r'$\hat{MI}$')
+    PerformancePlotter._simple_plot(plotdata_x, plotdata_y, colors, styles, style_labels, color_labels, outfile_path, xlabel = "minibatch", ylabel = r'$\widehat{\mathrm{MI}}(\hat{y}, m_{bb})$')
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "show evolution of MI as the training progresses")
