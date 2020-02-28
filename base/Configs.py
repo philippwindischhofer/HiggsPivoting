@@ -9,14 +9,19 @@ class TrainingConfig:
     nuisance_branches = ["mBB"]
     auxiliary_branches = ["EventWeight", "mBB", "dRBB", "nJ"]
 
-    training_pars = {"pretrain_batches": 100, "training_batches": 800, "printout_interval": 10}
+    training_pars = {"pretrain_batches": 100, "training_batches": 800, "statistics_interval": 10}
+
+    # training_slice = [0.0, 0.66]
+    # test_slice = [0.66, 1.0]
+    # validation_slice = [0.66, 1.0]
 
     training_slice = [0.0, 0.33]
     test_slice = [0.33, 0.66]
     validation_slice = [0.66, 1.0]
 
-    data_path = os.path.join(os.environ["ROOTDIR"], "examples", "training-MadGraphPy8-ATLAS-small.h5")
-    submitter = LocalJobSubmitter # "CondorJobSubmitter" also works
+    data_path = "/home/windischhofer/datasmall/HiggsPivotingPaper/Hbb/training-MadGraphPy8-ATLAS-ttbar-NLO.h5"
+    submitter = CondorJobSubmitter # "CondorJobSubmitter" also works
+    #submitter = LocalJobSubmitter
 
     sig_samples = ["Hbb"]
     sig_sampling_lengths = [1.0]
