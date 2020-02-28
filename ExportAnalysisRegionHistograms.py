@@ -12,6 +12,7 @@ from plotting.CategoryPlotter import CategoryPlotter
 from plotting.ModelEvaluator import ModelEvaluator
 from DatasetExtractor import TrainNuisAuxSplit
 from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
+from MakeMIEvolutionPlot import _load_metadata
 
 def main():
     parser = ArgumentParser(description = "populate analysis signal regions and export them to be used with HistFitter")
@@ -20,6 +21,10 @@ def main():
     parser.add_argument("--out_dir", action = "store", dest = "out_dir")
     parser.add_argument("--use_test", action = "store_const", const = True, default = False)
     args = vars(parser.parse_args())
+
+    adv_model = _load_metadata(os.path.join(args["model_dir"], "meta.conf"), "AdversarialEnvironment")["adversary_model"]
+    adversary_label_library = {"MINEAdversary": "MIND", "DisCoAdversary": "DisCo", "GMMAdversary": "EMAX"}
+    adversary_label = adversary_label_library[adv_model]
 
     # extract the validation or test dataset
     if args["use_test"]:
@@ -265,10 +270,10 @@ def main():
                 cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ)])
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ), adversary_label])
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}_nostack.pdf".format(cur_nJ, cut_start, cut_end)), 
-                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ)], stacked = False, histtype = 'step', density = True)
+                                                      var = "mBB", xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ), adversary_label], stacked = False, histtype = 'step', density = True)
 
             print("filled {} signal events".format(cur_cat.get_number_events("Hbb")))
 

@@ -126,15 +126,15 @@ class PerformancePlotter:
 
         def bkg_floating_epilog(ax):
             ax.axhline(y = hypodicts_runs[0][0]["optimized_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
-                       color = "salmon", linestyle = "--", label = "cut-based analysis (optimised)", zorder = 1)
+                       color = "darkgrey", linestyle = "--", label = "cut-based analysis (optimised)", zorder = 1)
             ax.axhline(y = hypodicts_runs[0][0]["original_asimov_sig_high_low_MET_background_floating"], xmin = 0.0, xmax = 1.0, 
-                       color = "salmon", linestyle = "-", label = "cut-based analysis", zorder = 1)
+                       color = "darkgrey", linestyle = "-", label = "cut-based analysis", zorder = 1)
             
         def bkg_fixed_epilog(ax):
             ax.axhline(y = hypodicts_runs[0][0]["optimized_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
-                       color = "indianred", linestyle = ":", label = "cut-based analysis (optimised)")
+                       color = "darkgrey", linestyle = ":", label = "cut-based analysis (optimised)")
             ax.axhline(y = hypodicts_runs[0][0]["original_asimov_sig_high_low_MET_background_fixed"], xmin = 0.0, xmax = 1.0, 
-                       color = "indianred", linestyle = "-", label = "cut-based analysis")
+                       color = "darkgrey", linestyle = "-", label = "cut-based analysis")
             
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_means, uncs_up = uncs_up_background_floating, uncs_down = uncs_down_background_floating, 
                                              labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, colors = colors, title = "",
@@ -162,7 +162,9 @@ class PerformancePlotter:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
-        ax.margins(x = 0.0, y = 0.1)
+        ax.margins(x = 0.0, y = 0.0)
+
+        ax.set_ylim([ax.get_ylim()[0] * 0.8, ax.get_ylim()[1] * 1.05])
 
         if plotlabel:
             text = "\n".join(plotlabel)
@@ -171,7 +173,8 @@ class PerformancePlotter:
         if show_legend:
             leg = ax.legend(loc = 'lower right')
             leg.get_frame().set_linewidth(0.0)
-
+        
+        plt.tight_layout()
         fig.savefig(outfile)
         plt.close()
 
@@ -484,7 +487,7 @@ class PerformancePlotter:
                 except KeyError:
                     print(anadict)
 
-            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
+            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
                 ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
                            anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                            label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
@@ -508,14 +511,14 @@ class PerformancePlotter:
 
         # prepare the legends for the CBA points
         legend_elems_CBA = [
-            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
-            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
-            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "combined")
+            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "low MET"),
+            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "high MET"),
+            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "combined")
         ]
         legend_elems_CBA_optimized = [
-            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
+            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey", label = "optimized"))
         ]
         leg_labels_PCA = ["loose     ", "tight       ", "combined", r'$\lambda = 1.4$']
         leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
@@ -559,9 +562,70 @@ class PerformancePlotter:
         fig.savefig(outfile)
         plt.close()
 
+    @staticmethod
+    def plot_significance_fairness_combined_legend(series_anadicts, series_cmaps, outdir, series_labels = []):
+        fig = plt.figure(figsize = (9, 2.0))
+        ax = fig.add_subplot(111)
+        
+        # prepare the legends for the CBA points
+        legend_elems_CBA = [
+            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "low MET"),
+            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "high MET"),
+            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "combined")
+        ]
+        legend_elems_CBA_optimized = [
+            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey", label = "optimized"))
+        ]
+        leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
+        
+        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 4.0, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.25, 0.46))
+        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.25, 0.28))
+        leg_CBA.get_frame().set_linewidth(0.0)
+        leg_CBA_optimized.get_frame().set_linewidth(0.0)
+        ax.add_artist(leg_CBA)
+        ax.add_artist(leg_CBA_optimized)
+        
+        ax.text(x = 0.06, y = 0.13, s = "cut-based\n  analysis", transform = ax.transAxes)
+        ax.text(x = 0.04, y = 0.61, s = "decorrelated\n   classifier\n    analysis", transform = ax.transAxes)
+
+        yticks = ax.yaxis.get_major_ticks()
+        yticks[0].set_visible(False)
+        yticks[1].set_visible(False)
+        yticks[2].set_visible(False)
+
+        for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
+            ax.text(x = 0.27 + ind * 0.14, y = 0.81, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.4))
+
+        # prepare the style legend describing the contour line styles
+        style_legend_elems = [
+            Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "loose", ls = ":"),
+            Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "tight", ls = "--"),
+            Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "combined", ls = "-"),
+        ]
+        style_legend_labels = ["loose", "tight", "combined"]
+        style_legend = ax.legend(handles = style_legend_elems, labels = style_legend_labels, loc = "upper left", ncol = 3, bbox_to_anchor = (0.25, 0.78), framealpha = 0.0, columnspacing = 2.3)
+        style_legend.get_frame().set_linewidth(0.0)
+        ax.add_artist(style_legend)
+
+        ax.set_ylim(0, 1)
+        ax.set_xlim(1.0, 5)
+        # ax.fill_between(x = ax.get_xlim(), y1 = [0, 0], y2 = [1, 1], facecolor = 'gray', alpha = 0.09)
+
+        ax.axhline(y = 0.5, xmin = 0, xmax = 10, color = 'gray')
+        ax.tick_params(axis = 'both', which = 'both', bottom = False, top = False, labelbottom = False, right = False, left = False, labelleft = False)
+
+        fig.subplots_adjust(right = 0.95, left = 0.1, bottom = 0.15, top = 0.95)
+        
+        # now start putting the labels
+        outfile = os.path.join(outdir, "combined_JSD_sig_smooth_common_legend.pdf")
+        fig.savefig(outfile)
+        plt.close()
+
     # use a slightly fancier way of plotting things: instead of showing the individual points, draw a smoothened version
     @staticmethod
-    def plot_significance_fairness_combined_smooth(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False):
+    def plot_significance_fairness_combined_smooth(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False, show_legend = True):
 
         def extract_data(dicts, xquant, yquant, zquant):
             xvals = []
@@ -589,8 +653,8 @@ class PerformancePlotter:
             kernel = stats.gaussian_kde(vals)
 
             # evaluate it on a fine grid
-            xcoords = np.linspace(np.min(xvals) * 0.9, np.max(xvals) * 1.1, num = density)
-            ycoords = np.linspace(np.min(yvals) * 0.9, np.max(yvals) * 1.1, num = 2 * density)
+            xcoords = np.linspace(np.min(xvals) * 0.8, np.max(xvals) * 1.5, num = density)
+            ycoords = np.linspace(np.min(yvals) * 0.8, np.max(yvals) * 1.5, num = 2 * density)
             xgrid, ygrid = np.meshgrid(xcoords, ycoords)
             gridpts = np.vstack([xgrid.ravel(), ygrid.ravel()])
 
@@ -622,10 +686,10 @@ class PerformancePlotter:
 
             for ind_x, cur_x in enumerate(x_smoothed):
                 for ind_y, cur_y in enumerate(y_smoothed):
-                    if z_smoothed[ind_y, ind_x] < 0.75:
+                    if z_smoothed[ind_y, ind_x] < 0.55:
                         z_smoothed[ind_y, ind_x] = 0.0
                     else:
-                        z_smoothed[ind_y, ind_x] = nearest_neighbours_interp(cur_x, cur_y, x, y, z)
+                        z_smoothed[ind_y, ind_x] = 0.4 #nearest_neighbours_interp(cur_x, cur_y, x, y, z)
 
             return x_smoothed, y_smoothed, z_smoothed
 
@@ -641,13 +705,16 @@ class PerformancePlotter:
             xvals_combined = np.array(xvals_combined)
             #label_x = np.min(xvals_combined) + 0.5 * (np.max(xvals_combined) - np.min(xvals_combined))
             label_x = np.max(xvals_combined)
-            label_y = np.max(yvals_combined) * 3.0
+            label_y = np.max(yvals_combined) * 5.0
             return label_x, label_y
 
         colorquant = "lambda"
 
-        fig = plt.figure(figsize = (10, 5))
-        fig.subplots_adjust(right = 0.9, left = 0.08)
+        if show_legend:
+            fig = plt.figure(figsize = (9, 5.5))
+        else:
+            fig = plt.figure(figsize = (9, 3.0))
+
         ax = fig.add_subplot(111)
 
         if len(series_labels) != len(series_cmaps):
@@ -658,7 +725,7 @@ class PerformancePlotter:
             # prepare colormap
             from matplotlib.colors import ListedColormap
             cmap = cmap(np.arange(cmap.N))
-            cmap[:,-1] = 0.5
+            cmap[:,-1] = 1.0
             cmap[0:20,-1] = 0
             cmap = ListedColormap(cmap)
 
@@ -671,17 +738,17 @@ class PerformancePlotter:
                 anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
 
             x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-            ax.contourf(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 10, cmap = cmap)
+            ax.contour(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 1, colors = cmap(0.4), linestyles = ["--"])
 
             # then for the *loose* ones
             x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
-            ax.contourf(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 10, cmap = cmap)
+            ax.contour(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 1, colors = cmap(0.4), linestyles = [":"])
                 
             # and finally for their combination
             x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-            ax.contourf(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 10, cmap = cmap)
+            ax.contour(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 1, colors = cmap(0.4), linestyles = ["-"])
 
-            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["salmon", "white"], ["salmon", "white"], ["salmon", "salmon"]):
+            for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
                 ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
                            anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
                            label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
@@ -703,62 +770,97 @@ class PerformancePlotter:
                                                orientation = 'vertical')
                 cb.set_label(r'$\lambda$')
 
-        # prepare the legends for the CBA points
-        legend_elems_CBA = [
-            Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "low MET"),
-            Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "high MET"),
-            Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "salmon", markeredgecolor = "salmon", label = "combined")
-        ]
-        legend_elems_CBA_optimized = [
-            (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon"),
-             Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "salmon", label = "optimized"))
-        ]
-        leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
+        if show_legend:
+            # prepare the legends for the CBA points
+            legend_elems_CBA = [
+                Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "low MET"),
+                Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "high MET"),
+                Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "darkgrey", markeredgecolor = "darkgrey", label = "combined")
+            ]
+            legend_elems_CBA_optimized = [
+                (Line2D([0], [0], marker = '^', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+                 Line2D([0], [0], marker = 'o', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey"),
+                 Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = "none", markeredgecolor = "darkgrey", label = "optimized"))
+            ]
+            leg_labels_CBA = [r'low-$E_{\mathrm{T}}^{\mathrm{miss}}$', r'high-$E_{\mathrm{T}}^{\mathrm{miss}}$', "combined"]
 
-        leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 8.24, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.20))
-        leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.17, 0.11))
-        leg_CBA.get_frame().set_linewidth(0.0)
-        leg_CBA_optimized.get_frame().set_linewidth(0.0)
-        ax.add_artist(leg_CBA)
-        ax.add_artist(leg_CBA_optimized)
+            leg_CBA = ax.legend(handles = legend_elems_CBA, labels = leg_labels_CBA, ncol = 3, framealpha = 0.0, columnspacing = 6.0, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.20, 0.20))
+            leg_CBA_optimized = ax.legend(handles = legend_elems_CBA_optimized, labels = ["optimised"], ncol = 1, framealpha = 0.0, columnspacing = 0.1, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, loc = "upper left", bbox_to_anchor = (0.20, 0.11))
+            leg_CBA.get_frame().set_linewidth(0.0)
+            leg_CBA_optimized.get_frame().set_linewidth(0.0)
+            ax.add_artist(leg_CBA)
+            ax.add_artist(leg_CBA_optimized)
 
-        ax.text(x = 0.03, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
-        ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+            ax.text(x = 0.06, y = 0.07, s = "cut-based\n  analysis", transform = ax.transAxes)
+            ax.text(x = 0.04, y = 0.21 + 0.06, s = "decorrelated\n   classifier\n    analysis", transform = ax.transAxes)
 
-        # put labels next to the pareto towers
-        loose_bbox_x, loose_bbox_y = get_label_pos(series_anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
-        tight_bbox_x, tight_bbox_y = get_label_pos(series_anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-        combined_bbox_x, combined_bbox_y = get_label_pos(series_anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-        ax.text(x = loose_bbox_x, y = loose_bbox_y, s = r'loose', ha = "center")
-        ax.text(x = tight_bbox_x, y = tight_bbox_y, s = r'tight', ha = "center")
-        ax.text(x = combined_bbox_x, y = combined_bbox_y, s = r'combined', ha = "center")
+            yticks = ax.yaxis.get_major_ticks()
+            yticks[0].set_visible(False)
+            yticks[1].set_visible(False)
+            yticks[2].set_visible(False)
+
+            # put labels next to the pareto towers
+            # loose_bbox_x, loose_bbox_y = get_label_pos(series_anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
+            # tight_bbox_x, tight_bbox_y = get_label_pos(series_anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+            # combined_bbox_x, combined_bbox_y = get_label_pos(series_anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
+            # ax.text(x = loose_bbox_x, y = loose_bbox_y, s = r'loose', ha = "center")
+            # ax.text(x = tight_bbox_x, y = tight_bbox_y, s = r'tight', ha = "center")
+            # ax.text(x = combined_bbox_x, y = combined_bbox_y, s = r'combined', ha = "center")
         
-        # prepare the legends for the individual PCA series
-        legend_elems_PCA = []
-        leg_labels_PCA = []
-        for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
-            legend_elems_PCA.append(Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(200), markeredgecolor = cmap(200), label = label))
-            leg_labels_PCA.append(label)
+            # prepare the legends for the individual PCA series
+            # legend_elems_PCA = []
+            # leg_labels_PCA = []
+            # for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
+            #     legend_elems_PCA.append(Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(0.4), markeredgecolor = cmap(0.4), label = label))
+            #     leg_labels_PCA.append(label)
 
-        leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = len(leg_labels_PCA), framealpha = 0.0, columnspacing = 2.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, 
-                            loc = "upper left", bbox_to_anchor = (0.07, 0.30))
-        leg_PCA.get_frame().set_linewidth(0.0)
-        ax.add_artist(leg_PCA)
-            
-        ax.set_xlim(left = ax.get_xlim()[0] * 0.7, right = ax.get_xlim()[1] * 1.05)
+            # leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = len(leg_labels_PCA), framealpha = 0.0, columnspacing = 2.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, 
+            #                     loc = "upper left", bbox_to_anchor = (0.20, 0.36))
+            # leg_PCA.get_frame().set_linewidth(0.0)
+            # ax.add_artist(leg_PCA)
+
+            for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
+                ax.text(x = 0.22 + ind * 0.14, y = 0.29 + 0.06, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.4))
+
+            # prepare the style legend describing the contour line styles
+            style_legend_elems = [
+                Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "loose", ls = ":"),
+                Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "tight", ls = "--"),
+                Line2D([0], [0], marker = '', color = 'gray', markerfacecolor = 'gray', markeredgecolor = 'gray', label = "combined", ls = "-"),
+            ]
+            style_legend_labels = ["loose", "tight", "combined"]
+            style_legend = ax.legend(handles = style_legend_elems, labels = style_legend_labels, loc = "upper left", ncol = 3, bbox_to_anchor = (0.20, 0.28 + 0.06), framealpha = 0.0, columnspacing = 2.3)
+            style_legend.get_frame().set_linewidth(0.0)
+            ax.add_artist(style_legend)
+        
+            ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
+            ax.axhline(y = 1e-2, xmin = 0, xmax = 10, color = 'gray')
+            ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-4, 1e-4], facecolor = 'gray', alpha = 0.04)
+        
+            # now start putting the labels
+            ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+
+        if nJ == 2:
+            ax.set_xlim(left = 1.5, right = 5.5)
+        elif nJ == 3:
+            ax.set_xlim(left = 0.6, right = 3.0)
+
         ax.set_yscale("log")
         ax.set_xlabel(r'Binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD')
-        ax.set_ylim(bottom = 1e-2, top = 1e5)
-        outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_smooth.pdf".format(nJ))
-        
-        ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')
-        ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-3, 1e-3], facecolor = 'gray', alpha = 0.04)
-        
-        # now start putting the labels
-        ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-        
+        ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+
+        if show_legend:
+            ax.set_ylim(bottom = 1e-4, top = 1e5)
+            fig.subplots_adjust(right = 0.95, left = 0.1, bottom = 0.10, top = 0.95)
+        else:
+            ax.set_ylim(bottom = 1.0, top = 1e5)
+            fig.subplots_adjust(right = 0.95, left = 0.1, bottom = 0.15, top = 0.95)
+
+        if show_legend:
+            outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_smooth.pdf".format(nJ))        
+        else:
+            outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_smooth_no_legend.pdf".format(nJ))        
         fig.savefig(outfile)
         plt.close()
                 
@@ -838,7 +940,7 @@ class PerformancePlotter:
 
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
-            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.1)
+            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.8)
         
         # plot the overlays
         for (x, y, opts) in overlays:
@@ -862,12 +964,13 @@ class PerformancePlotter:
             epilog(ax)
 
         # make colorbar for the range of encountered legended values
-        cb_ax = fig.add_axes([0.83, 0.15, 0.02, 0.7])
+        cb_ax = fig.add_axes([0.86, 0.15, 0.02, 0.82])
         fig.subplots_adjust(right = 0.8)
         cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
                                        norm = norm,
                                        orientation = 'vertical')
         cb.set_label(r'$\lambda$')
 
+        plt.subplots_adjust(left = 0.13, right = 0.84, bottom = 0.1, top = 0.97)
         fig.savefig(outpath)
         plt.close()

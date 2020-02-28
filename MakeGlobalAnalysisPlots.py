@@ -44,8 +44,8 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                if float(anadict["lambda"]) > 1.4:
-                    continue
+                # if float(anadict["lambda"]) > 1.4:
+                #     continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)
 
@@ -92,8 +92,8 @@ def MakeAllGlobalAnalysisPlots(args):
 
     # get the type of the adversary used in this case
     adv_model = _load_metadata(os.path.join(args["model_dirs"][0], "meta.conf"), "AdversarialEnvironment")["adversary_model"]
-    adversary_label_library = {"MINEAdversary": "MINE", "DisCoAdversary": "DisCo", "GMMAdversary": "GMM"}
-    cmap_library = {"MINEAdversary": plt.cm.Blues, "DisCoAdversary": plt.cm.Oranges, "GMMAdversary": plt.cm.YlGn}
+    adversary_label_library = {"MINEAdversary": "MIND", "DisCoAdversary": "DisCo", "GMMAdversary": "EMAX"}
+    cmap_library = {"MINEAdversary": plt.cm.Blues, "DisCoAdversary": plt.cm.Oranges, "GMMAdversary": plt.cm.Greens}
 
     adversary_label = adversary_label_library[adv_model]
     cmap = cmap_library[adv_model]
@@ -109,7 +109,7 @@ def MakeAllGlobalAnalysisPlots(args):
 
                 overlay_paths = [overlay_inclusive, overlay_CBA_original, overlay_CBA_optimized]
                 overlay_labels = ["inclusive", "cut-based analysis", "cut-based analysis\n(optimised)"]
-                overlay_colors = ["black", "salmon", "salmon"]
+                overlay_colors = ["black", "darkgrey", "darkgrey"]
                 overlay_lss = ["-", "-", "--"]
                 
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))

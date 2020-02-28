@@ -23,7 +23,7 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     # load the full collection of data to be plotted, for each model directory
     dicts = []
     colorschemes = []
-    colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.YlOrRd]
+    colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
     for workdir, cur_colorscheme in zip(workdirs, colorscheme_library):
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
@@ -31,10 +31,11 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
         colorschemes.append(cur_colorscheme)
         dicts.append(cur_dicts)
         
+    PerformancePlotter.plot_significance_fairness_combined_legend(dicts, colorschemes, plotdir, series_labels = labels)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
-    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2, show_legend = False)
+    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3, show_legend = False)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "make performance vs. fairness comparison plots")

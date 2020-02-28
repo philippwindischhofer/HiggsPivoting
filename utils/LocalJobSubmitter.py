@@ -9,7 +9,7 @@ class LocalJobSubmitter:
         while True:
             time.sleep(1)
             cur_utilization = psutil.cpu_percent()
-            if cur_utilization < 90:
+            if cur_utilization < 50:
                 break
 
         try:
