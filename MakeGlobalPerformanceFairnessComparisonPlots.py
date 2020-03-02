@@ -30,7 +30,7 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
         cur_dicts = load_plotdata(cur_model_dirs)
         colorschemes.append(cur_colorscheme)
         dicts.append(cur_dicts)
-        
+
     PerformancePlotter.plot_significance_fairness_combined_legend(dicts, colorschemes, plotdir, series_labels = labels)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)

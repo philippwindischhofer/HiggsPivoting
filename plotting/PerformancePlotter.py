@@ -157,14 +157,14 @@ class PerformancePlotter:
         for x, y, unc_up, unc_down, label, color in zip(xs, ys, uncs_up, uncs_down, labels, colors):
             # first, plot the central value
             ax.plot(x, y, marker = 'o', label = label, color = color)
-            ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
+            #ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.margins(x = 0.0, y = 0.0)
 
-        ax.set_ylim([ax.get_ylim()[0] * 0.8, ax.get_ylim()[1] * 1.05])
+        ax.set_ylim([ax.get_ylim()[0] * 0.8, ax.get_ylim()[1] * 1.15])
 
         if plotlabel:
             text = "\n".join(plotlabel)
@@ -596,7 +596,7 @@ class PerformancePlotter:
         yticks[2].set_visible(False)
 
         for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
-            ax.text(x = 0.27 + ind * 0.14, y = 0.81, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.4))
+            ax.text(x = 0.27 + ind * 0.14, y = 0.81, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.7))
 
         # prepare the style legend describing the contour line styles
         style_legend_elems = [
@@ -650,11 +650,12 @@ class PerformancePlotter:
 
             # fit the KDE
             vals = np.stack([xvals, yvals])
-            kernel = stats.gaussian_kde(vals)
+            kernel = stats.gaussian_kde(vals, bw_method = 0.2)
+            #kernel = stats.gaussian_kde(vals)
 
             # evaluate it on a fine grid
             xcoords = np.linspace(np.min(xvals) * 0.8, np.max(xvals) * 1.5, num = density)
-            ycoords = np.linspace(np.min(yvals) * 0.8, np.max(yvals) * 1.5, num = 2 * density)
+            ycoords = np.linspace(np.min(yvals) * 0.8, np.max(yvals) * 1.5, num = density)
             xgrid, ygrid = np.meshgrid(xcoords, ycoords)
             gridpts = np.vstack([xgrid.ravel(), ygrid.ravel()])
 
@@ -677,16 +678,19 @@ class PerformancePlotter:
             dists_closest = dists[sorter][0:number_neighbours]
             return np.sum(zvals_closest / dists_closest) / np.sum(1.0 / dists_closest)
 
-        def get_smoothed_pareto_frontier(dicts, xquant, yquant, zquant = "lambda"):
+        def get_smoothed_pareto_frontier(dicts, xquant, yquant, zquant = "lambda", nJ = 2):
             # find the proper normalization of the color map
             # perform KDE on the points that are to be plotted ... 
             # first for the *tight* signal regions
             x, y, z = extract_data(dicts, xquant, yquant, zquant = "lambda")
             x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y)
+            
+            threshold = 1.4 if nJ == 2 else 1.9
+            #threshold = 0.0
 
             for ind_x, cur_x in enumerate(x_smoothed):
                 for ind_y, cur_y in enumerate(y_smoothed):
-                    if z_smoothed[ind_y, ind_x] < 0.55:
+                    if z_smoothed[ind_y, ind_x] < threshold:
                         z_smoothed[ind_y, ind_x] = 0.0
                     else:
                         z_smoothed[ind_y, ind_x] = 0.4 #nearest_neighbours_interp(cur_x, cur_y, x, y, z)
@@ -737,16 +741,16 @@ class PerformancePlotter:
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
                 anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
 
-            x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-            ax.contour(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 1, colors = cmap(0.4), linestyles = ["--"])
+            x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            ax.contour(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 1, colors = cmap(0.7), linestyles = ["--"])
 
             # then for the *loose* ones
-            x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ))
-            ax.contour(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 1, colors = cmap(0.4), linestyles = [":"])
+            x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            ax.contour(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 1, colors = cmap(0.7), linestyles = [":"])
                 
             # and finally for their combination
-            x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ))
-            ax.contour(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 1, colors = cmap(0.4), linestyles = ["-"])
+            x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            ax.contour(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 1, colors = cmap(0.7), linestyles = ["-"])
 
             for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
                 ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
@@ -811,7 +815,7 @@ class PerformancePlotter:
             # legend_elems_PCA = []
             # leg_labels_PCA = []
             # for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
-            #     legend_elems_PCA.append(Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(0.4), markeredgecolor = cmap(0.4), label = label))
+            #     legend_elems_PCA.append(Line2D([0], [0], marker = 's', color = 'none', markerfacecolor = cmap(0.7), markeredgecolor = cmap(0.7), label = label))
             #     leg_labels_PCA.append(label)
 
             # leg_PCA = ax.legend(handles = legend_elems_PCA, labels = leg_labels_PCA, ncol = len(leg_labels_PCA), framealpha = 0.0, columnspacing = 2.3, handler_map = {tuple: mpl.legend_handler.HandlerTuple(None)}, 
@@ -820,7 +824,7 @@ class PerformancePlotter:
             # ax.add_artist(leg_PCA)
 
             for ind, (cmap, label) in enumerate(zip(series_cmaps, series_labels)):
-                ax.text(x = 0.22 + ind * 0.14, y = 0.29 + 0.06, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.4))
+                ax.text(x = 0.22 + ind * 0.14, y = 0.29 + 0.06, s = label, ha = "left", weight = "bold", transform = ax.transAxes, color = cmap(0.7))
 
             # prepare the style legend describing the contour line styles
             style_legend_elems = [
@@ -837,13 +841,13 @@ class PerformancePlotter:
             ax.axhline(y = 1e-2, xmin = 0, xmax = 10, color = 'gray')
             ax.fill_between(x = ax.get_xlim(), y1 = [1, 1], y2 = [1e-4, 1e-4], facecolor = 'gray', alpha = 0.04)
         
-            # now start putting the labels
-            ax.text(x = 0.02, y = 0.62, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
-
         if nJ == 2:
             ax.set_xlim(left = 1.5, right = 5.5)
         elif nJ == 3:
             ax.set_xlim(left = 0.6, right = 3.0)
+
+        # now start putting the labels
+        ax.text(x = 0.02, y = 0.42, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
 
         ax.set_yscale("log")
         ax.set_xlabel(r'Binned significance [$\sigma$]')
