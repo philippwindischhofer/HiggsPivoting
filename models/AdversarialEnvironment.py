@@ -108,6 +108,9 @@ class AdversarialEnvironment(TFEnvironment):
             self.weights_2j = tf.where(tf.math.less(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
             self.weights_3j = tf.where(tf.math.greater(self.nJ_in, 2.5), self.weights_in, tf.zeros_like(self.weights_in))
 
+            self.weights_2j_bkg = tf.where(tf.math.equal(self.labels_in, 1), self.weights_2j, tf.zeros_like(self.weights_2j))
+            self.weights_3j_bkg = tf.where(tf.math.equal(self.labels_in, 1), self.weights_3j, tf.zeros_like(self.weights_3j))
+
             # set up the classifier models, separately for 2j and 3j
             self.classifier_out_2j, self.classifier_vars_2j = self.classifier_model_2j.build_model(self.data_in, is_training = self.is_training)
             self.classification_loss_2j = self.classifier_model_2j.build_loss(self.classifier_out_2j, self.labels_one_hot, weights = self.weights_2j, batchnum = self.batchnum)
@@ -121,8 +124,8 @@ class AdversarialEnvironment(TFEnvironment):
             self.classifier_out = tf.where(tf.math.less(self.nJ_in, 2.5), self.classifier_out_2j, self.classifier_out_3j)
 
             # set up the model for the adversary
-            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j, batchnum = self.batchnum, is_training = self.is_training)
-            self.adv_loss_3j, self.adversary_vars_3j = self.adversary_model_3j.build_loss(self.classifier_out_single_3j, self.nuisances_in, weights = self.weights_3j, batchnum = self.batchnum, is_training = self.is_training)
+            self.adv_loss_2j, self.adversary_vars_2j = self.adversary_model_2j.build_loss(self.classifier_out_single_2j, self.nuisances_in, weights = self.weights_2j_bkg, batchnum = self.batchnum, is_training = self.is_training)
+            self.adv_loss_3j, self.adversary_vars_3j = self.adversary_model_3j.build_loss(self.classifier_out_single_3j, self.nuisances_in, weights = self.weights_3j_bkg, batchnum = self.batchnum, is_training = self.is_training)
 
             self.print_0 = tf.print("nJ", self.nJ_in)
             self.print_1 = tf.print("weights (2j)", self.weights_2j)
