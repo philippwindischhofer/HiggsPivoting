@@ -229,26 +229,6 @@ class AdversarialTrainer(Trainer):
             size = self.training_pars["batchsize"]
             print("using fixed-size batch sampling")
 
-        # pre-train the adversary
-        print("pretraining adversarial network for {} batches".format(self.training_pars["adversary_pretrain_batches"]))
-        for batch in range(int(self.training_pars["adversary_pretrain_batches"])):
-            # sample coherently from (data, nuisance, label) tuples
-            (data_batch_2j, nuisances_batch_2j, labels_batch_2j, auxdata_batch_2j), weights_batch_2j = sampling_callback([data_sig_2j, nuisances_sig_2j, labels_sig_2j, auxdat_sig_2j], weights_sig_2j, 
-                                                                                                                         [data_bkg_2j, nuisances_bkg_2j, labels_bkg_2j, auxdat_bkg_2j], weights_bkg_2j,
-                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
-            (data_batch_3j, nuisances_batch_3j, labels_batch_3j, auxdata_batch_3j), weights_batch_3j = sampling_callback([data_sig_3j, nuisances_sig_3j, labels_sig_3j, auxdat_sig_3j], weights_sig_3j, 
-                                                                                                                         [data_bkg_3j, nuisances_bkg_3j, labels_bkg_3j, auxdat_bkg_3j], weights_bkg_3j,
-                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)            
-            data_batch = np.concatenate([data_batch_2j, data_batch_3j])
-            nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
-            labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
-            weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
-            auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
-
-            env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
-            env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
-        print("adversary pretraining complete!")
-
         # pre-train the classifier
         print("pretraining classifier for {} batches".format(self.training_pars["classifier_pretrain_batches"]))
         for batch in range(int(self.training_pars["classifier_pretrain_batches"])):
@@ -269,6 +249,26 @@ class AdversarialTrainer(Trainer):
             env.train_classifier(data_step = data_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
             env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)            
         print("classifier pretraining complete!")
+
+        # pre-train the adversary
+        print("pretraining adversarial network for {} batches".format(self.training_pars["adversary_pretrain_batches"]))
+        for batch in range(int(self.training_pars["adversary_pretrain_batches"])):
+            # sample coherently from (data, nuisance, label) tuples
+            (data_batch_2j, nuisances_batch_2j, labels_batch_2j, auxdata_batch_2j), weights_batch_2j = sampling_callback([data_sig_2j, nuisances_sig_2j, labels_sig_2j, auxdat_sig_2j], weights_sig_2j, 
+                                                                                                                         [data_bkg_2j, nuisances_bkg_2j, labels_bkg_2j, auxdat_bkg_2j], weights_bkg_2j,
+                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
+            (data_batch_3j, nuisances_batch_3j, labels_batch_3j, auxdata_batch_3j), weights_batch_3j = sampling_callback([data_sig_3j, nuisances_sig_3j, labels_sig_3j, auxdat_sig_3j], weights_sig_3j, 
+                                                                                                                         [data_bkg_3j, nuisances_bkg_3j, labels_bkg_3j, auxdat_bkg_3j], weights_bkg_3j,
+                                                                                                                         size = size // 2, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)            
+            data_batch = np.concatenate([data_batch_2j, data_batch_3j])
+            nuisances_batch = np.concatenate([nuisances_batch_2j, nuisances_batch_3j])
+            labels_batch = np.concatenate([labels_batch_2j, labels_batch_3j])
+            weights_batch = np.abs(np.concatenate([weights_batch_2j, weights_batch_3j]))
+            auxdata_batch = np.concatenate([auxdata_batch_2j, auxdata_batch_3j])
+
+            env.train_adversary(data_step = data_batch, nuisances_step = nuisances_batch, labels_step = labels_batch, weights_step = weights_batch, batchnum = batch, auxdat_step = auxdata_batch)
+            env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
+        print("adversary pretraining complete!")
 
         # start the actual adversarial training
         print("starting adversarial training:")
