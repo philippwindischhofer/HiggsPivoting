@@ -643,7 +643,6 @@ class PerformancePlotter:
             return np.array(xvals), np.array(yvals), np.array(zvals)
 
         def kde_smoothing(xvals, yvals, density = 1000, ylog = True, aspect_ratio_factor = 1.0):
-            #from scipy import stats
             from sklearn.neighbors import KernelDensity
 
             if ylog:
@@ -651,11 +650,8 @@ class PerformancePlotter:
 
             # fit the KDE
             vals = np.stack([xvals, yvals]).transpose()
-            kde_est = KernelDensity(bandwidth = 0.007, metric = 'euclidean', kernel = 'gaussian', algorithm = 'ball_tree')
+            kde_est = KernelDensity(bandwidth = 0.04, metric = 'euclidean', kernel = 'gaussian', algorithm = 'ball_tree')
             kde_est.fit(vals)
-
-            #kernel = stats.gaussian_kde(vals, bw_method = 0.2)
-            #kernel = stats.gaussian_kde(vals)
 
             # evaluate it on a fine grid
             xcoords = np.linspace(np.min(xvals) * 0.8, np.max(xvals) * 1.5, num = density)
@@ -692,7 +688,7 @@ class PerformancePlotter:
             x, y, z = extract_data(dicts, xquant, yquant, zquant = "lambda")
             x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y, aspect_ratio_factor = aspect_ratio_factor)
             
-            threshold = 1.4 if nJ == 2 else 1.9
+            threshold = 1.6 if nJ == 2 else 1.9
             #threshold = 0.0
 
             for ind_x, cur_x in enumerate(x_smoothed):
