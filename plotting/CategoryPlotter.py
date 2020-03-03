@@ -68,9 +68,9 @@ class CategoryPlotter:
 
         for cur_data, cur_weights in zip(data, weights):
 
-            print(cur_weights)
+            #print(cur_weights)
             cur_bin_contents, cur_bin_edges = np.histogram(cur_data, bins = binning, weights = cur_weights.flatten(), density = density)
-            print(cur_bin_contents)
+            #print(cur_bin_contents)
             bins = np.digitize(cur_data, bins = binning) - 1 # subtract 1 to get back a 0-indexed array
 
             # compute sum-of-weights-squared for each bin to get the uncertainties correct
