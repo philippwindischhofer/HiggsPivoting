@@ -642,29 +642,33 @@ class PerformancePlotter:
 
             return np.array(xvals), np.array(yvals), np.array(zvals)
 
-        def kde_smoothing(xvals, yvals, density = 1000, ylog = True):
-            from scipy import stats
+        def kde_smoothing(xvals, yvals, density = 1000, ylog = True, aspect_ratio_factor = 1.0):
+            #from scipy import stats
+            from sklearn.neighbors import KernelDensity
 
             if ylog:
-                yvals = np.log(yvals)
+                yvals = np.log(yvals) / aspect_ratio_factor
 
             # fit the KDE
-            vals = np.stack([xvals, yvals])
-            kernel = stats.gaussian_kde(vals, bw_method = 0.2)
+            vals = np.stack([xvals, yvals]).transpose()
+            kde_est = KernelDensity(bandwidth = 0.007, metric = 'euclidean', kernel = 'gaussian', algorithm = 'ball_tree')
+            kde_est.fit(vals)
+
+            #kernel = stats.gaussian_kde(vals, bw_method = 0.2)
             #kernel = stats.gaussian_kde(vals)
 
             # evaluate it on a fine grid
             xcoords = np.linspace(np.min(xvals) * 0.8, np.max(xvals) * 1.5, num = density)
             ycoords = np.linspace(np.min(yvals) * 0.8, np.max(yvals) * 1.5, num = density)
             xgrid, ygrid = np.meshgrid(xcoords, ycoords)
-            gridpts = np.vstack([xgrid.ravel(), ygrid.ravel()])
+            gridpts = np.vstack([xgrid.ravel(), ygrid.ravel()]).transpose()
 
-            smoothed = kernel(gridpts)
+            smoothed = np.exp(kde_est.score_samples(gridpts))
 
             if ylog:
-                ycoords = np.exp(ycoords)
+                ycoords = np.exp(ycoords * aspect_ratio_factor)
 
-            return xcoords, ycoords, smoothed.reshape(len(ycoords), len(xcoords))
+            return xcoords, ycoords, smoothed.reshape(xgrid.shape)
 
         def nearest_neighbours_interp(xval, yval, xvals, yvals, zvals, number_neighbours = 4, log_y = True):
             # compute the euclidean distance from x/y to all the other points
@@ -682,8 +686,11 @@ class PerformancePlotter:
             # find the proper normalization of the color map
             # perform KDE on the points that are to be plotted ... 
             # first for the *tight* signal regions
+
+            aspect_ratio_factor = 3 * 11.51 / 4 if nJ == 2 else 3 * 11.51 / 2.4
+
             x, y, z = extract_data(dicts, xquant, yquant, zquant = "lambda")
-            x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y)
+            x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y, aspect_ratio_factor = aspect_ratio_factor)
             
             threshold = 1.4 if nJ == 2 else 1.9
             #threshold = 0.0
