@@ -104,9 +104,9 @@ class Category:
         if clipping:
             data = np.clip(data, binning[0], binning[-1])
 
-        print("data / weights")
-        print(np.shape(data))
-        print(np.shape(weights.flatten()))
+        # print("data / weights")
+        # print(np.shape(data))
+        # print(np.shape(weights.flatten()))
 
         n, bins = np.histogram(data, bins = binning, weights = weights.flatten(), density = density)
 
