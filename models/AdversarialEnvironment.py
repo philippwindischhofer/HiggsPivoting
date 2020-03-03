@@ -221,7 +221,7 @@ class AdversarialEnvironment(TFEnvironment):
         weights_step = weights_step.flatten()
 
         # determine the current learning rate as per the scheduling
-        adversary_lr = self._lr_scheduler(lr_start = float(self.global_pars["adam_clf_lr"]),
+        classifier_lr = self._lr_scheduler(lr_start = float(self.global_pars["adam_clf_lr"]),
                                           lr_decay = float(self.global_pars["adam_clf_lr_decay"]),
                                           batchnum = batchnum)
 
@@ -256,7 +256,7 @@ class AdversarialEnvironment(TFEnvironment):
         print("classifier loss (2j): {:.4e}, classifier loss (3j): {:.4e}, adv. loss (2j) = {:.4e}, adv. loss (3j) = {:.4e}".format(classifier_lossval_2j, classifier_lossval_3j, adversary_lossval_2j, adversary_lossval_3j))
 
     # use the model to make predictions on 'data', adhering to a certain batch size for evolution
-    def predict(self, data, auxdat = None, pred_size = 256, use_dropout = True):
+    def predict(self, data, auxdat = None, pred_size = 256, use_dropout = True, seed = 12345):
         if auxdat is None:
             nJ = data[:, TrainingConfig.training_branches.index("nJ")]
         else:
@@ -270,6 +270,7 @@ class AdversarialEnvironment(TFEnvironment):
         retvals = []
         for chunk, nJ_chunk in zip(chunks, nJ_chunks):
             with self.graph.as_default():
+                tf.set_random_seed(seed)
                 retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False, self.nJ_in: nJ_chunk})
                 retvals.append(retval_cur)
 
