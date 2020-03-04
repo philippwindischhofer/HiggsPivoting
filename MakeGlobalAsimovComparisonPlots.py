@@ -13,9 +13,13 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
     cmaps = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
     colors = [cmap(0.7) for cmap in cmaps]
 
-    for workdir in workdirs:
+    lambda_upper_limits = {"MIND": 0.18, "DisCo": 1.2, "EMAX": 1.8}
+
+    for workdir, label in zip(workdirs, labels):
+        cur_upper_limit = lambda_upper_limits[label]
+
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
-        cur_hypodicts, cur_sensdicts = load_plotdata(cur_model_dirs)
+        cur_hypodicts, cur_sensdicts = load_plotdata(cur_model_dirs, lambda_upper_limit = cur_upper_limit)
 
         lambdas = [float(cur_dict["lambda"]) for cur_dict in cur_sensdicts]
         lambda_max = max(lambdas)

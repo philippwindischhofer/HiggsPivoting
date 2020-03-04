@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 from plotting.PerformancePlotter import PerformancePlotter
 
-def load_plotdata(model_dirs):
+def load_plotdata(model_dirs, lambda_upper_limit):
     dicts = []
 
     # load back the prepared performance metrics
@@ -11,6 +11,9 @@ def load_plotdata(model_dirs):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
+                if float(anadict["lambda"]) > lambda_upper_limit:
+                    continue
+
                 dicts.append(anadict)
         except:
             print("no information found for model '{}'".format(model_dir))
@@ -25,9 +28,12 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     colorschemes = []
     colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
-    for workdir, cur_colorscheme in zip(workdirs, colorscheme_library):
+    lambda_upper_limits = {"MIND": 0.18, "DisCo": 1.2, "EMAX": 1.8}
+
+    for workdir, cur_colorscheme, cur_label in zip(workdirs, colorscheme_library, labels):
+        cur_upper_limit = lambda_upper_limits[cur_label]
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
-        cur_dicts = load_plotdata(cur_model_dirs)
+        cur_dicts = load_plotdata(cur_model_dirs, cur_upper_limit)
         colorschemes.append(cur_colorscheme)
         dicts.append(cur_dicts)
 

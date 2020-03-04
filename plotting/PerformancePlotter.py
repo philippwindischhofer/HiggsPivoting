@@ -164,7 +164,7 @@ class PerformancePlotter:
         ax.set_title(title)
         ax.margins(x = 0.0, y = 0.0)
 
-        ax.set_ylim([ax.get_ylim()[0] * 0.8, ax.get_ylim()[1] * 1.15])
+        ax.set_ylim([ax.get_ylim()[0] * 0.7, ax.get_ylim()[1] * 1.15])
 
         if plotlabel:
             text = "\n".join(plotlabel)
@@ -642,7 +642,7 @@ class PerformancePlotter:
 
             return np.array(xvals), np.array(yvals), np.array(zvals)
 
-        def kde_smoothing(xvals, yvals, density = 1000, ylog = True, aspect_ratio_factor = 1.0):
+        def kde_smoothing(xvals, yvals, density = 1000, ylog = True, aspect_ratio_factor = 1.0, bandwidth = 0.04):
             from sklearn.neighbors import KernelDensity
 
             if ylog:
@@ -650,7 +650,7 @@ class PerformancePlotter:
 
             # fit the KDE
             vals = np.stack([xvals, yvals]).transpose()
-            kde_est = KernelDensity(bandwidth = 0.04, metric = 'euclidean', kernel = 'gaussian', algorithm = 'ball_tree')
+            kde_est = KernelDensity(bandwidth = bandwidth, metric = 'euclidean', kernel = 'gaussian', algorithm = 'ball_tree')
             kde_est.fit(vals)
 
             # evaluate it on a fine grid
@@ -678,7 +678,7 @@ class PerformancePlotter:
             dists_closest = dists[sorter][0:number_neighbours]
             return np.sum(zvals_closest / dists_closest) / np.sum(1.0 / dists_closest)
 
-        def get_smoothed_pareto_frontier(dicts, xquant, yquant, zquant = "lambda", nJ = 2):
+        def get_smoothed_pareto_frontier(dicts, xquant, yquant, zquant = "lambda", nJ = 2, bandwidth = 0.04, threshold = 1.4):
             # find the proper normalization of the color map
             # perform KDE on the points that are to be plotted ... 
             # first for the *tight* signal regions
@@ -686,10 +686,9 @@ class PerformancePlotter:
             aspect_ratio_factor = 3 * 11.51 / 4 if nJ == 2 else 3 * 11.51 / 2.4
 
             x, y, z = extract_data(dicts, xquant, yquant, zquant = "lambda")
-            x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y, aspect_ratio_factor = aspect_ratio_factor)
-            
-            threshold = 1.6 if nJ == 2 else 1.9
-            #threshold = 0.0
+            x_smoothed, y_smoothed, z_smoothed = kde_smoothing(x, y, aspect_ratio_factor = aspect_ratio_factor,
+                                                               bandwidth = bandwidth)
+                        #threshold = 0.0
 
             for ind_x, cur_x in enumerate(x_smoothed):
                 for ind_y, cur_y in enumerate(y_smoothed):
@@ -744,15 +743,27 @@ class PerformancePlotter:
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
                 anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
 
-            x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            bandwidth_tight = 0.03 if nJ == 2 else 0.04
+            threshold_tight = 1.4 if nJ == 2 else 1.6
+
+            x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ, 
+                                                                                                bandwidth = bandwidth_tight, threshold = threshold_tight)
             ax.contour(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 1, colors = cmap(0.7), linestyles = ["--"])
 
+            bandwidth_loose = 0.05 if nJ == 2 else 0.03
+            threshold_loose = 1.4 if nJ == 2 else 1.6
+
             # then for the *loose* ones
-            x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ), nJ = nJ,
+                                                                                                bandwidth = bandwidth_loose, threshold = threshold_loose)
             ax.contour(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 1, colors = cmap(0.7), linestyles = [":"])
+
+            bandwidth_combined = 0.03 if nJ == 2 else 0.04
+            threshold_combined = 1.4 if nJ == 2 else 1.6
                 
             # and finally for their combination
-            x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ)
+            x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ,
+                                                                                                         bandwidth = bandwidth_combined, threshold = threshold_combined)
             ax.contour(x_combined_smoothed, y_combined_smoothed, z_combined_smoothed, levels = 1, colors = cmap(0.7), linestyles = ["-"])
 
             for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
