@@ -550,7 +550,7 @@ class PerformancePlotter:
         ax.set_yscale("log")
         ax.set_xlabel(r'Binned significance [$\sigma$]')
         ax.set_ylabel(r'1/JSD')
-        ax.set_ylim(bottom = 2e-2, top = 1e3)
+        ax.set_ylim(bottom = 2e-2, top = 1e5)
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig.pdf".format(nJ))
         
         ax.axhline(y = 1.0, xmin = 0, xmax = 10, color = 'gray')

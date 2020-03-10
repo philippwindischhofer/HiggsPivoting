@@ -15,7 +15,7 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
-                # if float(anadict["lambda"]) > 1.4:
+                # if float(anadict["lambda"]) > 1.75:
                 #     continue
                 dicts.append(anadict)
         except:
@@ -44,7 +44,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                # if float(anadict["lambda"]) > 1.4:
+                # if float(anadict["lambda"]) > 1.2:
                 #     continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)

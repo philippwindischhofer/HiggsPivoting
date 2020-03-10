@@ -28,7 +28,7 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     colorschemes = []
     colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
-    lambda_upper_limits = {"MIND": 0.18, "DisCo": 1.2, "EMAX": 1.8}
+    lambda_upper_limits = {"MIND": 1e6, "DisCo": 1e6, "EMAX": 1e6}
 
     for workdir, cur_colorscheme, cur_label in zip(workdirs, colorscheme_library, labels):
         cur_upper_limit = lambda_upper_limits[cur_label]

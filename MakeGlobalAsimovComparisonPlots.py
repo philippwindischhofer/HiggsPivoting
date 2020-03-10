@@ -13,7 +13,7 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
     cmaps = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
     colors = [cmap(0.7) for cmap in cmaps]
 
-    lambda_upper_limits = {"MIND": 0.18, "DisCo": 1.2, "EMAX": 1.8}
+    lambda_upper_limits = {"MIND": 1e6, "DisCo": 1e6, "EMAX": 1e6}
 
     for workdir, label in zip(workdirs, labels):
         cur_upper_limit = lambda_upper_limits[label]
