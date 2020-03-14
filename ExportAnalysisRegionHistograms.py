@@ -157,6 +157,8 @@ def main():
     for cur_process in samples:
         inclusive_2J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_2jet.pkl".format(cur_process)), density = True)
 
+    inclusive_2J.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_bkg_2jet.pkl"), density = True)
+
     inclusive_3J = CutBasedCategoryFiller.create_nJ_category(process_events = data_test,
                                                              process_aux_events = aux_test,
                                                              process_weights = weights_test,
@@ -164,6 +166,8 @@ def main():
                                                              nJ = 3)
     for cur_process in samples:
         inclusive_3J.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_3jet.pkl".format(cur_process)), density = True)
+
+    inclusive_3J.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_bkg_3jet.pkl"), density = True)
 
     total_events = inclusive_2J.get_total_events() + inclusive_3J.get_total_events()
     CBA_used_events = 0
@@ -197,6 +201,8 @@ def main():
             for cur_process in samples:
                 low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, cur_nJ)), density = True)
 
+            low_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_bkg_{}jet_low_MET.pkl".format(cur_nJ)), density = True)
+
             CategoryPlotter.plot_category_composition(low_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_low_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                       plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'150 GeV < $E_{\mathrm{T}}^{\mathrm{miss}}$' + '< {MET_cut} GeV'.format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_lowMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {})
             
@@ -229,6 +235,8 @@ def main():
             
             for cur_process in samples:
                 high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, cur_nJ)), density = True)
+
+            high_MET_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(outdir, prefix + "dist_mBB_bkg_{}jet_high_MET.pkl".format(cur_nJ)), density = True)
 
             CategoryPlotter.plot_category_composition(high_MET_cat, binning = SR_binning, outpath = os.path.join(outdir, prefix + "{}jet_high_MET.pdf".format(cur_nJ)), var = "mBB", xlabel = r'$m_{bb}$ [GeV]', 
                                                       plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', r'$E_{\mathrm{T}}^{\mathrm{miss}}$ >' + ' {MET_cut} GeV'.format(**cur_cuts), r'$\Delta R_{{bb}} < {dRBB_highMET_cut}$'.format(**cur_cuts), r'{} jet'.format(cur_nJ)], args = {})
@@ -268,6 +276,8 @@ def main():
 
             for cur_process in samples:
                 cur_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_{}_{}jet_{}.pkl".format(cur_process, cur_nJ, cut_label)), density = True)
+
+            cur_cat.export_histogram(binning = SR_binning, processes = bkg_samples, var_name = "mBB", outfile = os.path.join(outdir, "dist_mBB_bkg_{}jet_{}.pkl".format(cur_nJ, cut_label)), density = True)
 
             CategoryPlotter.plot_category_composition(cur_cat, binning = SR_binning, outpath = os.path.join(outdir, "dist_mBB_region_{}jet_{}_{}.pdf".format(cur_nJ, cut_start, cut_end)), 
                                                       var = "mBB", xlabel = r'$m_{bb}$ [GeV]', plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s} = 13$ TeV, 140 fb$^{-1}$', cut_label + r', {} jet'.format(cur_nJ), adversary_label])

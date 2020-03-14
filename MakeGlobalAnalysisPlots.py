@@ -72,7 +72,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     except:
         overlays = []
 
-    lambdas = [cur["lambda"] for cur in dicts] 
+    lambdas = [float(cur["lambda"]) for cur in dicts]
     lambsort = np.argsort(lambdas)
     dicts = [dicts[cur_ind] for cur_ind in lambsort]
     plot_data = [plot_data[cur_ind] for cur_ind in lambsort]
@@ -80,7 +80,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing, cmap = cmap)
 
 def MakeAllGlobalAnalysisPlots(args):
-    processes = ["Hbb", "Wjets", "Zjets", "diboson", "ttbar"]
+    processes = ["Hbb", "Wjets", "Zjets", "diboson", "ttbar", "bkg"]
     nJ = [2, 3]
     SRs = ["tight", "loose"]
     CBA_SRs = ["high_MET", "low_MET"]

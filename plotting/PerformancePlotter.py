@@ -957,7 +957,9 @@ class PerformancePlotter:
             colorrange = [float(perfdict[colorquant]) for perfdict in perfdicts if colorquant in perfdict]
         else:
             colorrange = [0]
-        norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
+
+        norm = mpl.colors.SymLogNorm(linthresh = 0.1, vmin = min(colorrange), vmax = max(colorrange))
+        #norm = mpl.colors.Normalize(vmin = min(colorrange), vmax = max(colorrange))
 
         if len(perfdicts) != len(hist_data):
             raise Exception("need to get the same number of perfdicts and plots")
@@ -991,7 +993,7 @@ class PerformancePlotter:
 
         # plot the combined histograms
         for cur_bin_centers, cur_bin_values, cur_color in zip(bin_centers, bin_values, colors):
-            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.8)
+            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 0.9)
         
         # plot the overlays
         for (x, y, opts) in overlays:

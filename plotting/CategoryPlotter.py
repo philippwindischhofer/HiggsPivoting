@@ -21,7 +21,8 @@ class CategoryPlotter:
                       "ttbar": r'$t\bar{t}$',
                       "Wjets": r'$W$ + jets',
                       "Zjets": r'$Z$ + jets',
-                      "diboson": r'Diboson'
+                      "diboson": r'Diboson',
+                      "bkg": r'total background'
     }
 
     # use the events in the given category to plot the spectrum of a certain event variable
