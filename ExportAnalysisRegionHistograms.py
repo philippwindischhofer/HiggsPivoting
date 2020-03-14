@@ -23,7 +23,7 @@ def main():
     args = vars(parser.parse_args())
 
     adv_model = _load_metadata(os.path.join(args["model_dir"], "meta.conf"), "AdversarialEnvironment")["adversary_model"]
-    adversary_label_library = {"MINEAdversary": "MIND", "DisCoAdversary": "DisCo", "GMMAdversary": "EMAX"}
+    adversary_label_library = {"MINEAdversary": "MIND", "DisCoAdversary": "DisCo", "GMMAdversary": "EMAX", "PtEstAdversary": "REG"}
     adversary_label = adversary_label_library[adv_model]
 
     # extract the validation or test dataset
