@@ -311,9 +311,13 @@ class AdversarialTrainer(Trainer):
                 # callbacks to keep track of the parameter evolution during training
                 stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
 
-                (data_batch_statistics, nuisances_batch_statistics, labels_batch_statistics, auxdata_batch_statistics), weights_batch_statistics = sampling_callback([data_sig, nuisances_sig, labels_sig, auxdat_sig], weights_sig, 
-                                                                                                                                                                     [data_bkg, nuisances_bkg, labels_bkg, auxdat_bkg], weights_bkg, 
-                                                                                                                                                                     size = 100000, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
+                (data_batch_statistics, nuisances_batch_statistics, labels_batch_statistics, auxdata_batch_statistics), weights_batch_statistics = self.sample_from_components([data_bkg, nuisances_bkg, labels_bkg, auxdat_bkg], weights_bkg,
+                                                                                                                                                                               batch_size = 100000, sampling_pars = bkg_sampling_pars)
+
+                # (data_batch_statistics, nuisances_batch_statistics, labels_batch_statistics, auxdata_batch_statistics), weights_batch_statistics = sampling_callback([data_sig, nuisances_sig, labels_sig, auxdat_sig], weights_sig, 
+                #                                                                                                                                                      [data_bkg, nuisances_bkg, labels_bkg, auxdat_bkg], weights_bkg, 
+                #                                                                                                                                                      size = 100000, sig_sampling_pars = sig_sampling_pars, bkg_sampling_pars = bkg_sampling_pars)
+
                 MI_dict_cur = env.get_MI_estimates(data = data_batch_statistics, aux_data = auxdata_batch_statistics, nuisances = nuisances_batch_statistics, weights = weights_batch_statistics)
                 stat_dict_cur.update(MI_dict_cur)
 
