@@ -14,24 +14,24 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
     colors = [cmap(0.7) for cmap in cmaps]
 
     lambda_upper_limits = {"MIND": 1e6, "DisCo": 1e6, "EMAX": 1e6}
+    xlabels = []
 
     for workdir, label in zip(workdirs, labels):
-        cur_upper_limit = lambda_upper_limits[label]
+        if label in lambda_upper_limits:
+            cur_upper_limit = lambda_upper_limits[label]
+        else:
+            cur_upper_limit = 1e6
+
+        xlabels.append(r"$\lambda_{{\mathrm{{{}}}}}$".format(label))
 
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
         cur_hypodicts, cur_sensdicts = load_plotdata(cur_model_dirs, lambda_upper_limit = cur_upper_limit)
-
-        lambdas = [float(cur_dict["lambda"]) for cur_dict in cur_sensdicts]
-        lambda_max = max(lambdas)
-
-        for cur_sensdict in cur_sensdicts:
-            cur_sensdict["lambda"] = str(float(cur_sensdict["lambda"]) / lambda_max)
 
         hypodicts.append(cur_hypodicts)
         sensdicts.append(cur_sensdicts)
 
     PerformancePlotter.plot_asimov_significance_comparison(hypodicts, sensdicts, colors = colors, labels = labels, outdir = plotdir, plotlabel = ["MadGraph + Pythia8", r'$\sqrt{s}=13$ TeV, 140 fb$^{-1}$'],
-                                                           xlabel = r"$\lambda / \lambda_{\mathrm{max}}$")
+                                                           xlabel = xlabels)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "create global comparison plots for Asimov sensitivities")

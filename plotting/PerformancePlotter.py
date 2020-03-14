@@ -54,7 +54,7 @@ class PerformancePlotter:
 
     # expect CBA_overlays in the form [{label, ls, dict}]
     @staticmethod
-    def plot_asimov_significance_comparison(hypodicts_runs, sensdicts_runs, outdir, labels, colors, xlabel = r'$\lambda$', ylabel = r'Asimov significance [$\sigma_A$]',
+    def plot_asimov_significance_comparison(hypodicts_runs, sensdicts_runs, outdir, labels, colors, xlabel = [r'$\lambda$'], ylabel = r'Asimov significance [$\sigma_A$]',
                                             model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
 
         assert len(hypodicts_runs) == len(sensdicts_runs) # make sure are given corresponding information
@@ -137,29 +137,61 @@ class PerformancePlotter:
                        color = "darkgrey", linestyle = "-", label = "cut-based analysis")
             
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_means, uncs_up = uncs_up_background_floating, uncs_down = uncs_down_background_floating, 
-                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabel = xlabel, ylabel = ylabel, colors = colors, title = "",
+                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabels = xlabel, ylabel = ylabel, colors = colors, title = "",
                                              epilog = bkg_floating_epilog,
                                              plotlabel = plotlabel)
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_means, uncs_up = uncs_up_background_fixed, uncs_down = uncs_down_background_fixed, 
-                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabel = xlabel, ylabel = ylabel, colors = colors, title = "background fixed",
+                                             labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabels = xlabel, ylabel = ylabel, colors = colors, title = "background fixed",
                                              epilog = bkg_fixed_epilog,
                                              plotlabel = plotlabel)
 
     @staticmethod
-    def _uncertainty_plot(xs, ys, uncs_up, uncs_down, labels, outfile, xlabel, ylabel, colors, show_legend = True, epilog = None, title = "", plotlabel = []):
-        fig = plt.figure()
+    def _uncertainty_plot(xs, ys, uncs_up, uncs_down, labels, outfile, xlabels, ylabel, colors, show_legend = True, epilog = None, title = "", plotlabel = []):
+
+        def _keep_only_bottom_visible(ax):
+            ax.set_frame_on(True)
+            ax.patch.set_visible(False)
+            for sp in ax.spines.values():
+                sp.set_visible(False)
+            ax.spines["bottom"].set_visible(True)
+
+        def _set_ax_position(ax, pos):
+            ax.xaxis.set_ticks_position("bottom")
+            ax.xaxis.set_label_position("bottom")
+            ax.spines["bottom"].set_position(("axes", pos))
+
+        def _add_new_axis(parent_ax, xlabel, position):
+            ax_secondary = parent_ax.twiny()
+            ax_secondary.margins(x = 0.0, y = 0.0)
+            _set_ax_position(ax_secondary, position)
+            _keep_only_bottom_visible(ax_secondary)
+            ax_secondary.set_xlabel(xlabel)
+            ax_secondary.set_xscale("symlog", linthreshx = 0.1)
+            return ax_secondary
+
+        fig = plt.figure(figsize = (6, 6))
+        fig.subplots_adjust(bottom = 0.04 + len(xlabels) * 0.1, left = 0.11, right = 0.96, top = 0.96)
         ax = fig.add_subplot(111)
+        ax.set_xscale("symlog", linthreshx = 0.1)
 
         if epilog is not None:
             epilog(ax)
 
-        for x, y, unc_up, unc_down, label, color in zip(xs, ys, uncs_up, uncs_down, labels, colors):
-            # first, plot the central value
-            ax.plot(x, y, marker = 'o', label = label, color = color)
-            #ax.fill_between(x, y + unc_down, y + unc_up, color = color, alpha = 0.6, zorder = 2)
+        plots = ax.get_lines()
 
-        ax.set_xlabel(xlabel)
+        for ind, (x, y, unc_up, unc_down, label, color, xlabel) in enumerate(zip(xs, ys, uncs_up, uncs_down, labels, colors, xlabels)):
+            if ind == 0:
+                cur_ax = ax
+            else:
+                cur_ax = _add_new_axis(ax, xlabel, -0.01 -0.18 * ind)
+
+            # first, plot the central value
+            #ax.plot(x, y, marker = 'o', label = label, color = color)
+            plots += cur_ax.plot(x, y, label = label, color = color, ls = "--")
+            cur_ax.fill_between(x, y - unc_down, y + unc_up, facecolor = color, edgecolor = None, alpha = 0.6, zorder = 2)
+
+        ax.set_xlabel(xlabels[0])
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.margins(x = 0.0, y = 0.0)
@@ -171,10 +203,11 @@ class PerformancePlotter:
             plt.text(0.4, 0.95, text, verticalalignment = 'top', horizontalalignment = 'right', transform = ax.transAxes)
 
         if show_legend:
-            leg = ax.legend(loc = 'lower right')
+            plot_labels = map(lambda cur: cur.get_label(), plots)
+            leg = ax.legend(plots, plot_labels, loc = 'lower right')
             leg.get_frame().set_linewidth(0.0)
-        
-        plt.tight_layout()
+
+        #plt.tight_layout()
         fig.savefig(outfile)
         plt.close()
 
