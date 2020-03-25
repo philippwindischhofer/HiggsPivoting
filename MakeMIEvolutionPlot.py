@@ -58,10 +58,10 @@ def MakeMIEvolutionPlot(plotdir, workdirs):
             style_labels[style] = trace_label
 
         cur_lambda = anadict["lambda"]
-        color_labels[cur_color] = '$\lambda = {}$'.format(cur_lambda)
+        color_labels[cur_color] = '$\lambda_{{\mathrm{{MIND}}}} = {}$'.format(cur_lambda)
 
     outfile_path = os.path.join(plotdir, "MI_evolution.pdf")
-    PerformancePlotter._simple_plot(plotdata_x, plotdata_y, colors, styles, style_labels, color_labels, outfile_path, xlabel = "minibatch", ylabel = r'$\widehat{\mathrm{MI}}(\hat{y}, m_{bb})$')
+    PerformancePlotter._simple_plot(plotdata_x, plotdata_y, colors, styles, style_labels, color_labels, outfile_path, xlabel = "minibatch", ylabel = r'$\widehat{\mathrm{MI}}_{\mathrm{bkg}}(\hat{y}, m_{bb})$')
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "show evolution of MI as the training progresses")

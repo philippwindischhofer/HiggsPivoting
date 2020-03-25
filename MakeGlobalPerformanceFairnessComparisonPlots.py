@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 from plotting.PerformancePlotter import PerformancePlotter
 
-def load_plotdata(model_dirs, lambda_upper_limit):
+def load_plotdata(model_dirs, veto = lambda lambda_val: True):
     dicts = []
 
     # load back the prepared performance metrics
@@ -11,7 +11,7 @@ def load_plotdata(model_dirs, lambda_upper_limit):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
-                if float(anadict["lambda"]) > lambda_upper_limit:
+                if veto(float(anadict["lambda"])):
                     continue
 
                 dicts.append(anadict)
@@ -28,20 +28,39 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     colorschemes = []
     colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
-    lambda_upper_limits = {"MIND": 1e6, "DisCo": 1e6, "EMAX": 1e6}
+    def MIND_veto(lambda_val):
+        if lambda_val > 0.0 and lambda_val < 0.5:
+            return True
+        else:
+            return False
+        return False
+
+    def DisCo_veto(lambda_val):
+        return False
+
+    def EMAX_veto(lambda_val):
+        if lambda_val > 0.0 and lambda_val < 1.5:
+            return True
+        else:
+            return False
+
+    lambda_veto = {"MIND": MIND_veto, "DisCo": DisCo_veto, "EMAX": EMAX_veto}
 
     for workdir, cur_colorscheme, cur_label in zip(workdirs, colorscheme_library, labels):
-        cur_upper_limit = lambda_upper_limits[cur_label]
+        cur_veto = lambda_veto[cur_label]
         cur_model_dirs = filter(os.path.isdir, map(lambda cur: os.path.join(workdir, cur), os.listdir(workdir)))
-        cur_dicts = load_plotdata(cur_model_dirs, cur_upper_limit)
+        cur_dicts = load_plotdata(cur_model_dirs, cur_veto)
         colorschemes.append(cur_colorscheme)
         dicts.append(cur_dicts)
 
     PerformancePlotter.plot_significance_fairness_combined_legend(dicts, colorschemes, plotdir, series_labels = labels)
-    PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
-    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2, show_legend = False)
-    PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3, show_legend = False)
+    #PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
+    #PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
+    #PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2, show_legend = False)
+    #PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3, show_legend = False)
+
+    PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "make performance vs. fairness comparison plots")

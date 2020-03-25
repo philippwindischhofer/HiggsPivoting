@@ -178,7 +178,7 @@ def main():
     for cur_nJ, cur_inclusive_cat, cur_signal_events, cur_signal_weights, cur_signal_aux_events in zip([2, 3], [inclusive_2J, inclusive_3J], [sig_data_test_2j, sig_data_test_3j], [sig_weights_test_2j, sig_weights_test_3j], [sig_aux_data_test_2j, sig_aux_data_test_3j]):
         for cur_cuts, prefix in zip([CBA_original, CBA_optimized], ["original_", "optimized_"]):
             # first, export the categories of the cut-based analysis: high / low MET, using the optimized cuts
-            print("filling {} jet low_MET category".format(cur_nJ))
+            print("filling {} jet low_MET category with cut prefix = {}".format(cur_nJ, prefix))
             low_MET_cat = CutBasedCategoryFiller.create_low_MET_category(process_events = data_test,
                                                                          process_aux_events = aux_test,
                                                                          process_weights = weights_test,

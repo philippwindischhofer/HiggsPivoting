@@ -1,4 +1,4 @@
-import os, pickle
+import os, pickle, random
 from argparse import ArgumentParser
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 3)
 
-def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues):
+def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues, lambda_label = r"$\lambda$"):
     
     dicts = []
     plot_data = []
@@ -38,6 +38,8 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         ax.text(x = 0.05, y = 0.85 - 0.05 * (len(inner_label) - 2), s = "\n".join(inner_label), transform = ax.transAxes,
                 horizontalalignment = 'left', verticalalignment = 'bottom')
         ax.set_ylim([0, ax.get_ylim()[1] * 0.5])
+
+    model_dirs = random.sample(model_dirs, 200)
     
     # load the plots that are to be mapped over runs
     for model_dir in model_dirs:
@@ -77,7 +79,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
     dicts = [dicts[cur_ind] for cur_ind in lambsort]
     plot_data = [plot_data[cur_ind] for cur_ind in lambsort]
 
-    PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing, cmap = cmap)
+    PerformancePlotter.combine_hists(dicts, plot_data, outpath, colorquant = "lambda", plot_title = "", overlays = overlays, epilog = annotation_epilog, smoothing = smoothing, cmap = cmap, cb_label = lambda_label)
 
 def MakeAllGlobalAnalysisPlots(args):
     processes = ["Hbb", "Wjets", "Zjets", "diboson", "ttbar", "bkg"]
@@ -115,8 +117,8 @@ def MakeAllGlobalAnalysisPlots(args):
                 outpath = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}.pdf".format(process, cur_nJ, cur_SR))
                 outpath_smoothed = os.path.join(args["plotdir"], "dist_mBB_{}_{}jet_{}_smoothed.pdf".format(process, cur_nJ, cur_SR))
 
-                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], cmap = cmap)
-                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], smoothing = True, cmap = cmap)
+                MakeGlobalAnalysisPlots(outpath = outpath, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], cmap = cmap, lambda_label = r"$\lambda_{{\mathrm{{{}}}}}$".format(adversary_label))
+                MakeGlobalAnalysisPlots(outpath = outpath_smoothed, model_dirs = args["model_dirs"], plot_basename = filename, xlabel = r'$m_{bb}$ [GeV]', ylabel = "a.u.", overlay_paths = overlay_paths, overlay_labels = overlay_labels, overlay_colors = overlay_colors, overlay_lss = overlay_lss, inner_label = [CategoryPlotter.process_labels[process], "{}, {} jet".format(cur_SR, cur_nJ), adversary_label], smoothing = True, cmap = cmap, lambda_label = r"$\lambda_{{\mathrm{{{}}}}}$".format(adversary_label))
     
 
 if __name__ == "__main__":

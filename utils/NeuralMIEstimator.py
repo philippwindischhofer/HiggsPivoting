@@ -26,7 +26,7 @@ class NeuralMIEstimator:
         # first, update the MINE estimator
         print("/ / / / / / / / / / / / / /")
 
-        for cur_step in range(1000):
+        for cur_step in range(100):
             sess.run(self.update_estimator, feed_dict = {self.X_in: X_in, self.Y_in: Y_in, self.weights_in: weights, self.is_training_in: True})
             cur_loss = sess.run(self.MINE_loss, feed_dict = {self.X_in: X_in, self.Y_in: Y_in, self.weights_in: weights, self.is_training_in: True})
             print(" MINE loss = {}".format(cur_loss))

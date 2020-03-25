@@ -5,7 +5,7 @@ class CondorJobSubmitter:
 
     # create the .submit file and submit it to the batch
     @staticmethod
-    def submit_job(job_script_path):
+    def submit_job(job_script_path, job_threshold = 400):
         job_script_base, _ = os.path.splitext(job_script_path)
         job_dir = os.path.dirname(job_script_path)
         submit_file_path = job_script_base + ".submit"
@@ -24,6 +24,13 @@ class CondorJobSubmitter:
             submit_file.write("queue 1")
 
         while True:
+            running_jobs = CondorJobSubmitter.queued_jobs()
+            if running_jobs < job_threshold:
+                break
+            print("have {} jobs running - wait a bit".format(running_jobs))
+            time.sleep(30)
+
+        while True:
             try:
                 # call the job submitter
                 sp.check_output(["condor_submit", submit_file_path])
@@ -31,7 +38,17 @@ class CondorJobSubmitter:
                 break
             except:
                 print("problem with submitter -- retrying")
-                time.sleep(1)
+                time.sleep(10)
+
+    @staticmethod
+    def queued_jobs(queue_status = "condor_q"):
+        while True:
+            try:
+                running_jobs = len(sp.check_output([queue_status]).decode("utf8").split('\n')) - 6
+                return running_jobs
+            except sp.CalledProcessError:
+                print("{} error - retrying!".format(queue_status))
+                time.sleep(10)
 
     @staticmethod
     def get_running_cluster_IDs():

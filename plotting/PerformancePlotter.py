@@ -55,7 +55,8 @@ class PerformancePlotter:
     # expect CBA_overlays in the form [{label, ls, dict}]
     @staticmethod
     def plot_asimov_significance_comparison(hypodicts_runs, sensdicts_runs, outdir, labels, colors, xlabel = [r'$\lambda$'], ylabel = r'Asimov significance [$\sigma_A$]',
-                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = []):
+                                            model_SRs = ["significance_clf_tight_2J", "significance_clf_loose_2J", "significance_clf_tight_3J", "significance_clf_loose_3J"], plotlabel = [],
+                                            linthreshs = []):
 
         assert len(hypodicts_runs) == len(sensdicts_runs) # make sure are given corresponding information
 
@@ -93,11 +94,17 @@ class PerformancePlotter:
             asimov_sigs_ncat_background_floating_max = np.array([np.max(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
             asimov_sigs_ncat_background_floating_min = np.array([np.min(cur) for cur in asimov_sigs_ncat_background_floating.values()])[sortind]
 
-            unc_up_background_floating = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean
-            unc_down_background_floating = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean
+            # unc_up_background_floating = asimov_sigs_ncat_background_floating_max - asimov_sigs_ncat_background_floating_mean
+            # unc_down_background_floating = asimov_sigs_ncat_background_floating_min - asimov_sigs_ncat_background_floating_mean
 
-            unc_up_background_fixed = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean
-            unc_down_background_fixed = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean
+            # unc_up_background_fixed = asimov_sigs_ncat_background_fixed_max - asimov_sigs_ncat_background_fixed_mean
+            # unc_down_background_fixed = asimov_sigs_ncat_background_fixed_min - asimov_sigs_ncat_background_fixed_mean
+
+            unc_up_background_floating = asimov_sigs_ncat_background_floating_std
+            unc_down_background_floating = -asimov_sigs_ncat_background_floating_std
+
+            unc_up_background_fixed = asimov_sigs_ncat_background_fixed_std
+            unc_down_background_fixed = -asimov_sigs_ncat_background_fixed_std
 
             return lambdas, asimov_sigs_ncat_background_floating_mean, unc_up_background_floating, unc_down_background_floating, asimov_sigs_ncat_background_fixed_mean, unc_up_background_fixed, unc_down_background_fixed
         
@@ -138,16 +145,19 @@ class PerformancePlotter:
             
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_floating_means, uncs_up = uncs_up_background_floating, uncs_down = uncs_down_background_floating, 
                                              labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_floating.pdf"), xlabels = xlabel, ylabel = ylabel, colors = colors, title = "",
-                                             epilog = bkg_floating_epilog,
+                                             epilog = bkg_floating_epilog, linthreshs = linthreshs,
                                              plotlabel = plotlabel)
 
         PerformancePlotter._uncertainty_plot(lambdas, asimov_sigs_ncat_background_fixed_means, uncs_up = uncs_up_background_fixed, uncs_down = uncs_down_background_fixed, 
                                              labels = labels, outfile = os.path.join(outdir, "asimov_significance_background_fixed.pdf"), xlabels = xlabel, ylabel = ylabel, colors = colors, title = "background fixed",
-                                             epilog = bkg_fixed_epilog,
+                                             epilog = bkg_fixed_epilog, linthreshs = linthreshs,
                                              plotlabel = plotlabel)
 
     @staticmethod
-    def _uncertainty_plot(xs, ys, uncs_up, uncs_down, labels, outfile, xlabels, ylabel, colors, show_legend = True, epilog = None, title = "", plotlabel = []):
+    def _uncertainty_plot(xs, ys, uncs_up, uncs_down, labels, outfile, xlabels, ylabel, colors, show_legend = True, epilog = None, title = "", plotlabel = [], linthreshs = []):
+
+        if len(linthreshs) != len(labels):
+            linthreshs = [0.1 for cur in labels]
 
         def _keep_only_bottom_visible(ax):
             ax.set_frame_on(True)
@@ -161,30 +171,30 @@ class PerformancePlotter:
             ax.xaxis.set_label_position("bottom")
             ax.spines["bottom"].set_position(("axes", pos))
 
-        def _add_new_axis(parent_ax, xlabel, position):
+        def _add_new_axis(parent_ax, xlabel, position, linthresx = 0.1):
             ax_secondary = parent_ax.twiny()
             ax_secondary.margins(x = 0.0, y = 0.0)
             _set_ax_position(ax_secondary, position)
             _keep_only_bottom_visible(ax_secondary)
             ax_secondary.set_xlabel(xlabel)
-            ax_secondary.set_xscale("symlog", linthreshx = 0.1)
+            ax_secondary.set_xscale("symlog", linthreshx = linthresx)
             return ax_secondary
 
         fig = plt.figure(figsize = (6, 6))
         fig.subplots_adjust(bottom = 0.04 + len(xlabels) * 0.1, left = 0.11, right = 0.96, top = 0.96)
         ax = fig.add_subplot(111)
-        ax.set_xscale("symlog", linthreshx = 0.1)
+        ax.set_xscale("symlog", linthreshx = linthreshs[0])
 
         if epilog is not None:
             epilog(ax)
 
         plots = ax.get_lines()
 
-        for ind, (x, y, unc_up, unc_down, label, color, xlabel) in enumerate(zip(xs, ys, uncs_up, uncs_down, labels, colors, xlabels)):
+        for ind, (x, y, unc_up, unc_down, label, color, xlabel, linthreshx) in enumerate(zip(xs, ys, uncs_up, uncs_down, labels, colors, xlabels, linthreshs)):
             if ind == 0:
                 cur_ax = ax
             else:
-                cur_ax = _add_new_axis(ax, xlabel, -0.01 -0.18 * ind)
+                cur_ax = _add_new_axis(ax, xlabel, -0.01 -0.18 * ind, linthreshx)
 
             # first, plot the central value
             #ax.plot(x, y, marker = 'o', label = label, color = color)
@@ -656,6 +666,126 @@ class PerformancePlotter:
         fig.savefig(outfile)
         plt.close()
 
+    # try to work with mean / median
+    @staticmethod
+    def plot_significance_fairness_combined_trajectories(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False):
+
+        def get_inv_JSD_bin_index(inv_JSD_val):
+            bins_log = np.logspace(start = 0, stop = 5, num = 20, base = 10)
+            return np.argmin(np.abs(bins_log - inv_JSD_val))
+
+        def assemble_plotdata(anadicts, prefix = "combined"):
+            tight_binned_significances = {}
+            tight_invJSDs = {}
+
+            loose_binned_significances = {}
+            loose_invJSDs = {}
+
+            for anadict in anadicts:
+                cur_loose_binned_significance = anadict["{}_{}jet_binned_sig".format(prefix, nJ)]
+                cur_tight_binned_significance = anadict["{}_{}jet_binned_sig".format(prefix, nJ)]
+                cur_loose_invJSD = anadict["{}_{}jet_inv_JS_bkg".format(prefix, nJ)]
+                cur_tight_invJSD = anadict["{}_{}jet_inv_JS_bkg".format(prefix, nJ)]
+                cur_lambda = float(anadict["lambda"])
+                
+                cur_bin_index = get_inv_JSD_bin_index(cur_tight_invJSD)
+
+                if cur_bin_index not in tight_binned_significances:
+                    tight_binned_significances[cur_bin_index] = []
+                tight_binned_significances[cur_bin_index].append(cur_tight_binned_significance)
+
+                if cur_bin_index not in tight_invJSDs:
+                    tight_invJSDs[cur_bin_index] = []
+                tight_invJSDs[cur_bin_index].append(cur_tight_invJSD)
+
+                if cur_bin_index not in loose_binned_significances:
+                    loose_binned_significances[cur_bin_index] = []
+                loose_binned_significances[cur_bin_index].append(cur_loose_binned_significance)
+
+                if cur_bin_index not in loose_invJSDs:
+                    loose_invJSDs[cur_bin_index] = []
+                loose_invJSDs[cur_bin_index].append(cur_loose_invJSD)
+
+            # ignore bins with very low contents -- these are likely to be outliers
+            for cur_bin in list(tight_binned_significances.keys()):
+                if len(tight_binned_significances[cur_bin]) < 2:
+                    tight_binned_significances.pop(cur_bin)
+
+            for cur_bin in list(loose_binned_significances.keys()):
+                if len(loose_binned_significances[cur_bin]) < 2:
+                    loose_binned_significances.pop(cur_bin)
+
+            bins = list(tight_binned_significances.keys())
+            bin_sorter = np.argsort(bins)
+
+            tight_binned_significances_mean = np.array([np.mean(tight_binned_significances[cur_bin_index]) for cur_bin_index in bins])[bin_sorter]
+            tight_inv_JSDs_mean = np.array([np.mean(tight_invJSDs[cur_bin_index]) for cur_bin_index in bins])[bin_sorter]
+
+            tight_binned_significances_unc = np.array([np.std(tight_binned_significances[cur_bin_index]) for cur_bin_index in bins])[bin_sorter]
+            tight_inv_JSDs_unc = np.array([np.std(tight_invJSDs[cur_bin_index]) for cur_bin_index in bins])[bin_sorter]
+
+            return tight_binned_significances_mean, tight_inv_JSDs_mean, tight_binned_significances_unc, tight_inv_JSDs_unc
+
+        # compute also the combined significance
+        for cur_series in series_anadicts:
+            for anadict in cur_series:
+                combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
+                anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
+                anadict["combined_{}jet_inv_JS_bkg".format(nJ)] = anadict["tight_{}jet_inv_JS_bkg".format(nJ)]
+            
+        fig = plt.figure(figsize = (9, 3.0))
+        ax = fig.add_subplot(111)
+
+        # get the data in the right format
+        for cur_anadicts, cur_cmap in zip(series_anadicts, series_cmaps):
+            for cur_prefix, cur_ls in zip(["loose", "tight", "combined"], [":", "--", "-"]):
+                cur_tight_binned_significances_mean, cur_tight_inv_JSDs_mean, cur_tight_binned_significances_unc, cur_tight_inv_JSDs_unc = assemble_plotdata(cur_anadicts, prefix = cur_prefix)
+
+                ax.plot(cur_tight_binned_significances_mean, cur_tight_inv_JSDs_mean, color = cur_cmap(0.7), ls = cur_ls, lw = 2)
+
+                upper_band = cur_tight_binned_significances_mean + cur_tight_binned_significances_unc
+                lower_band = cur_tight_binned_significances_mean - cur_tight_binned_significances_unc
+                ax.plot(upper_band[:-1], cur_tight_inv_JSDs_mean[:-1], color = cur_cmap(0.7), lw = 0.5, ls = cur_ls)
+                ax.plot(lower_band[:-1], cur_tight_inv_JSDs_mean[:-1], color = cur_cmap(0.7), lw = 0.5, ls = cur_ls)
+
+        for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
+            ax.scatter(series_anadicts[0][0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
+                       series_anadicts[0][0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec,
+                       zorder = 10)
+                
+            ax.scatter(series_anadicts[0][0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
+                       series_anadicts[0][0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec,
+                       zorder = 10)
+                
+            combined_sig = np.sqrt(series_anadicts[0][0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + series_anadicts[0][0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
+                
+            ax.scatter(combined_sig,
+                       series_anadicts[0][0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
+                       label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec,
+                       zorder = 10)
+
+        if nJ == 2:
+            ax.set_xlim(left = 1.5, right = 5.5)
+        elif nJ == 3:
+            ax.set_xlim(left = 0.6, right = 3.0)
+
+        # now start putting the labels
+        ax.text(x = 0.02, y = 0.42, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
+
+        ax.set_yscale("log")
+        ax.set_xlabel(r'Binned significance [$\sigma$]')
+        ax.set_ylabel(r'1/JSD')
+        ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
+
+        ax.set_ylim(bottom = 0.9, top = 1e5)
+        fig.subplots_adjust(right = 0.95, left = 0.1, bottom = 0.15, top = 0.95)
+
+        outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_trajectory_no_legend.pdf".format(nJ))
+        fig.savefig(outfile)
+        plt.close()        
+
     # use a slightly fancier way of plotting things: instead of showing the individual points, draw a smoothened version
     @staticmethod
     def plot_significance_fairness_combined_smooth(series_anadicts, series_cmaps, outdir, series_labels = [], nJ = 2, show_colorbar = False, show_legend = True):
@@ -776,23 +906,23 @@ class PerformancePlotter:
                 combined_sig = np.sqrt(anadict["loose_{}jet_binned_sig".format(nJ)] ** 2 + anadict["tight_{}jet_binned_sig".format(nJ)] ** 2)
                 anadict["combined_{}jet_binned_sig".format(nJ)] = combined_sig
 
-            bandwidth_tight = 0.03 if nJ == 2 else 0.04
-            threshold_tight = 1.4 if nJ == 2 else 1.6
+            bandwidth_tight = 0.07 if nJ == 2 else 0.04
+            threshold_tight = 2.0 if nJ == 2 else 3.0
 
             x_tight_smoothed, y_tight_smoothed, z_tight_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "tight_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ, 
                                                                                                 bandwidth = bandwidth_tight, threshold = threshold_tight)
             ax.contour(x_tight_smoothed, y_tight_smoothed, z_tight_smoothed, levels = 1, colors = cmap(0.7), linestyles = ["--"])
 
-            bandwidth_loose = 0.05 if nJ == 2 else 0.03
-            threshold_loose = 1.4 if nJ == 2 else 1.6
+            bandwidth_loose = 0.04 if nJ == 2 else 0.04
+            threshold_loose = 0.7 if nJ == 2 else 3.0
 
             # then for the *loose* ones
             x_loose_smoothed, y_loose_smoothed, z_loose_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "loose_{}jet_binned_sig".format(nJ), yquant = "loose_{}jet_inv_JS_bkg".format(nJ), nJ = nJ,
                                                                                                 bandwidth = bandwidth_loose, threshold = threshold_loose)
             ax.contour(x_loose_smoothed, y_loose_smoothed, z_loose_smoothed, levels = 1, colors = cmap(0.7), linestyles = [":"])
 
-            bandwidth_combined = 0.03 if nJ == 2 else 0.04
-            threshold_combined = 1.4 if nJ == 2 else 1.6
+            bandwidth_combined = 0.06 if nJ == 2 else 0.04
+            threshold_combined = 2.0 if nJ == 2 else 3.0
                 
             # and finally for their combination
             x_combined_smoothed, y_combined_smoothed, z_combined_smoothed = get_smoothed_pareto_frontier(anadicts, xquant = "combined_{}jet_binned_sig".format(nJ), yquant = "tight_{}jet_inv_JS_bkg".format(nJ), nJ = nJ,
@@ -802,17 +932,20 @@ class PerformancePlotter:
             for prefix, label, mc, mfc, mec in zip(["original_", "optimized_"], ["", "(optimised)"], ["darkgrey", "white"], ["darkgrey", "white"], ["darkgrey", "darkgrey"]):
                 ax.scatter(anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)], 
                            anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                           label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec)
+                           label = "cut-based analysis" + label, marker = 'o', color = mc, facecolors = mfc, edgecolors = mec,
+                           zorder = 10)
             
                 ax.scatter(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)],
                            anadicts[0][prefix + "low_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                           label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec)
+                           label = "cut-based analysis" + label, marker = '^', color = mc, facecolors = mfc, edgecolors = mec,
+                           zorder = 10)
             
                 combined_sig = np.sqrt(anadicts[0][prefix + "low_MET_{}jet_binned_sig".format(nJ)] ** 2 + anadicts[0][prefix + "high_MET_{}jet_binned_sig".format(nJ)] ** 2)
             
                 ax.scatter(combined_sig,
                            anadicts[0][prefix + "high_MET_{}jet_inv_JS_bkg".format(nJ)], 
-                           label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec)
+                           label = "cut-based analysis" + label, marker = 's', color = mc, facecolors = mfc, edgecolors = mec,
+                           zorder = 10)
 
             if show_colorbar:
                 cb_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
@@ -950,7 +1083,7 @@ class PerformancePlotter:
 
     # combine the passed plots and save them
     @staticmethod
-    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False, cmap = plt.cm.Blues):
+    def combine_hists(perfdicts, hist_data, outpath, colorquant, plot_title, overlays = [], epilog = None, xlabel = "", ylabel = "", smoothing = False, cmap = plt.cm.Blues, cb_label = r"$\lambda$"):
 
         # find the proper normalization of the color map
         if len(perfdicts) > 0:
@@ -1022,8 +1155,53 @@ class PerformancePlotter:
         cb = mpl.colorbar.ColorbarBase(cb_ax, cmap = cmap,
                                        norm = norm,
                                        orientation = 'vertical')
-        cb.set_label(r'$\lambda$')
+        cb.set_label(cb_label)
 
         plt.subplots_adjust(left = 0.13, right = 0.84, bottom = 0.1, top = 0.97)
         fig.savefig(outpath)
         plt.close()
+
+    @staticmethod
+    def combine_hists_simple(hist_data, outpath, colors, labels, overlays = [], epilog = None, xlabel = "", ylabel = ""):
+        bin_values = []
+        bin_centers = []
+
+        for cur_hist in hist_data:
+            cur_bin_values = cur_hist[0]
+            edges = cur_hist[1]
+
+            low_edges = edges[:-1]
+            high_edges = edges[1:]
+            cur_centers = 0.5 * (low_edges + high_edges)
+
+            bin_centers.append(cur_centers)
+            bin_values.append(cur_bin_values)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        fig.subplots_adjust(left = 0.15)
+
+        # plot the combined histograms
+        for cur_bin_centers, cur_bin_values, cur_color, cur_label in zip(bin_centers, bin_values, colors, labels):
+            ax.plot(cur_bin_centers, cur_bin_values, color = cur_color, linewidth = 2.0, label = cur_label)
+
+        # plot the overlays
+        for (x, y, opts) in overlays:
+            ax.plot(x, y, **opts)
+            leg = ax.legend(loc = 'upper center', bbox_to_anchor = (0.74, 1.0), ncol = 1, framealpha = 0.0)
+            for t in leg.texts:
+                t.set_multialignment('left')
+            leg.get_frame().set_linewidth(0.0)
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.margins(0.0)
+        ax.set_ylim((0, 2.5 * ax.get_ylim()[1])) # add some more margin on top
+
+        if epilog:
+            epilog(ax)
+        
+        plt.subplots_adjust(left = 0.16, right = 0.97, bottom = 0.1, top = 0.97)
+        fig.savefig(outpath)
+        plt.close()
+
