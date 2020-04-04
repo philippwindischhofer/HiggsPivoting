@@ -88,7 +88,7 @@ class AdversarialTrainer(Trainer):
 
         # concatenate the individual components
         data_combined = [np.concatenate([cur_sig_sampled, cur_bkg_sampled], axis = 0) for cur_sig_sampled, cur_bkg_sampled in zip(sig_sampled, bkg_sampled)]
-        weights_combined = np.concatenate([sig_weights, bkg_weights], axis = 0) * 100
+        weights_combined = np.concatenate([sig_weights, bkg_weights], axis = 0) * size / 10.0
 
         return data_combined, weights_combined
 
@@ -307,10 +307,13 @@ class AdversarialTrainer(Trainer):
             print("dynamic batch size = " + str(len(weights_batch)))
             print("SOW per batch = " + str(np.sum(weights_batch)))
 
+            stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
+            stat_dict_cur["batch"] = batch
+            env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
+            print("stat_dict = " + str(stat_dict_cur))
+
             if self.verbose_statistics and not batch % int(self.training_pars["statistics_interval"]):
                 # callbacks to keep track of the parameter evolution during training
-                stat_dict_cur = env.get_model_statistics(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
-
                 (data_batch_statistics, nuisances_batch_statistics, labels_batch_statistics, auxdata_batch_statistics), weights_batch_statistics = self.sample_from_components([data_bkg, nuisances_bkg, labels_bkg, auxdat_bkg], weights_bkg,
                                                                                                                                                                                batch_size = 100000, sampling_pars = bkg_sampling_pars)
 
@@ -320,16 +323,11 @@ class AdversarialTrainer(Trainer):
 
                 MI_dict_cur = env.get_MI_estimates(data = data_batch_statistics, aux_data = auxdata_batch_statistics, nuisances = nuisances_batch_statistics, weights = weights_batch_statistics)
                 stat_dict_cur.update(MI_dict_cur)
-
-                stat_dict_cur["batch"] = batch
-            
-                env.dump_loss_information(data = data_batch, nuisances = nuisances_batch, labels = labels_batch, weights = weights_batch, auxdat_step = auxdata_batch)
-                print("stat_dict = " + str(stat_dict_cur))
-
-                for key, val in stat_dict_cur.items():
-                    if not key in self.statistics_dict:
-                        self.statistics_dict[key] = []
-                    self.statistics_dict[key].append(val)
+                        
+            for key, val in stat_dict_cur.items():
+                if not key in self.statistics_dict:
+                    self.statistics_dict[key] = []
+                self.statistics_dict[key].append(val)
 
     def save_training_statistics(self, filepath):
         with open(filepath, "wb") as outfile:
