@@ -1,0 +1,210 @@
+import os
+import numpy as np
+from configparser import ConfigParser
+
+import tensorflow as tf
+
+from base.PCAWhiteningPreprocessor import PCAWhiteningPreprocessor
+
+# possible concrete models that are supported
+from models.GMMAdversary import GMMAdversary
+from models.MINEAdversary import MINEAdversary
+from models.DisCoAdversary import DisCoAdversary
+from models.SimpleClassifier import SimpleClassifier
+from models.SimpleProbabilisticClassifier import SimpleProbabilisticClassifier
+
+class AdversarialModel:
+
+    def __init__(self, classifier_model, adversary_model, global_pars):
+        self.classifier_model = classifier_model
+        self.adversary_model = adversary_model
+
+        self.pre = None
+        self.pre_nuisance = None
+
+        self.global_pars = global_pars
+
+        self.lambda_final = float(self.global_pars["lambda"])
+        self.graph = tf.Graph()
+
+        self.sess = self.sess = tf.Session(graph = self.graph, config = tf.ConfigProto(intra_op_parallelism_threads = 8, 
+                                                                                       inter_op_parallelism_threads = 8,
+                                                                                       allow_soft_placement = True, 
+                                                                                       device_count = {'CPU': 1}))
+
+    @classmethod
+    def from_config(cls, config_dir):
+        gconfig = ConfigParser()
+        gconfig.read(os.path.join(config_dir, "meta.conf"))
+
+        global_pars = gconfig["AdversarialEnvironment"]
+        classifier_model_type = global_pars["classifier_model"]
+        adversary_model_type = global_pars["adversary_model"]
+        classifier_model = eval(classifier_model_type)
+        adversary_model = eval(adversary_model_type)
+
+        classifier_hyperpars = gconfig[classifier_model_type]
+        adversary_hyperpars = gconfig[adversary_model_type]
+
+        mod = classifier_model("class", hyperpars = classifier_hyperpars)
+        adv = adversary_model("adv", hyperpars = adversary_hyperpars)
+        obj = cls(mod, adv, global_pars)
+
+        # then re-build the graph using these settings
+        obj.build()
+
+        # finally, load back the weights and preprocessors, if available
+        obj.load(config_dir)
+        return obj
+
+    def build(self):
+        
+        num_inputs = int(float(self.global_pars["num_inputs"]))
+        num_nuisances = int(float(self.global_pars["num_nuisances"]))
+
+        with self.graph.as_default():
+            self.pre = PCAWhiteningPreprocessor(num_inputs)
+            self.pre_nuisance = PCAWhiteningPreprocessor(num_nuisances)
+            
+            # prepare the inputs
+            self.labels_in = tf.placeholder(tf.int32, [None, ], name = 'labels_in')
+            self.data_in = tf.placeholder(tf.float32, [None, num_inputs], name = 'data_in')
+            self.nuisances_in = tf.placeholder(tf.float32, [None, num_nuisances], name = 'nuisances_in')
+            self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
+            self.is_training = tf.placeholder(tf.bool, name = 'is_training')
+            self.lambdaval = tf.placeholder(tf.float32, [1], name = 'lambdaval')
+
+            self.classifier_lr = tf.placeholder(tf.float32, [], name = "classifier_lr")
+            self.adversary_lr = tf.placeholder(tf.float32, [], name = "adversary_lr")
+                        
+            self.labels_one_hot = tf.one_hot(self.labels_in, depth = 2)
+            self.weights_bkg = tf.where(tf.math.equal(self.labels_in, 0), self.weights_in, tf.zeros_like(self.weights_in))
+
+            # set up the classifier
+            self.classifier_out, self.classifier_vars = self.classifier_model.build_model(self.data_in, is_training = self.is_training)
+            self.classification_loss = self.classifier_model.build_loss(self.classifier_out, self.labels_one_hot, weights = self.weights_in)
+
+            self.classifier_out_single = tf.expand_dims(self.classifier_out[:,0], axis = 1)
+
+            # set up the adversary
+            self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_bkg, is_training = self.is_training)
+
+            # total loss
+            self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
+
+            # set up the optimisers
+            self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = self.classifier_lr, 
+                                                                      beta1 = float(self.global_pars["adam_clf_beta1"]), 
+                                                                      beta2 = float(self.global_pars["adam_clf_beta2"]), 
+                                                                      epsilon = float(self.global_pars["adam_clf_eps"])).minimize(self.classification_loss, var_list = self.classifier_vars)
+
+            self.train_adversary_standalone = tf.train.AdamOptimizer(learning_rate = self.adversary_lr,
+                                                                     beta1 = float(self.global_pars["adam_adv_beta1"]), 
+                                                                     beta2 = float(self.global_pars["adam_adv_beta2"]), 
+                                                                     epsilon = float(self.global_pars["adam_adv_eps"])).minimize(self.adv_loss, var_list = self.adversary_vars)
+
+            self.train_classifier_adv = tf.train.AdamOptimizer(learning_rate = self.classifier_lr, 
+                                                               beta1 = float(self.global_pars["adam_clf_adv_beta1"]), 
+                                                               beta2 = float(self.global_pars["adam_clf_adv_beta2"]), 
+                                                               epsilon = float(self.global_pars["adam_clf_adv_eps"])).minimize(self.total_loss, var_list = self.classifier_vars)
+
+            self.saver = tf.train.Saver(var_list = self.classifier_vars + self.adversary_vars)
+
+    def init(self, data_train, data_nuisance):
+        self.pre.setup(data_train)
+        self.pre_nuisance.setup(data_nuisance)
+
+        with self.graph.as_default():
+            self.sess.run(tf.global_variables_initializer())
+
+    def _lr_scheduler(self, lr_start, lr_decay, batchnum):
+        return lr_start * np.exp(-lr_decay * batchnum)
+
+    def train_step(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
+        data_pre = self.pre.process(data_step)
+        nuisances_pre = self.pre_nuisance.process(nuisances_step)
+        weights_step = weights_step.flatten()
+
+        classifier_lr = self._lr_scheduler(lr_start = float(self.global_pars["adam_clf_adv_lr"]),
+                                           lr_decay = float(self.global_pars["adam_clf_adv_lr_decay"]),
+                                           batchnum = batchnum)
+
+        with self.graph.as_default():
+            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True, self.classifier_lr: classifier_lr})
+
+    def train_classifier(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
+        data_pre = self.pre.process(data_step)
+        weights_step = weights_step.flatten()
+
+        # determine the current learning rate as per the scheduling
+        classifier_lr = self._lr_scheduler(lr_start = float(self.global_pars["adam_clf_lr"]),
+                                          lr_decay = float(self.global_pars["adam_clf_lr_decay"]),
+                                          batchnum = batchnum)
+
+        with self.graph.as_default():
+            self.sess.run(self.train_classifier_standalone, feed_dict = {self.data_in: data_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.is_training: True, self.classifier_lr: classifier_lr})
+
+    def train_adversary(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
+        data_pre = self.pre.process(data_step)
+        nuisances_pre = self.pre_nuisance.process(nuisances_step)
+        weights_step = weights_step.flatten()
+
+        # determine the current learning rate as per the scheduling
+        adversary_lr = self._lr_scheduler(lr_start = float(self.global_pars["adam_adv_lr"]),
+                                          lr_decay = float(self.global_pars["adam_adv_lr_decay"]),
+                                          batchnum = batchnum)
+
+        with self.graph.as_default():
+            self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.is_training: True, self.adversary_lr: adversary_lr})
+
+    def predict(self, data, pred_size = 18):
+        data_pre = self.pre.process(data)
+        datlen = len(data_pre)
+
+        print("datlen = {}".format(datlen))
+
+        chunks = np.split(data_pre, datlen / pred_size, axis = 0)
+        retvals = []
+        for chunk in chunks:
+            retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False})
+            retvals.append(retval_cur)
+
+        return np.concatenate(retvals, axis = 0)
+
+    def load(self, indir):
+        
+        # load the weights
+        with self.graph.as_default():
+            try:
+                self.saver.restore(self.sess, os.path.join(indir, "model.dat"))
+                print("weights successfully loaded from " + indir)
+            except:
+                print("no weights found, continuing with uninitialized graph!")
+
+        # load the preprocessors
+        try:
+            self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(indir, "pre.pkl"))
+            self.pre_nuisance = PCAWhiteningPreprocessor.from_file(indir, "pre_nuis.pkl")
+            print("preprocessors successfully loaded from " + indir)
+        except FileNotFoundError:
+            print("no preprocessors found")
+
+    def save(self, outdir):
+        
+        # save the weights in the graph
+        with self.graph.as_default():
+            self.saver.save(self.sess, os.path.join(outdir, "model.dat"))
+
+        # save the preprocessors
+        self.pre.save(os.path.join(outdir, "pre.pkl"))
+        self.pre_nuisance.save(os.path.join(outdir, "pre_nuis.pkl"))
+
+        config_path = os.path.join(outdir, "meta.conf")
+        gconfig = ConfigParser()
+        gconfig.read(config_path) # start from the current version of the config file and add changes on top
+        gconfig["AdversarialEnvironment"] = self.global_pars
+        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
+        gconfig[self.adversary_model.__class__.__name__] = self.adversary_model.hyperpars
+        with open(config_path, 'w') as metafile:
+            gconfig.write(metafile)
+        
