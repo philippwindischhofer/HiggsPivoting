@@ -132,7 +132,7 @@ class AdversarialModel:
         with self.graph.as_default():
             self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True, self.classifier_lr: classifier_lr})
 
-    def train_classifier(self, data_step, nuisances_step, labels_step, weights_step, batchnum):
+    def train_classifier(self, data_step, labels_step, weights_step, batchnum):
         data_pre = self.pre.process(data_step)
         weights_step = weights_step.flatten()
 
@@ -157,13 +157,32 @@ class AdversarialModel:
         with self.graph.as_default():
             self.sess.run(self.train_adversary_standalone, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.is_training: True, self.adversary_lr: adversary_lr})
 
+    def evaluate_classifier_loss(self, data, labels, weights_step):
+        data_pre = self.pre.process(data)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            classifier_lossval = self.sess.run(self.classification_loss, feed_dict = {self.data_in: data_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
+
+        return classifier_lossval
+
+    def evaluate_adversary_loss(self, data, nuisances, labels, weights_step):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            adv_loss = self.sess.run(self.adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
+
+        return adv_loss
+
     def predict(self, data, pred_size = 18):
         data_pre = self.pre.process(data)
         datlen = len(data_pre)
 
         print("datlen = {}".format(datlen))
 
-        chunks = np.split(data_pre, datlen / pred_size, axis = 0)
+        chunks = np.array_split(data_pre, datlen / pred_size, axis = 0)
         retvals = []
         for chunk in chunks:
             retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False})

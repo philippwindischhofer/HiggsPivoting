@@ -21,12 +21,20 @@ class AdversarialModelTrainer:
         
         self.model.init(data_all, nuis_all)
 
-        sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = 10)
-        sampled_bkg, weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = 10)
+        sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = 500)
+        sampled_bkg, weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = 500)
 
         (data_batch, nuis_batch, labels_batch), weights_batch = self._combine_samples(sampled_sig, weights_sig, sampled_bkg, weights_bkg)
 
-        self.model.train_adversary(data_batch, nuis_batch, labels_batch, weights_batch, batchnum = 1)
+        for step in range(100):
+            self.model.train_adversary(data_batch, nuis_batch, labels_batch, weights_batch, batchnum = 1)
+            adv_loss = self.model.evaluate_adversary_loss(data_batch, nuis_batch, labels_batch, weights_batch)
+            print("adv loss = {}".format(adv_loss))
+
+        for step in range(100):
+            self.model.train_classifier(data_batch, labels_batch, weights_batch, batchnum = 1)
+            clf_loss = self.model.evaluate_classifier_loss(data_batch, labels_batch, weights_batch)
+            print("clf loss = {}".format(clf_loss))
 
         res = self.model.predict(data_batch)
         print(res)
