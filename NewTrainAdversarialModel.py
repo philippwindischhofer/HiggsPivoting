@@ -37,41 +37,16 @@ def TrainAdversarialModel(infile_path, outdir, verbose_statistics = False):
     bkg_data_val = [extract_shuffled_slice(cur_sample, slice_def = validation_slice) for cur_sample in bkg_data]
 
     # test a few things
-    testpath = "/data/atlassmallfiles/users/windischhofer/HiggsPivotingPaper/Hbb_adv_madgraph_2020_04_04_new_commissioning"
-
-    tconf = TrainingConfig.from_file(testpath)
+    tconf = TrainingConfig.from_file(outdir)
 
     from models.ModelCollection import ModelCollection
-    mcoll = ModelCollection.from_config(testpath)
+    mcoll = ModelCollection.from_config(outdir)
 
     from training.ModelCollectionTrainer import ModelCollectionTrainer
     from training.BatchSamplers import sample_from_TrainingSamples
     trainer = ModelCollectionTrainer(mcoll, batch_sampler = sample_from_TrainingSamples, 
                                      training_pars = tconf.training_pars)
     trainer.train(sig_data_train, bkg_data_train, sig_data_val, bkg_data_val)
-
-    # from models.AdversarialModel import AdversarialModel
-    # mod = AdversarialModel.from_config(testpath)
-
-    # from training.AdversarialModelTrainer import AdversarialModelTrainer
-
-    # trainer = AdversarialModelTrainer(mod, batch_sampler = sample_from_TrainingSamples)
-    # trainer.train(sig_data_train, bkg_data_train, sig_data_val, bkg_data_val)
-
-    # from models.ModelCollection import ModelCollection
-    # mcoll = ModelCollection([mod])
-
-    # pred = mcoll.predict(sig_data_train[0][0:20])
-    # print(pred)
-
-    # # test a few things
-    # testpath_2 = "/data/atlassmallfiles/users/windischhofer/HiggsPivotingPaper/Hbb_adv_madgraph_2020_04_04_new_commissioning"
-    # from models.AdversarialModel import AdversarialModel
-    # mod_2 = AdversarialModel.from_config(testpath_2)
-
-    # trainer_2 = AdversarialModelTrainer(mod_2, batch_sampler = sample_from_TrainingSamples)
-    # trainer_2.train(sig_data_train, bkg_data_train, sig_data_val, bkg_data_val)
-
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "train adversarial networks")

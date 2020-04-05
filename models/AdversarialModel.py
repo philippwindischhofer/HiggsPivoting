@@ -201,7 +201,17 @@ class AdversarialModel:
 
         return adv_loss
 
-    def predict(self, data, pred_size = 18):
+    def evaluate_loss(self, data, nuisances, labels, weights_step):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            total_loss = self.sess.run(self.total_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True})
+
+        return total_loss
+
+    def predict(self, data, pred_size = 256):
         data_pre = self.pre.process(data)
         datlen = len(data_pre)
 
@@ -252,3 +262,18 @@ class AdversarialModel:
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
         
+
+    def create_paramdict(self):
+        paramdict = {}
+
+        for key, val in self.global_pars.items():
+            paramdict[key] = val
+
+        for key, val in self.classifier_model.hyperpars.items():
+            paramdict[self.classifier_model.name + "_" + key] = val
+
+        for key, val in self.adversary_model.hyperpars.items():
+            paramdict[self.adversary_model.name + "_" + key] = val
+
+        return paramdict
+

@@ -16,7 +16,7 @@ def create_job_script(model_dir, script_dir, training_data_path, rootdir, use_te
         outfile.write("source " + os.path.join(rootdir, "setup_env.sh") + "\n")
 
         # first, generate the MC templates
-        outfile.write("python " + os.path.join(rootdir, "ExportAnalysisRegionHistograms.py") + " --data " + training_data_path + " --model_dir " + model_dir + " --out_dir " + model_dir + (" --use_test " if use_test else "") + " > " + os.path.join(model_dir, "fitjob.log") + "\n")
+        outfile.write("python " + os.path.join(rootdir, "NewExportAnalysisRegionHistograms.py") + " --data " + training_data_path + " --model_dir " + model_dir + " --out_dir " + model_dir + (" --use_test " if use_test else "") + " > " + os.path.join(model_dir, "fitjob.log") + "\n")
         outfile.write("deactivate\n")
         
     return script_path
@@ -26,7 +26,7 @@ def RunPrepareHistFitterCampaign(model_dirs, **kwargs):
     
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path, rootdir = os.environ["ROOTDIR"], **kwargs)
-        TrainingConfig.submitter.submit_job(job_script)
+        #TrainingConfig.submitter.submit_job(job_script)
 
 if __name__ == "__main__":
     if not os.environ["ROOTDIR"]:
