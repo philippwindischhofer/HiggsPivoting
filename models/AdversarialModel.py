@@ -13,9 +13,14 @@ from models.DisCoAdversary import DisCoAdversary
 from models.SimpleClassifier import SimpleClassifier
 from models.SimpleProbabilisticClassifier import SimpleProbabilisticClassifier
 
+# available data formatters that are supported
+from training.DataFormatters import only_2j, only_3j
+
+from base.Configs import TrainingConfig
+
 class AdversarialModel:
 
-    def __init__(self, classifier_model, adversary_model, global_pars):
+    def __init__(self, classifier_model, adversary_model, global_pars, path = None):
         self.classifier_model = classifier_model
         self.adversary_model = adversary_model
 
@@ -23,32 +28,52 @@ class AdversarialModel:
         self.pre_nuisance = None
 
         self.global_pars = global_pars
+        self.data_formatter = eval(global_pars["data_formatter"])()
 
         self.lambda_final = float(self.global_pars["lambda"])
         self.graph = tf.Graph()
 
-        self.sess = self.sess = tf.Session(graph = self.graph, config = tf.ConfigProto(intra_op_parallelism_threads = 8, 
-                                                                                       inter_op_parallelism_threads = 8,
-                                                                                       allow_soft_placement = True, 
-                                                                                       device_count = {'CPU': 1}))
+        self.path = path
+        self.sess = self.sess = tf.Session(graph = self.graph, 
+                                           config = TrainingConfig.session_config)
+
+    @staticmethod
+    def extract_config(model_name, config):
+        gconfig = ConfigParser()
+
+        main_config = config[model_name]
+        gconfig["AdversarialModel"] = main_config
+
+        classifier_model_name = main_config["classifier_model"]
+        adversary_model_name = main_config["adversary_model"]
+
+        gconfig[classifier_model_name] = config[classifier_model_name]
+        gconfig[adversary_model_name] = config[adversary_model_name]
+
+        return gconfig
 
     @classmethod
     def from_config(cls, config_dir):
         gconfig = ConfigParser()
         gconfig.read(os.path.join(config_dir, "meta.conf"))
 
-        global_pars = gconfig["AdversarialEnvironment"]
-        classifier_model_type = global_pars["classifier_model"]
-        adversary_model_type = global_pars["adversary_model"]
+        global_pars = gconfig["AdversarialModel"]
+
+        classifier_model_name = global_pars["classifier_model"]
+        adversary_model_name = global_pars["adversary_model"]
+
+        classifier_model_type = gconfig[classifier_model_name]["model_type"]
+        adversary_model_type = gconfig[adversary_model_name]["model_type"]
+
         classifier_model = eval(classifier_model_type)
         adversary_model = eval(adversary_model_type)
 
-        classifier_hyperpars = gconfig[classifier_model_type]
-        adversary_hyperpars = gconfig[adversary_model_type]
+        classifier_hyperpars = gconfig[global_pars["classifier_model"]]
+        adversary_hyperpars = gconfig[global_pars["adversary_model"]]
 
-        mod = classifier_model("class", hyperpars = classifier_hyperpars)
-        adv = adversary_model("adv", hyperpars = adversary_hyperpars)
-        obj = cls(mod, adv, global_pars)
+        mod = classifier_model(classifier_model_name, hyperpars = classifier_hyperpars)
+        adv = adversary_model(adversary_model_name, hyperpars = adversary_hyperpars)
+        obj = cls(mod, adv, global_pars, path = config_dir)
 
         # then re-build the graph using these settings
         obj.build()
@@ -182,7 +207,7 @@ class AdversarialModel:
 
         print("datlen = {}".format(datlen))
 
-        chunks = np.array_split(data_pre, datlen / pred_size, axis = 0)
+        chunks = np.array_split(data_pre, max(datlen / pred_size, 1), axis = 0)
         retvals = []
         for chunk in chunks:
             retval_cur = self.sess.run(self.classifier_out, feed_dict = {self.data_in: chunk, self.is_training: False})
@@ -203,7 +228,7 @@ class AdversarialModel:
         # load the preprocessors
         try:
             self.pre = PCAWhiteningPreprocessor.from_file(os.path.join(indir, "pre.pkl"))
-            self.pre_nuisance = PCAWhiteningPreprocessor.from_file(indir, "pre_nuis.pkl")
+            self.pre_nuisance = PCAWhiteningPreprocessor.from_file(os.path.join(indir, "pre_nuis.pkl"))
             print("preprocessors successfully loaded from " + indir)
         except FileNotFoundError:
             print("no preprocessors found")
@@ -221,9 +246,9 @@ class AdversarialModel:
         config_path = os.path.join(outdir, "meta.conf")
         gconfig = ConfigParser()
         gconfig.read(config_path) # start from the current version of the config file and add changes on top
-        gconfig["AdversarialEnvironment"] = self.global_pars
-        gconfig[self.classifier_model.__class__.__name__] = self.classifier_model.hyperpars
-        gconfig[self.adversary_model.__class__.__name__] = self.adversary_model.hyperpars
+        gconfig["AdversarialModel"] = self.global_pars
+        gconfig[self.classifier_model.name] = self.classifier_model.hyperpars
+        gconfig[self.adversary_model.name] = self.adversary_model.hyperpars
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
         

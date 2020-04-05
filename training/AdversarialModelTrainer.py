@@ -3,41 +3,63 @@ import training.BatchSamplers as BatchSamplers
 
 class AdversarialModelTrainer:
 
-    def __init__(self, model, data_formatter, batch_sampler):
+    def __init__(self, model, batch_sampler, training_pars):
         self.model = model
-        self.data_formatter = data_formatter
+        self.data_formatter = self.model.data_formatter
         self.batch_sampler = batch_sampler
+        self.training_pars = training_pars
 
     def train(self, trainsamples_sig, trainsamples_bkg, valsamples_sig, valsamples_bkg):
         
         # first, format the training and validation datasets in the way required by the model
-        trainsamples_sig_formatted = [self.data_formatter(cur_sample, is_signal = True) for cur_sample in trainsamples_sig]
-        trainsamples_bkg_formatted = [self.data_formatter(cur_sample, is_signal = False) for cur_sample in trainsamples_bkg]
+        trainsamples_sig_formatted = [self.data_formatter.format_as_TrainingSample(cur_sample, is_signal = True) for cur_sample in trainsamples_sig]
+        trainsamples_bkg_formatted = [self.data_formatter.format_as_TrainingSample(cur_sample, is_signal = False) for cur_sample in trainsamples_bkg]
 
-        valsamples_sig_formatted = [self.data_formatter(cur_sample, is_signal = True) for cur_sample in valsamples_sig]
-        valsamples_bkg_formatted = [self.data_formatter(cur_sample, is_signal = False) for cur_sample in valsamples_bkg]
+        valsamples_sig_formatted = [self.data_formatter.format_as_TrainingSample(cur_sample, is_signal = True) for cur_sample in valsamples_sig]
+        valsamples_bkg_formatted = [self.data_formatter.format_as_TrainingSample(cur_sample, is_signal = False) for cur_sample in valsamples_bkg]
 
         (data_all, nuis_all, labels_all), weights_all = BatchSamplers.all(trainsamples_sig_formatted + trainsamples_bkg_formatted)
         
         self.model.init(data_all, nuis_all)
 
-        sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = 500)
-        sampled_bkg, weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = 500)
+        batchsize = self.training_pars["batchsize"]
 
-        (data_batch, nuis_batch, labels_batch), weights_batch = self._combine_samples(sampled_sig, weights_sig, sampled_bkg, weights_bkg)
+        # pre-train the classifier
+        clf_pretrain_batches = int(self.training_pars["classifier_pretrain_batches"])
+        print("pretraining the classifier for {} batches".format(clf_pretrain_batches))
+        for batch in range(clf_pretrain_batches):
+            sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = batchsize // 2)
+            sampled_bkg, weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize // 2)
+            (data_batch, nuis_batch, labels_batch), weights_batch = self._combine_samples(sampled_sig, weights_sig, sampled_bkg, weights_bkg)
 
-        for step in range(100):
-            self.model.train_adversary(data_batch, nuis_batch, labels_batch, weights_batch, batchnum = 1)
-            adv_loss = self.model.evaluate_adversary_loss(data_batch, nuis_batch, labels_batch, weights_batch)
-            print("adv loss = {}".format(adv_loss))
+            self.model.train_classifier(data_batch, labels_batch, weights_batch, batch)
 
-        for step in range(100):
-            self.model.train_classifier(data_batch, labels_batch, weights_batch, batchnum = 1)
-            clf_loss = self.model.evaluate_classifier_loss(data_batch, labels_batch, weights_batch)
-            print("clf loss = {}".format(clf_loss))
+        # pre-train the adversary
+        adv_pretrain_batches = int(self.training_pars["adversary_pretrain_batches"])
+        print("pretraining the adversarial network for {} batches".format(adv_pretrain_batches))
+        for batch in range(adv_pretrain_batches):
+            (data_batch_bkg, nuis_batch_bkg, labels_batch_bkg), weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize)
 
-        res = self.model.predict(data_batch)
-        print(res)
+            self.model.train_adversary(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg, batch)
+
+        # start the actual adversarial training
+        adv_training_batches = int(self.training_pars["training_batches"])
+        print("performing adversarial training for {} batches".format(adv_training_batches))
+        for batch in range(adv_training_batches):
+            
+            # update adversary
+            for adv_update in range(5):
+                (data_batch_bkg, nuis_batch_bkg, labels_batch_bkg), weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize)
+                self.model.train_adversary(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg, batch)
+
+            # update classifier
+            sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = batchsize // 2)
+            sampled_bkg, weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize // 2)
+            (data_batch, nuis_batch, labels_batch), weights_batch = self._combine_samples(sampled_sig, weights_sig, sampled_bkg, weights_bkg)
+
+            self.model.train_step(data_batch, nuis_batch, labels_batch, weights_batch, batch)
+
+        self.model.save(self.model.path)
 
     def _combine_samples(self, samples_sig, weights_sig, samples_bkg, weights_bkg):
 

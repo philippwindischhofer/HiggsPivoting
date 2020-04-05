@@ -18,17 +18,30 @@ class TrainingSample:
             
         return cls(cur_data, cur_nuis, cur_weights, cur_labels)
 
-def only_nJ(data, nJ, is_signal = False):
-    data_nJ = _extract_nJ(data, nJ)
-    return TrainingSample.fromTable(data_nJ, is_signal)
+class only_nJ:
+    
+    def __init__(self, nJ):
+        self.nJ = nJ
 
-def only_2j(data, is_signal = False):
-    return only_nJ(data, nJ = 2, is_signal = is_signal)
+    def _extract_nJ(self, sample, nJ):
+        sample_nJ = sample.loc[sample["nJ"] == self.nJ]
+        return sample_nJ
 
-def only_3j(data, is_signal = False):
-    return only_nJ(data, nJ = 3, is_signal = is_signal)
+    def format_as_TrainingSample(self, data, is_signal = False):
+        data_nJ = self._extract_nJ(data, self.nJ)
+        return TrainingSample.fromTable(data_nJ, is_signal)
 
-def _extract_nJ(sample, nJ):
-    sample_nJ = sample.loc[sample["nJ"] == nJ]
-    return sample_nJ
+    def get_formatted_indices(self, data):
+        return self._extract_nJ(data, self.nJ).index
+
+class only_2j(only_nJ):
+
+    def __init__(self):
+        super().__init__(nJ = 2)
+
+class only_3j(only_nJ):
+
+    def __init__(self):
+        super().__init__(nJ = 3)
+
 
