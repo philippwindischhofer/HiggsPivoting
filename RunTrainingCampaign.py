@@ -16,7 +16,7 @@ def create_job_script(training_data_path, run_dir, script_dir, rootdir, statisti
         outfile.write("source " + os.path.join(rootdir, "bin", "activate") + "\n")
         outfile.write("source " + os.path.join(rootdir, "setup_env.sh") + "\n")
 
-        outfile.write("python " + os.path.join(rootdir, "TrainAdversarialModel.py") + " --data " + training_data_path + " --outdir " + run_dir + (" --statistics" if statistics else "") + " | tee " + os.path.join(run_dir, "job.log\n"))
+        outfile.write("python " + os.path.join(rootdir, "NewTrainAdversarialModel.py") + " --data " + training_data_path + " --outdir " + run_dir + (" --statistics" if statistics else "") + " | tee " + os.path.join(run_dir, "job.log\n"))
 
         outfile.write("deactivate\n")
 

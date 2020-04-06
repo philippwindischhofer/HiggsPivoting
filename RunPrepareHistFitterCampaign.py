@@ -26,7 +26,7 @@ def RunPrepareHistFitterCampaign(model_dirs, **kwargs):
     
     for model_dir in model_dirs:
         job_script = create_job_script(model_dir, script_dir = model_dir, training_data_path = training_data_path, rootdir = os.environ["ROOTDIR"], **kwargs)
-        #TrainingConfig.submitter.submit_job(job_script)
+        TrainingConfig.submitter.submit_job(job_script)
 
 if __name__ == "__main__":
     if not os.environ["ROOTDIR"]:
