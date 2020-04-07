@@ -18,6 +18,8 @@ class ClassifierBasedCategoryFiller:
     @staticmethod
     def create_classifier_category(mcoll, process_data, process_names, sig_process_data, classifier_sigeff_range = (1.0, 0.0), nJ = 2):
         
+        sig_process_data = [cur_data.loc[cur_data["nJ"] == nJ] for cur_data in sig_process_data] # make sure to base the selection only on signal events with the correct number of jets
+
         # first, determine the cuts on the classifier based on the asked-for signal efficiency
         classifier_range = ClassifierBasedCategoryFiller._sigeff_range_to_score_range(mcoll, sig_process_data, sigeff_range = classifier_sigeff_range)
         print("translated signal efficiency range ({}, {}) to classifier output range ({}, {})".format(classifier_sigeff_range[0], classifier_sigeff_range[1], 
@@ -40,5 +42,7 @@ class ClassifierBasedCategoryFiller:
             
             # fill the category
             retcat.add_events(events = passed.data, weights = passed.weights, process = cur_process_name, event_variables = TrainingConfig.training_branches)
+
+            print("filled {} events from process '{}'".format(len(passed.data), cur_process_name))
 
         return retcat
