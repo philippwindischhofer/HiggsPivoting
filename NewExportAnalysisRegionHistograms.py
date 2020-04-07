@@ -85,7 +85,8 @@ def ExportAnalysisRegionHistograms(infile_path, model_dir, out_dir):
         for cut_end, cut_start, cut_label in zip(cuts[nJ][0:-1], cuts[nJ][1:], cut_labels):
             print("exporting {}J region with sigeff range {} - {}".format(nJ, cut_start, cut_end))
 
-            cur_cat = ClassifierBasedCategoryFiller.create_classifier_category(mcoll, process_data = all_processes, process_names = all_process_names, sig_process_data = sig_data_test, 
+            cur_cat = ClassifierBasedCategoryFiller.create_classifier_category(mcoll, sig_process_data = sig_data_test, sig_process_names = sig_sample_names,
+                                                                               bkg_process_data = bkg_data_test, bkg_process_names = bkg_sample_names,
                                                                                classifier_sigeff_range = (cut_start, cut_end), nJ = nJ)
             
             cur_cat.export_ROOT_histogram(binning = SR_binning, processes = all_process_names, var_names = "mBB",
