@@ -20,9 +20,10 @@ from base.Configs import TrainingConfig
 
 class AdversarialModel:
 
-    def __init__(self, classifier_model, adversary_model, global_pars, path = None):
+    def __init__(self, name, classifier_model, adversary_model, global_pars, path = None, training_config = {}):
         self.classifier_model = classifier_model
         self.adversary_model = adversary_model
+        self.training_config = training_config
 
         self.pre = None
         self.pre_nuisance = None
@@ -34,8 +35,11 @@ class AdversarialModel:
         self.graph = tf.Graph()
 
         self.path = path
+        self.name = name
         self.sess = self.sess = tf.Session(graph = self.graph, 
                                            config = TrainingConfig.session_config)
+
+        self.private_DisCo_adversary = DisCoAdversary("private_DisCo", hyperpars = {})
 
     @staticmethod
     def extract_config(model_name, config):
@@ -46,9 +50,11 @@ class AdversarialModel:
 
         classifier_model_name = main_config["classifier_model"]
         adversary_model_name = main_config["adversary_model"]
+        training_config_name = main_config["training_config"]
 
         gconfig[classifier_model_name] = config[classifier_model_name]
         gconfig[adversary_model_name] = config[adversary_model_name]
+        gconfig[training_config_name] = config[training_config_name]
 
         return gconfig
 
@@ -59,6 +65,7 @@ class AdversarialModel:
 
         global_pars = gconfig["AdversarialModel"]
 
+        model_name = global_pars["model_name"]
         classifier_model_name = global_pars["classifier_model"]
         adversary_model_name = global_pars["adversary_model"]
 
@@ -70,10 +77,11 @@ class AdversarialModel:
 
         classifier_hyperpars = gconfig[global_pars["classifier_model"]]
         adversary_hyperpars = gconfig[global_pars["adversary_model"]]
+        training_config = gconfig[global_pars["training_config"]]
 
         mod = classifier_model(classifier_model_name, hyperpars = classifier_hyperpars)
         adv = adversary_model(adversary_model_name, hyperpars = adversary_hyperpars)
-        obj = cls(mod, adv, global_pars, path = config_dir)
+        obj = cls(model_name, mod, adv, global_pars, path = config_dir, training_config = training_config)
 
         # then re-build the graph using these settings
         obj.build()
@@ -98,6 +106,7 @@ class AdversarialModel:
             self.weights_in = tf.placeholder(tf.float32, [None, ], name = 'weights_in')
             self.is_training = tf.placeholder(tf.bool, name = 'is_training')
             self.lambdaval = tf.placeholder(tf.float32, [1], name = 'lambdaval')
+            self.lambdaval_private_DisCo = tf.placeholder(tf.float32, [1], name = 'lambdaval_private_DisCo')
 
             self.classifier_lr = tf.placeholder(tf.float32, [], name = "classifier_lr")
             self.adversary_lr = tf.placeholder(tf.float32, [], name = "adversary_lr")
@@ -114,8 +123,12 @@ class AdversarialModel:
             # set up the adversary
             self.adv_loss, self.adversary_vars = self.adversary_model.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_bkg, is_training = self.is_training)
 
+            self.private_DisCo_adv_loss, _ = self.private_DisCo_adversary.build_loss(self.classifier_out_single, self.nuisances_in, weights = self.weights_bkg, is_training = self.is_training)
+
             # total loss
             self.total_loss = self.classification_loss + self.lambdaval * (-self.adv_loss)
+
+            self.private_DisCo_total_loss = self.classification_loss + self.lambdaval_private_DisCo * (-self.private_DisCo_adv_loss)
 
             # set up the optimisers
             self.train_classifier_standalone = tf.train.AdamOptimizer(learning_rate = self.classifier_lr, 
@@ -201,6 +214,16 @@ class AdversarialModel:
 
         return adv_loss
 
+    def evaluate_private_DisCo_adversary_loss(self, data, nuisances, labels, weights_step):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            adv_loss = self.sess.run(self.private_DisCo_adv_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.is_training: True})
+
+        return adv_loss
+
     def evaluate_loss(self, data, nuisances, labels, weights_step):
         data_pre = self.pre.process(data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
@@ -208,6 +231,27 @@ class AdversarialModel:
 
         with self.graph.as_default():
             total_loss = self.sess.run(self.total_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True})
+
+        return total_loss
+
+    def evaluate_all_losses(self, data, nuisances, labels, weights_step, DisCo_lambda):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            (clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss) = self.sess.run([self.classification_loss, self.adv_loss, self.total_loss, self.private_DisCo_adv_loss, self.private_DisCo_total_loss], 
+                                                                                                               feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.lambdaval_private_DisCo: [DisCo_lambda], self.is_training: True})
+
+        return clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss
+
+    def evaluate_private_DisCo_total_loss(self, data, nuisances, labels, weights_step, DisCo_lambda):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            total_loss = self.sess.run(self.private_DisCo_total_loss, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.lambdaval_private_DisCo: [DisCo_lambda], self.is_training: True})
 
         return total_loss
 
@@ -261,8 +305,21 @@ class AdversarialModel:
         gconfig[self.adversary_model.name] = self.adversary_model.hyperpars
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
-        
 
+    def get_model_statistics(self, data, nuisances, labels, weights_step, postfix = "", DisCo_lambda = 5.0):
+
+        stat_dict = {}
+
+        clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss = self.evaluate_all_losses(data, nuisances, labels, weights_step, DisCo_lambda)
+
+        stat_dict["clf_loss" + postfix] = clf_loss
+        stat_dict["adv_loss" + postfix] = adv_loss
+        stat_dict["total_loss" + postfix] = total_loss[0]
+        stat_dict["total_loss_private_DisCo" + postfix] = private_DisCo_total_loss[0]
+        stat_dict["adv_loss_private_DisCo" + postfix] = private_DisCo_adv_loss
+
+        return stat_dict
+        
     def create_paramdict(self):
         paramdict = {}
 

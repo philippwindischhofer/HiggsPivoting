@@ -13,7 +13,7 @@ class AdversarialModelTrainer:
         if not isinstance(self.training_pars, dict):
             self.training_pars = {key: float(val) for key, val in self.training_pars.items()}
 
-        self.validation_check_interval = 500
+        self.validation_check_interval = 1000
         self.validation_check_batchsize = 20000
 
         self.statistics_dict = {} # to hold the model statistics
@@ -82,11 +82,8 @@ class AdversarialModelTrainer:
             if batch % self.validation_check_interval == 0:
 
                 # gather some statistics on the evolution of the losses on the training dataset
-                cur_statdict = self.model.get_model_statistics(data_batch, nuis_batch, labels_batch, weights_batch, postfix = "_train")
+                cur_statdict = self.model.get_model_statistics(data_batch, nuis_batch, labels_batch, weights_batch, postfix = "_train", DisCo_lambda = 5.0)
                 cur_statdict["batch"] = batch
-
-                # evaluate the total training loss
-                train_loss = self.model.evaluate_loss(data_batch, nuis_batch, labels_batch, weights_batch)
 
                 # compute the average loss on the validation dataset to check when to stop training
                 validation_sampled_sig, validation_weights_sig = self.batch_sampler(valsamples_sig_formatted, size = self.validation_check_batchsize // 2)
@@ -94,7 +91,7 @@ class AdversarialModelTrainer:
                 (data_validation_batch, nuis_validation_batch, labels_validation_batch), validation_weights_batch = self._combine_samples(validation_sampled_sig, validation_weights_sig, validation_sampled_bkg, validation_weights_bkg)
                 validation_weights_batch = np.abs(validation_weights_batch)
                 
-                cur_statdict_validation = self.model.get_model_statistics(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch, postfix = "_validation")
+                cur_statdict_validation = self.model.get_model_statistics(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch, postfix = "_validation", DisCo_lambda = 5.0)
                 cur_statdict.update(cur_statdict_validation)
 
                 stat_dict_text = ["{} = {:.6g}".format(key, val) for key, val in cur_statdict.items() if key is not "batch"]
