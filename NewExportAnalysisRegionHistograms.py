@@ -10,6 +10,7 @@ from analysis.NewCutBasedCategoryFiller import CutBasedCategoryFiller
 from analysis.NewClassifierBasedCategoryFiller import ClassifierBasedCategoryFiller
 from plotting.CategoryPlotter import CategoryPlotter
 from plotting.ModelEvaluator import ModelEvaluator
+from plotting.TrainingStatisticsPlotter import TrainingStatisticsPlotter
 
 def renormalize_yields(sample, factor):
     sample["EventWeight"] *= factor
@@ -56,6 +57,11 @@ def ExportAnalysisRegionHistograms(infile_path, model_dir, out_dir):
     CBA_optimized = {"MET_cut": 191, "dRBB_highMET_cut": 1.2, "dRBB_lowMET_cut": 5.0}
 
     adversary_label = "temp"
+
+    # initially, make some plots showing the evolution of some training metrics
+    for model in mcoll.models:
+        training_plotter = TrainingStatisticsPlotter(model.path)
+        training_plotter.plot(model.path)
 
     # fill inclusive categories with 2j / 3j events
     inclusive_2J = CutBasedCategoryFiller.create_nJ_category(process_data = all_processes, process_names = all_process_names, nJ = 2)
@@ -117,6 +123,8 @@ def ExportAnalysisRegionHistograms(infile_path, model_dir, out_dir):
             for cur_process in all_process_names:
                 low_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(out_dir, prefix + "dist_mBB_{}_{}jet_low_MET.pkl".format(cur_process, nJ)), density = True)
 
+            low_MET_cat.export_histogram(binning = SR_binning, processes = bkg_sample_names, var_name = "mBB", outfile = os.path.join(out_dir, prefix + "dist_mBB_bkg_{}jet_low_MET.pkl".format(nJ)), density = True)
+
             anadict[prefix + "low_MET_{}jet_sig_eff".format(nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, sig_sample_names)
             anadict[prefix + "low_MET_{}jet_bkg_eff".format(nJ)] = ModelEvaluator.get_efficiency(low_MET_cat, cur_inclusive_cat, bkg_sample_names)
             
@@ -138,6 +146,8 @@ def ExportAnalysisRegionHistograms(infile_path, model_dir, out_dir):
 
             for cur_process in all_process_names:
                 high_MET_cat.export_histogram(binning = SR_binning, processes = [cur_process], var_name = "mBB", outfile = os.path.join(out_dir, prefix + "dist_mBB_{}_{}jet_high_MET.pkl".format(cur_process, nJ)), density = True)
+
+            high_MET_cat.export_histogram(binning = SR_binning, processes = bkg_sample_names, var_name = "mBB", outfile = os.path.join(out_dir, prefix + "dist_mBB_bkg_{}jet_high_MET.pkl".format(nJ)), density = True)
 
             anadict[prefix + "high_MET_{}jet_sig_eff".format(nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, sig_sample_names)
             anadict[prefix + "high_MET_{}jet_bkg_eff".format(nJ)] = ModelEvaluator.get_efficiency(high_MET_cat, cur_inclusive_cat, bkg_sample_names)
