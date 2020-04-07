@@ -1,3 +1,4 @@
+import os, pickle
 import numpy as np
 import training.BatchSamplers as BatchSamplers
 
@@ -9,8 +10,13 @@ class AdversarialModelTrainer:
         self.batch_sampler = batch_sampler
         self.training_pars = training_pars
 
-        self.validation_check_interval = 100
-        self.validation_check_batchsize = 10000
+        if not isinstance(self.training_pars, dict):
+            self.training_pars = {key: float(val) for key, val in self.training_pars.items()}
+
+        self.validation_check_interval = 500
+        self.validation_check_batchsize = 20000
+
+        self.statistics_dict = {} # to hold the model statistics
 
     def train(self, trainsamples_sig, trainsamples_bkg, valsamples_sig, valsamples_bkg):
 
@@ -49,6 +55,11 @@ class AdversarialModelTrainer:
 
             self.model.train_adversary(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg, batch)
 
+            if batch % self.validation_check_interval == 0:
+                
+                adv_loss = self.model.evaluate_adversary_loss(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg)
+                print("batch {}: adv_loss = {}".format(batch, adv_loss))
+
         # start the actual adversarial training
         adv_training_batches = int(self.training_pars["training_batches"])
         print("performing adversarial training for {} batches".format(adv_training_batches))
@@ -70,6 +81,10 @@ class AdversarialModelTrainer:
 
             if batch % self.validation_check_interval == 0:
 
+                # gather some statistics on the evolution of the losses on the training dataset
+                cur_statdict = self.model.get_model_statistics(data_batch, nuis_batch, labels_batch, weights_batch, postfix = "_train")
+                cur_statdict["batch"] = batch
+
                 # evaluate the total training loss
                 train_loss = self.model.evaluate_loss(data_batch, nuis_batch, labels_batch, weights_batch)
 
@@ -78,15 +93,27 @@ class AdversarialModelTrainer:
                 validation_sampled_bkg, validation_weights_bkg = self.batch_sampler(valsamples_bkg_formatted, size = self.validation_check_batchsize // 2)
                 (data_validation_batch, nuis_validation_batch, labels_validation_batch), validation_weights_batch = self._combine_samples(validation_sampled_sig, validation_weights_sig, validation_sampled_bkg, validation_weights_bkg)
                 validation_weights_batch = np.abs(validation_weights_batch)
-                validation_loss = self.model.evaluate_loss(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch)
+                
+                cur_statdict_validation = self.model.get_model_statistics(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch, postfix = "_validation")
+                cur_statdict.update(cur_statdict_validation)
 
-                print("batch {}: train_loss = {}  val_loss = {}".format(batch, train_loss, validation_loss))
+                stat_dict_text = ["{} = {:.6g}".format(key, val) for key, val in cur_statdict.items() if key is not "batch"]
+                print("batch {}: {}".format(batch, " | ".join(stat_dict_text)))
 
+                self._append_to_statistics_dict(cur_statdict) # register it in the central location
+
+                validation_loss = cur_statdict_validation["total_loss_validation"]
                 if validation_loss < best_val_loss:
                     print("have new best validation loss; triggering checkpoint saver")
                     best_val_loss = validation_loss
                 
                     self.model.save(self.model.path)
+
+        # save training statistics at the end
+        model_stat_path = os.path.join(self.model.path, "training_evolution.pkl")
+        print("saving statistics dict to {}".format(model_stat_path))
+        with open(model_stat_path, "wb") as stat_outfile:
+            pickle.dump(self.statistics_dict, stat_outfile)
 
     def _combine_samples(self, samples_sig, weights_sig, samples_bkg, weights_bkg):
 
@@ -94,3 +121,9 @@ class AdversarialModelTrainer:
         weights_combined = np.concatenate([weights_sig, weights_bkg], axis = 0)
         
         return data_combined, weights_combined
+
+    def _append_to_statistics_dict(self, to_append):
+        for key, val in to_append.items():
+            if not key in self.statistics_dict:
+                self.statistics_dict[key] = []
+            self.statistics_dict[key].append(val)

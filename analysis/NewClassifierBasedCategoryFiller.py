@@ -43,6 +43,6 @@ class ClassifierBasedCategoryFiller:
             # fill the category
             retcat.add_events(events = passed.data, weights = passed.weights, process = cur_process_name, event_variables = TrainingConfig.training_branches)
 
-            print("filled {} events from process '{}'".format(len(passed.data), cur_process_name))
+            print("filled {} events from process '{}'".format(sum(passed.weights), cur_process_name))
 
         return retcat
