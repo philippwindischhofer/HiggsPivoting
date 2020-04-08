@@ -51,6 +51,8 @@ class CutBasedCategoryFiller:
 
             retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches, aux_content = passed_aux, aux_variables = TrainingConfig.auxiliary_branches)
 
+            print("filled {} events from sample '{}'".format(len(passed_events), process_name))
+
         return retcat
 
     # cuts applied to incoming events:
@@ -74,5 +76,7 @@ class CutBasedCategoryFiller:
             passed_aux = cur_aux_events[cut]
 
             retcat.add_events(events = passed_events, weights = passed_weights, process = process_name, event_variables = TrainingConfig.training_branches, aux_content = passed_aux, aux_variables = TrainingConfig.auxiliary_branches)
+
+            print("filled {} events from sample '{}'".format(len(passed_events), process_name))
 
         return retcat

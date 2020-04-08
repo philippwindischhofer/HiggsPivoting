@@ -13,11 +13,6 @@ def extract_shuffled_slice(sample, slice_def, random_state = 12345):
 
 def TrainAdversarialModel(infile_path, outdir, verbose_statistics = False):
     
-    # prepare the training data
-    tconf = TrainingConfig.from_file(outdir)
-    data_branches = tconf.training_branches
-    print("using data_branches = " + ", ".join(data_branches))
-
     # read the training data
     sig_sample_names = TrainingConfig.sig_samples
     bkg_sample_names = TrainingConfig.bkg_samples
@@ -36,16 +31,12 @@ def TrainAdversarialModel(infile_path, outdir, verbose_statistics = False):
     bkg_data_train = [extract_shuffled_slice(cur_sample, slice_def = training_slice) for cur_sample in bkg_data]
     bkg_data_val = [extract_shuffled_slice(cur_sample, slice_def = validation_slice) for cur_sample in bkg_data]
 
-    # test a few things
-    tconf = TrainingConfig.from_file(outdir)
-
     from models.ModelCollection import ModelCollection
     mcoll = ModelCollection.from_config(outdir)
 
     from training.ModelCollectionTrainer import ModelCollectionTrainer
     from training.BatchSamplers import sample_from_TrainingSamples
-    trainer = ModelCollectionTrainer(mcoll, batch_sampler = sample_from_TrainingSamples, 
-                                     training_pars = tconf.training_pars)
+    trainer = ModelCollectionTrainer(mcoll, batch_sampler = sample_from_TrainingSamples)
     trainer.train(sig_data_train, bkg_data_train, sig_data_val, bkg_data_val)
 
 if __name__ == "__main__":

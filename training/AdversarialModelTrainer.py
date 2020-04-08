@@ -18,6 +18,15 @@ class AdversarialModelTrainer:
 
         self.statistics_dict = {} # to hold the model statistics
 
+    def _average_over_dicts(self, dicts):
+        available_keys = dicts[0].keys()
+        retdict = {}
+
+        for cur_key in available_keys:
+            retdict[cur_key] = np.mean([cur_dict[cur_key] for cur_dict in dicts])
+
+        return retdict
+
     def train(self, trainsamples_sig, trainsamples_bkg, valsamples_sig, valsamples_bkg):
 
         best_val_loss = 1e6
@@ -80,24 +89,39 @@ class AdversarialModelTrainer:
             self.model.train_step(data_batch, nuis_batch, labels_batch, weights_batch, batch)
 
             if batch % self.validation_check_interval == 0:
-
+                
+                print("-------------------------------------")
+                print("batch {}:".format(batch))
+                
                 # gather some statistics on the evolution of the losses on the training dataset
                 cur_statdict = self.model.get_model_statistics(data_batch, nuis_batch, labels_batch, weights_batch, postfix = "_train", DisCo_lambda = 5.0)
                 cur_statdict["batch"] = batch
 
-                # compute the average loss on the validation dataset to check when to stop training
-                validation_sampled_sig, validation_weights_sig = self.batch_sampler(valsamples_sig_formatted, size = self.validation_check_batchsize // 2)
-                validation_sampled_bkg, validation_weights_bkg = self.batch_sampler(valsamples_bkg_formatted, size = self.validation_check_batchsize // 2)
-                (data_validation_batch, nuis_validation_batch, labels_validation_batch), validation_weights_batch = self._combine_samples(validation_sampled_sig, validation_weights_sig, validation_sampled_bkg, validation_weights_bkg)
-                validation_weights_batch = np.abs(validation_weights_batch)
+                # average over several evaluations on samples from the validation dataset
+                statdicts_validation = []
+                for eval_step in range(5):
+                    # compute the average loss on the validation dataset to check when to stop training
+                    validation_sampled_sig, validation_weights_sig = self.batch_sampler(valsamples_sig_formatted, size = self.validation_check_batchsize // 2)
+                    validation_sampled_bkg, validation_weights_bkg = self.batch_sampler(valsamples_bkg_formatted, size = self.validation_check_batchsize // 2)
+                    (data_validation_batch, nuis_validation_batch, labels_validation_batch), validation_weights_batch = self._combine_samples(validation_sampled_sig, validation_weights_sig, validation_sampled_bkg, validation_weights_bkg)
+                    validation_weights_batch = np.abs(validation_weights_batch)
                 
-                cur_statdict_validation = self.model.get_model_statistics(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch, postfix = "_validation", DisCo_lambda = 5.0)
-                cur_statdict.update(cur_statdict_validation)
+                    cur_statdict_validation = self.model.get_model_statistics(data_validation_batch, nuis_validation_batch, labels_validation_batch, validation_weights_batch, postfix = "_validation", DisCo_lambda = 5.0)
+                    statdicts_validation.append(cur_statdict_validation)
+
+                statdict_validation = self._average_over_dicts(statdicts_validation)
+                cur_statdict.update(statdict_validation)
 
                 stat_dict_text = ["{} = {:.6g}".format(key, val) for key, val in cur_statdict.items() if key is not "batch"]
-                print("batch {}: {}".format(batch, " | ".join(stat_dict_text)))
+                print("{}".format(" | ".join(stat_dict_text)))
 
                 self._append_to_statistics_dict(cur_statdict) # register it in the central location
+
+                # save the updated training statistics to the binary file
+                model_stat_path = os.path.join(self.model.path, "training_evolution.pkl")
+                print("saving statistics dict to {}".format(model_stat_path))
+                with open(model_stat_path, "wb") as stat_outfile:
+                    pickle.dump(self.statistics_dict, stat_outfile)
 
                 validation_loss = cur_statdict_validation["total_loss_validation"]
                 if validation_loss < best_val_loss:
@@ -106,11 +130,7 @@ class AdversarialModelTrainer:
                 
                     self.model.save(self.model.path)
 
-        # save training statistics at the end
-        model_stat_path = os.path.join(self.model.path, "training_evolution.pkl")
-        print("saving statistics dict to {}".format(model_stat_path))
-        with open(model_stat_path, "wb") as stat_outfile:
-            pickle.dump(self.statistics_dict, stat_outfile)
+                print("-------------------------------------")
 
     def _combine_samples(self, samples_sig, weights_sig, samples_bkg, weights_bkg):
 

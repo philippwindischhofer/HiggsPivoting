@@ -234,7 +234,7 @@ class AdversarialModel:
 
         return total_loss
 
-    def evaluate_all_losses(self, data, nuisances, labels, weights_step, DisCo_lambda):
+    def evaluate_all_losses_private_DisCo(self, data, nuisances, labels, weights_step, DisCo_lambda):
         data_pre = self.pre.process(data)
         nuisances_pre = self.pre_nuisance.process(nuisances)
         weights_step = weights_step.flatten()
@@ -244,6 +244,18 @@ class AdversarialModel:
                                                                                                                feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.lambdaval_private_DisCo: [DisCo_lambda], self.is_training: True})
 
         return clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss
+
+    def evaluate_all_losses(self, data, nuisances, labels, weights_step):
+        data_pre = self.pre.process(data)
+        nuisances_pre = self.pre_nuisance.process(nuisances)
+        weights_step = weights_step.flatten()
+
+        with self.graph.as_default():
+            (clf_loss, adv_loss, total_loss) = self.sess.run([self.classification_loss, self.adv_loss, self.total_loss], 
+                                                             feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], 
+                                                                          self.is_training: True})
+
+        return clf_loss, adv_loss, total_loss
 
     def evaluate_private_DisCo_total_loss(self, data, nuisances, labels, weights_step, DisCo_lambda):
         data_pre = self.pre.process(data)
@@ -310,13 +322,14 @@ class AdversarialModel:
 
         stat_dict = {}
 
-        clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss = self.evaluate_all_losses(data, nuisances, labels, weights_step, DisCo_lambda)
+        #clf_loss, adv_loss, total_loss, private_DisCo_adv_loss, private_DisCo_total_loss = self.evaluate_all_losses_private_DisCo(data, nuisances, labels, weights_step, DisCo_lambda)
+        clf_loss, adv_loss, total_loss = self.evaluate_all_losses(data, nuisances, labels, weights_step)
 
         stat_dict["clf_loss" + postfix] = clf_loss
         stat_dict["adv_loss" + postfix] = adv_loss
         stat_dict["total_loss" + postfix] = total_loss[0]
-        stat_dict["total_loss_private_DisCo" + postfix] = private_DisCo_total_loss[0]
-        stat_dict["adv_loss_private_DisCo" + postfix] = private_DisCo_adv_loss
+        # stat_dict["total_loss_private_DisCo" + postfix] = private_DisCo_total_loss[0]
+        # stat_dict["adv_loss_private_DisCo" + postfix] = private_DisCo_adv_loss
 
         return stat_dict
         

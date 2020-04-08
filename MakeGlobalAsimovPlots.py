@@ -20,7 +20,7 @@ def load_plotdata(model_dirs, lambda_veto = lambda cur: False):
                 hypodicts.append(hypodict)
                 sensdicts.append(sensdict)
 
-                cur_dir = os.path.split(model_dir)[-1]
+                cur_dir = os.path.split(os.path.normpath(model_dir))[-1]
                 model_performance[cur_dir] = hypodict["asimov_sig_ncat_background_floating"]
         except:
             print("either sensdict.pkl or perfdict.pkl not found for model '{}'".format(model_dir))

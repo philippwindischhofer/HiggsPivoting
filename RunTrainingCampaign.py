@@ -49,8 +49,8 @@ def RunTrainingCampaign(master_confpath, nrep = 1, statistics = False):
             job_script = create_job_script(training_data_path, run_dir, run_dir, rootdir = os.environ["ROOTDIR"], statistics = statistics)
             
             # submit them
-            TrainingConfig.submitter.submit_job(job_script)
-
+            #TrainingConfig.submitter.submit_job(job_script)
+            
         os.remove(config_file)
 
 if __name__ == "__main__":

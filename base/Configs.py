@@ -1,7 +1,9 @@
 from configparser import ConfigParser
 from utils.CondorJobSubmitter import CondorJobSubmitter
 from utils.LocalJobSubmitter import LocalJobSubmitter
+
 import os
+import tensorflow as tf
 
 class TrainingConfig:
     # branches to use for the training
@@ -16,8 +18,8 @@ class TrainingConfig:
     # validation_slice = [0.66, 1.0]
 
     training_slice = [0.0, 0.33]
-    test_slice = [0.33, 0.66]
-    validation_slice = [0.66, 1.0]
+    test_slice = [0.33, 0.44]
+    validation_slice = [0.44, 1.0]
 
     data_path = "/home/windischhofer/datasmall/HiggsPivotingPaper/Hbb/training-MadGraphPy8-ATLAS-ttbar-NLO.h5"
     submitter = CondorJobSubmitter # "CondorJobSubmitter" also works
@@ -29,8 +31,16 @@ class TrainingConfig:
     bkg_samples = ["Zjets", "Wjets", "ttbar", "diboson"]
     bkg_sampling_lengths = [1.0, 1.0, 1.0, 1.0]
 
+    # bkg_samples = ["Zjets"]
+    # bkg_sampling_lengths = [1.0]
+
     sample_reweighting = {"Hbb": 1.0, "Zjets": 1.0, "Wjets": 1.0, "ttbar": 1.0, "diboson": 1.0}
 
+    session_config = tf.ConfigProto(intra_op_parallelism_threads = 16, 
+                                    inter_op_parallelism_threads = 16,
+                                    allow_soft_placement = True, 
+                                    device_count = {'CPU': 1})
+    
     @classmethod
     def from_file(cls, config_dir):
         gconfig = ConfigParser()

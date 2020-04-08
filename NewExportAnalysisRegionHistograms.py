@@ -81,7 +81,9 @@ def ExportAnalysisRegionHistograms(infile_path, model_dir, out_dir):
     anadict = {}
 
     # fill the signal regions of the classifier-based analysis
-    for nJ, cur_inclusive_cat in zip([2, 3], [inclusive_2J, inclusive_3J]):
+    #for nJ, cur_inclusive_cat in zip([2, 3], [inclusive_2J, inclusive_3J]):
+    for nJ, cur_inclusive_cat in zip([3], [inclusive_3J]):
+    #for nJ, cur_inclusive_cat in zip([2], [inclusive_2J]):
         for cut_end, cut_start, cut_label in zip(cuts[nJ][0:-1], cuts[nJ][1:], cut_labels):
             print("exporting {}J region with sigeff range {} - {}".format(nJ, cut_start, cut_end))
 

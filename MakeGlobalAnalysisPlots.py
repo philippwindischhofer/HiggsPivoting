@@ -23,13 +23,13 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
 
     dicts = sorted(dicts, key = lambda cur: cur["lambda"])
 
-    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues], plotdir, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues_r], plotdir, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues_r], plotdir, nJ = 3)
 
-    PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 2)
-    PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 3)
+    #PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 2)
+    #PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 3)
 
-def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues, lambda_label = r"$\lambda$"):
+def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues_r, lambda_label = r"$\lambda$"):
     
     dicts = []
     plot_data = []
@@ -39,7 +39,7 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
                 horizontalalignment = 'left', verticalalignment = 'bottom')
         ax.set_ylim([0, ax.get_ylim()[1] * 0.5])
 
-    model_dirs = random.sample(model_dirs, 200)
+    #model_dirs = random.sample(model_dirs, 200)
     
     # load the plots that are to be mapped over runs
     for model_dir in model_dirs:
@@ -93,7 +93,7 @@ def MakeAllGlobalAnalysisPlots(args):
     MakeGlobalPerformanceFairnessPlots(**args)
 
     # get the type of the adversary used in this case
-    adv_model = _load_metadata(os.path.join(args["model_dirs"][0], "meta.conf"), "AdversarialEnvironment")["adversary_model"]
+    adv_model = _load_metadata(os.path.join(args["model_dirs"][0], "meta.conf"), "adversary_2j")["model_type"]
     adversary_label_library = {"MINEAdversary": "MIND", "DisCoAdversary": "DisCo", "GMMAdversary": "EMAX"}
     cmap_library = {"MINEAdversary": plt.cm.Blues, "DisCoAdversary": plt.cm.Oranges, "GMMAdversary": plt.cm.Greens}
 

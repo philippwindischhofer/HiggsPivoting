@@ -20,7 +20,7 @@ class TrainingStatisticsPlotter:
                 print("have the following timelines available for training statistics: " + ", ".join(data_keys))
 
                 # generate plots for those timelines
-                fig, axes = plt.subplots(nrows = len(data_keys), ncols = 1)
+                fig, axes = plt.subplots(nrows = len(data_keys), ncols = 1, figsize = (10, 5 * len(data_keys)))
                 fig.subplots_adjust(hspace = 0.5)
 
                 for ind, (data_key, ax) in enumerate(zip(data_keys, axes)):
