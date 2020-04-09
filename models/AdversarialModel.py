@@ -1,4 +1,4 @@
-import os
+import os, glob, re
 import numpy as np
 from configparser import ConfigParser
 
@@ -286,8 +286,12 @@ class AdversarialModel:
         # load the weights
         with self.graph.as_default():
             try:
-                self.saver.restore(self.sess, os.path.join(indir, "model.dat"))
-                print("weights successfully loaded from " + indir)
+                # load the weights from the most recent checkpoint
+                last_checkpoint_index = self._get_last_checkpoint_index(indir)
+                checkpoint_dir = os.path.join(indir, "checkpoint_{}".format(last_checkpoint_index))
+                print("trying to load weights from {}".format(checkpoint_dir))
+                self.saver.restore(self.sess, os.path.join(checkpoint_dir, "model.dat"))
+                print("weights successfully loaded from " + checkpoint_dir)
             except:
                 print("no weights found, continuing with uninitialized graph!")
 
@@ -302,8 +306,17 @@ class AdversarialModel:
     def save(self, outdir):
         
         # save the weights in the graph
+        last_checkpoint_index = self._get_last_checkpoint_index(outdir)
+        if last_checkpoint_index is not None:
+            checkpoint_dir = os.path.join(outdir, "checkpoint_{}".format(last_checkpoint_index + 1))
+        else:
+            checkpoint_dir = os.path.join(outdir, "checkpoint_0")
+
+        os.makedirs(checkpoint_dir)
+
         with self.graph.as_default():
-            self.saver.save(self.sess, os.path.join(outdir, "model.dat"))
+            print("saving weights to {}".format(checkpoint_dir))
+            self.saver.save(self.sess, os.path.join(checkpoint_dir, "model.dat"))
 
         # save the preprocessors
         self.pre.save(os.path.join(outdir, "pre.pkl"))
@@ -317,6 +330,19 @@ class AdversarialModel:
         gconfig[self.adversary_model.name] = self.adversary_model.hyperpars
         with open(config_path, 'w') as metafile:
             gconfig.write(metafile)
+
+    def _get_last_checkpoint_index(self, outdir):
+        # determine the index of this saver step
+        old_checkpoints = list(map(os.path.basename, glob.glob(os.path.join(outdir, "checkpoint_*"))))
+
+        if len(old_checkpoints) > 0:
+            checkpoint_regex = re.compile(".*checkpoint_(.+)$")
+            checkpoint_numbers = list(map(lambda cur: int(checkpoint_regex.match(cur).group(1)), old_checkpoints))
+            last_checkpoint_index = max(checkpoint_numbers)
+        else:
+            last_checkpoint_index = None
+
+        return last_checkpoint_index
 
     def get_model_statistics(self, data, nuisances, labels, weights_step, postfix = "", DisCo_lambda = 5.0):
 

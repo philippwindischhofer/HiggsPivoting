@@ -74,11 +74,11 @@ class AdversarialModelTrainer:
         print("performing adversarial training for {} batches".format(adv_training_batches))
         for batch in range(adv_training_batches):
             
-            # update adversary
-            for adv_update in range(5):
-                (data_batch_bkg, nuis_batch_bkg, labels_batch_bkg), weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize)
-                weights_bkg = np.abs(weights_bkg)
-                self.model.train_adversary(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg, batch)
+            # # update adversary
+            # for adv_update in range(5):
+            #     (data_batch_bkg, nuis_batch_bkg, labels_batch_bkg), weights_bkg = self.batch_sampler(trainsamples_bkg_formatted, size = batchsize)
+            #     weights_bkg = np.abs(weights_bkg)
+            #     self.model.train_adversary(data_batch_bkg, nuis_batch_bkg, labels_batch_bkg, weights_bkg, batch)
 
             # update classifier
             sampled_sig, weights_sig = self.batch_sampler(trainsamples_sig_formatted, size = batchsize // 2)
