@@ -29,23 +29,13 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
     def MIND_veto(lambda_val):
-        if lambda_val > 0.0 and lambda_val < 0.5:
-            return True
-        else:
-            return False
         return False
 
     def DisCo_veto(lambda_val):
-        if lambda_val > 15:
-            return True
-        else:
-            return False
+        return False
         
     def EMAX_veto(lambda_val):
-        if lambda_val > 0.0 and lambda_val < 1.5:
-            return True
-        else:
-            return False
+        return False
 
     lambda_veto = {"MIND": MIND_veto, "DisCo": DisCo_veto, "EMAX": EMAX_veto, "DisCo_2000": DisCo_veto, "DisCo_4000": DisCo_veto}
 
