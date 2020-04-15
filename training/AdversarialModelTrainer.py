@@ -124,11 +124,12 @@ class AdversarialModelTrainer:
                     pickle.dump(self.statistics_dict, stat_outfile)
 
                 validation_loss = cur_statdict_validation["total_loss_validation"]
-                if validation_loss < best_val_loss:
-                    print("have new best validation loss; triggering checkpoint saver")
-                    best_val_loss = validation_loss
+                if validation_loss is not None:
+                    if validation_loss < best_val_loss:
+                        print("have new best validation loss; triggering checkpoint saver")
+                        best_val_loss = validation_loss
                 
-                    self.model.save(self.model.path)
+                        self.model.save(self.model.path)
 
                 print("-------------------------------------")
 
@@ -143,4 +144,8 @@ class AdversarialModelTrainer:
         for key, val in to_append.items():
             if not key in self.statistics_dict:
                 self.statistics_dict[key] = []
+
+            if val is None:
+                val = -99
+
             self.statistics_dict[key].append(val)

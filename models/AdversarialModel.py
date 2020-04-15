@@ -167,8 +167,11 @@ class AdversarialModel:
                                            lr_decay = float(self.global_pars["adam_clf_adv_lr_decay"]),
                                            batchnum = batchnum)
 
-        with self.graph.as_default():
-            self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True, self.classifier_lr: classifier_lr})
+        try:
+            with self.graph.as_default():
+                self.sess.run(self.train_classifier_adv, feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels_step, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], self.is_training: True, self.classifier_lr: classifier_lr})
+        except:
+            print("problem when executing train_step, skipping")
 
     def train_classifier(self, data_step, labels_step, weights_step, batchnum):
         data_pre = self.pre.process(data_step)
@@ -250,10 +253,16 @@ class AdversarialModel:
         nuisances_pre = self.pre_nuisance.process(nuisances)
         weights_step = weights_step.flatten()
 
-        with self.graph.as_default():
-            (clf_loss, adv_loss, total_loss) = self.sess.run([self.classification_loss, self.adv_loss, self.total_loss], 
-                                                             feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], 
-                                                                          self.is_training: True})
+        try:
+            with self.graph.as_default():
+                (clf_loss, adv_loss, total_loss) = self.sess.run([self.classification_loss, self.adv_loss, self.total_loss], 
+                                                                 feed_dict = {self.data_in: data_pre, self.nuisances_in: nuisances_pre, self.labels_in: labels, self.weights_in: weights_step, self.lambdaval: [self.lambda_final], 
+                                                                              self.is_training: True})
+        except:
+            print("problem evaluating losses, returning default")
+            clf_loss = None
+            adv_loss = None
+            total_loss = [None]
 
         return clf_loss, adv_loss, total_loss
 

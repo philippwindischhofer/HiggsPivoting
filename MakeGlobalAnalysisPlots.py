@@ -15,8 +15,6 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as infile:
                 anadict = pickle.load(infile)
-                # if float(anadict["lambda"]) > 1.75:
-                #     continue
                 dicts.append(anadict)
         except:
             print("no information found for model '{}'".format(model_dir))
@@ -26,8 +24,8 @@ def MakeGlobalPerformanceFairnessPlots(model_dirs, plotdir):
     PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues_r], plotdir, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined([dicts], [plt.cm.Blues_r], plotdir, nJ = 3)
 
-    #PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 2)
-    #PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined_smooth([dicts], [plt.cm.Blues], plotdir, nJ = 3)
 
 def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = [], overlay_labels = [], overlay_colors = [], overlay_lss = [], xlabel = "", ylabel = "", plot_label = "", inner_label = [], smoothing = False, cmap = plt.cm.Blues_r, lambda_label = r"$\lambda$"):
     
@@ -46,8 +44,6 @@ def MakeGlobalAnalysisPlots(outpath, model_dirs, plot_basename, overlay_paths = 
         try:
             with open(os.path.join(model_dir, "anadict.pkl"), "rb") as anadict_infile, open(os.path.join(model_dir, plot_basename), "rb") as plot_infile:
                 anadict = pickle.load(anadict_infile)
-                # if float(anadict["lambda"]) > 1.2:
-                #     continue
 
                 (n, bins, var_name) = pickle.load(plot_infile)
 

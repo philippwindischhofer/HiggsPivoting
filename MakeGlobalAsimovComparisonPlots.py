@@ -20,7 +20,7 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
         else:
             return False
         return False
-
+        
     def DisCo_veto(lambda_val):
         return False
             
@@ -32,7 +32,7 @@ def MakeGlobalAsimovComparisonPlots(plotdir, workdirs, labels):
         return False
 
     lambda_veto = {"MIND": MIND_veto, "DisCo": DisCo_veto, "EMAX": EMAX_veto}
-    linthresh_library = {"MIND": 3.9, "DisCo": 3.4, "EMAX": 9.7}
+    linthresh_library = {"MIND": 3.9, "DisCo": 7.4, "EMAX": 9.7}
 
     linthreshs = []
 

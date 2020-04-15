@@ -26,7 +26,7 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
     # load the full collection of data to be plotted, for each model directory
     dicts = []
     colorschemes = []
-    colorscheme_library = [plt.cm.Blues_r, plt.cm.Greens_r, plt.cm.Oranges_r]
+    colorscheme_library = [plt.cm.Blues, plt.cm.Greens, plt.cm.Oranges]
 
     def MIND_veto(lambda_val):
         if lambda_val > 0.0 and lambda_val < 0.5:
@@ -36,8 +36,11 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
         return False
 
     def DisCo_veto(lambda_val):
-        return False
-
+        if lambda_val > 15:
+            return True
+        else:
+            return False
+        
     def EMAX_veto(lambda_val):
         if lambda_val > 0.0 and lambda_val < 1.5:
             return True
@@ -54,13 +57,13 @@ def MakeGlobalPerformanceFairnessComparisonPlots(plotdir, workdirs, labels):
         dicts.append(cur_dicts)
 
     #PerformancePlotter.plot_significance_fairness_combined_legend(dicts, colorschemes, plotdir, series_labels = labels)
-    #PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
     PerformancePlotter.plot_significance_fairness_combined(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
     #PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2, show_legend = False)
     #PerformancePlotter.plot_significance_fairness_combined_smooth(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3, show_legend = False)
 
-    #PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
-    #PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
+    PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 2)
+    PerformancePlotter.plot_significance_fairness_combined_trajectories(dicts, colorschemes, plotdir, series_labels = labels, nJ = 3)
 
 if __name__ == "__main__":
     parser = ArgumentParser(description = "make performance vs. fairness comparison plots")

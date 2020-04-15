@@ -201,6 +201,10 @@ class PerformancePlotter:
             plots += cur_ax.plot(x, y, label = label, color = color, ls = "--")
             cur_ax.fill_between(x, y - unc_down, y + unc_up, facecolor = color, edgecolor = None, alpha = 0.6, zorder = 2)
 
+            print("{} -> {}".format(label, outfile))
+            for cur_x, cur_y in zip(x, y):
+                print("lambda = {} : {} sigma".format(cur_x, cur_y))
+
         ax.set_xlabel(xlabels[0])
         ax.set_ylabel(ylabel)
         ax.set_title(title)
@@ -708,11 +712,11 @@ class PerformancePlotter:
 
             # ignore bins with very low contents -- these are likely to be outliers
             for cur_bin in list(tight_binned_significances.keys()):
-                if len(tight_binned_significances[cur_bin]) < 2:
+                if len(tight_binned_significances[cur_bin]) < 5:
                     tight_binned_significances.pop(cur_bin)
 
             for cur_bin in list(loose_binned_significances.keys()):
-                if len(loose_binned_significances[cur_bin]) < 2:
+                if len(loose_binned_significances[cur_bin]) < 5:
                     loose_binned_significances.pop(cur_bin)
 
             bins = list(tight_binned_significances.keys())
@@ -769,7 +773,7 @@ class PerformancePlotter:
         if nJ == 2:
             ax.set_xlim(left = 1.5, right = 5.5)
         elif nJ == 3:
-            ax.set_xlim(left = 0.6, right = 3.0)
+            ax.set_xlim(left = 0.6, right = 2.5)
 
         # now start putting the labels
         ax.text(x = 0.02, y = 0.42, s = r'less shaping $\rightarrow$', transform = ax.transAxes, rotation = 90, color = "gray")
@@ -779,7 +783,7 @@ class PerformancePlotter:
         ax.set_ylabel(r'1/JSD')
         ax.text(x = 0.67, y = 0.88, s = r'$\sqrt{{s}}=13$ TeV, 140 fb$^{{-1}}$, {} jet'.format(nJ), transform = ax.transAxes)
 
-        ax.set_ylim(bottom = 0.9, top = 1e5)
+        ax.set_ylim(bottom = 0.9, top = 1e4)
         fig.subplots_adjust(right = 0.95, left = 0.1, bottom = 0.15, top = 0.95)
 
         outfile = os.path.join(outdir, "{}jet_combined_JSD_sig_trajectory_no_legend.pdf".format(nJ))
